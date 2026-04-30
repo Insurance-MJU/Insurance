@@ -12,14 +12,25 @@ public class ProductDocument {
     private Date submittedAt;
     private String title;
 
-    public enum DocType {}
+    public enum DocType { GENERAL_TERMS, SPECIAL_TERMS, BASIC_DOCUMENT }
 
-    public Date getCreatedAt() { return createdAt; }
-    public DocType getDocType() { return docType; }
-    public String getNote() { return note; }
+    // Setters
+    public void setCreatedAt(Date v)            { this.createdAt = v; }
+    public void setDocType(DocType v)           { this.docType = v; }
+    public void setNote(String v)               { this.note = v; }
+    public void setProductDocumentId(String v)  { this.productDocumentId = v; }
+    public void setProductId(String v)          { this.productId = v; }
+    public void setReceivedAt(Date v)           { this.receivedAt = v; }
+    public void setSubmittedAt(Date v)          { this.submittedAt = v; }
+    public void setTitle(String v)              { this.title = v; }
+
+    // Getters
+    public Date getCreatedAt()           { return createdAt; }
+    public DocType getDocType()          { return docType; }
+    public String getNote()              { return note; }
     public String getProductDocumentId() { return productDocumentId; }
-    public String getProductId() { return productId; }
-    public Date getReceivedAt() { return receivedAt; }
-    public Date getSubmittedAt() { return submittedAt; }
-    public String getTitle() { return title; }
+    public String getProductId()         { return productId; }
+    public Date getReceivedAt()          { return receivedAt; }
+    public Date getSubmittedAt()         { return submittedAt; }
+    public String getTitle()             { return title; }
 }

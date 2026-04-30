@@ -62,7 +62,7 @@ public class MainMenuController {
         if (role == UserRole.CUSTOMER) {
             switch (input) {
                 case "1": new CS01ProductSubscription().run();  break;
-                case "2": new CS02ProductInquiry().run();       break;
+                case "2": new CS02ProductInquiry().run(); break; // 단독 조회 - 반환값 무시
                 case "3": new CS03PremiumEstimate().run();      break;
                 case "4": new CS04ClaimRequest().run();         break;
                 case "5": new CS05ContractInquiry().run();      break;
