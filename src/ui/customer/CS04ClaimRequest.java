@@ -1,9 +1,108 @@
 package ui.customer;
 
-import ui.StubUseCase;
+import infra.Context;
+import java.util.Scanner;
 
 public class CS04ClaimRequest {
+    private final Scanner sc = Context.getInstance().scanner();
+
     public void run() {
-        new StubUseCase("CS-04", "보험금을 청구한다").run();
+        System.out.println("\n========================================");
+        System.out.println(" CS-04: 보험금을 청구한다");
+        System.out.println("========================================");
+
+        // Step 1
+        System.out.println("\n[사고접수 및 보험금 청구]");
+
+        // Step 2~3: 본인 인증
+        System.out.println("\n[본인 인증 수단 선택]");
+        System.out.println(" 1. 공동인증서  2. 간편비밀번호  3. 휴대폰 인증");
+        System.out.print(" 인증 수단 선택: ");
+        String authMethod = sc.nextLine().trim();
+
+        System.out.print(" 이름: ");
+        String authName = sc.nextLine().trim();
+        System.out.print(" 휴대전화번호 (예: 010-1234-5678): ");
+        sc.nextLine();
+        System.out.print(" 인증번호 (예: 123456): ");
+        sc.nextLine();
+
+        // Step 4: 본인 인증 결과
+        System.out.println("\n[본인 인증 결과]");
+        System.out.println(" 고객명 확인: " + authName);
+
+        // Step 5: 내 보험계약 확인 → include CS-05
+        System.out.print("\n계약 조회에 동의하십니까? (Y/N): ");
+        if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
+            System.out.println("[안내] 계약 조회 동의가 필요합니다.");
+            returnToMenu();
+            return;
+        }
+
+        // A1: 청구 대상 계약 미선택 처리
+        boolean contractSelected = new CS05ContractInquiry().runAsInclude();
+        if (!contractSelected) {
+            System.out.println("\n[경고] 대상 보험 계약은 필수 선택 사항입니다. 대상을 리스트에 추가해 주세요.");
+            returnToMenu();
+            return;
+        }
+
+        // Step 6~7: 사고 기초 정보 입력
+        System.out.println("\n[사고 기초 정보 입력]");
+        System.out.print(" 사고 발생 일시 (예: 2026-04-19 14:00): ");
+        String accidentDate = sc.nextLine().trim();
+        System.out.print(" 사고 장소 (예: 서울시 강남구): ");
+        String accidentPlace = sc.nextLine().trim();
+        System.out.print(" 상세 경위 (예: 후방 추돌): ");
+        String accidentDetail = sc.nextLine().trim();
+
+        // E1: 사고 발생 일시가 보험 가입 기간 외인 경우 (간단 검증)
+        if (accidentDate.contains("2025") || accidentDate.isEmpty()) {
+            System.out.println("\n[오류] 입력된 사고 일시 값이 허용 범위를 초과하였습니다.");
+            System.out.println("       사고 일시를 수정하고 다시 시도해주세요.");
+            returnToMenu();
+            return;
+        }
+
+        // Step 8~9: 증빙 서류 업로드
+        System.out.println("\n[증빙 서류 업로드]");
+        System.out.print(" 진단서 파일명 (예: 진단서_김고객.jpg): ");
+        String doc1 = sc.nextLine().trim();
+        System.out.print(" 현장사진 파일명 (예: 현장_1.jpg): ");
+        String doc2 = sc.nextLine().trim();
+        System.out.println("[서류 제출]");
+        System.out.println("\n[첨부 파일 확인]");
+        System.out.println(" - " + doc1 + "  (정상 첨부)");
+        System.out.println(" - " + doc2 + "  (정상 첨부)");
+
+        // Step 10~11: 최종 제출 동의
+        System.out.println("\n[최종 제출 동의]");
+        System.out.print(" 위 내용으로 보험금을 청구하시겠습니까? (Y/N): ");
+        if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
+            System.out.println("[안내] 청구가 취소되었습니다.");
+            returnToMenu();
+            return;
+        }
+
+        // Step 12: 청구 완료
+        String accNo = "ACC-" + String.format("%05d", System.currentTimeMillis() % 100000);
+        System.out.println("\n[보험금 청구 완료]");
+        System.out.println("------------------------------------------------------------");
+        System.out.println(" 접수 번호   : " + accNo);
+        System.out.println(" 사고 일시   : " + accidentDate);
+        System.out.println(" 사고 장소   : " + accidentPlace);
+        System.out.println(" 경위        : " + accidentDetail);
+        System.out.println(" 처리 상태   : 보상팀 이관 완료");
+        System.out.println(" 안내        : 담당자가 배정되면 연락드리겠습니다. (1~3 영업일 소요)");
+        System.out.println("------------------------------------------------------------");
+        System.out.println("\n보험금 청구가 완료되었습니다.");
+
+        returnToMenu();
+    }
+
+    private void returnToMenu() {
+        System.out.print("\nEnter를 누르면 메인 메뉴로 돌아갑니다...");
+        sc.nextLine();
+        System.out.println();
     }
 }

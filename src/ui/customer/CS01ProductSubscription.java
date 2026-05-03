@@ -133,14 +133,8 @@ public class CS01ProductSubscription {
         }
 
         // ── Step 8: <<include>> CS-03 예상보험료 산출 ─────────
-        System.out.println("\n[예상 보험료 산출]");
-        long premium = calculatePremium(stdValue, purpose);
-        System.out.printf(" 기본 보험료   : %,d원%n", (long)(stdValue * 0.04));
-        System.out.printf(" 할인 적용 후  : %,d원  (다이렉트 60%% 할인)%n", premium);
-
-        System.out.print("\n위 내용으로 가입을 신청하시겠습니까? (Y/N): ");
-        if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
-            System.out.println("[안내] 가입이 취소되었습니다.");
+        boolean confirmed = new CS03PremiumEstimate().runAsInclude(selectedProduct, stdValue, purpose);
+        if (!confirmed) {
             returnToMenu();
             return;
         }
@@ -153,14 +147,15 @@ public class CS01ProductSubscription {
         }
 
         // ── Step 9: 완료 ──────────────────────────────────────
-        System.out.println("\n보험가입이 완료되었습니다.");
+        System.out.println("\n========================================");
+        System.out.println(" 보험가입이 완료되었습니다.");
+        System.out.println("========================================");
         System.out.printf(" 상품명      : %s%n", selectedProduct.getProductName());
         System.out.printf(" 가입자      : %s%n", name);
         System.out.printf(" 전화번호    : %s%n", phone);
         System.out.printf(" 차량번호    : %s%n", car.getCarNumber());
         System.out.printf(" 운행용도    : %s%n", car.getPurposeLabel());
         System.out.printf(" 운전자범위  : %s%n", driverScope.getScopeLabel());
-        System.out.printf(" 납입 보험료 : %,d원/년%n", premium);
         returnToMenu();
     }
 
@@ -176,15 +171,6 @@ public class CS01ProductSubscription {
         } catch (Exception e) {
             return -1;
         }
-    }
-
-    // 간단 보험료 계산 로직 (차량기준가액 기반)
-    private long calculatePremium(long stdValue, Car.Purpose purpose) {
-        double base = stdValue * 0.04;
-        double discount = 0.6; // 다이렉트 40% 할인 → 기본료 * 0.6이 아니라 60% 할인 = *0.4
-        if (purpose == Car.Purpose.BUSINESS)   discount = 0.5;
-        if (purpose == Car.Purpose.COMMERCIAL) discount = 0.3;
-        return Math.round(base * (1.0 - discount + 0.4)); // 최소 40%
     }
 
     private void returnToMenu() {
