@@ -73,7 +73,7 @@ public class CS05ContractInquiry {
         } else {
             for (Contract c : contracts) {
                 System.out.printf(" %-15s %-35s %-8s%n",
-                    c.getPolicyNo(), c.getProductId(), c.getStatusLabel());
+                    c.getPolicyNo(), c.getProductName(), c.getStatusLabel());
             }
         }
         System.out.println("------------------------------------------------------------");

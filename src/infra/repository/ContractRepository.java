@@ -46,7 +46,7 @@ public class ContractRepository {
         Contract c = new Contract();
         c.setPolicyNo(policyNo);
         c.setContractId(contractId);
-        c.setProductId(productName);   // productName을 productId 필드로 임시 저장
+        c.setProductName(productName);
         c.setStatus(status);
         c.setPolicyholder(holder);
         c.setPremium(new Money(premiumAmount, "KRW"));

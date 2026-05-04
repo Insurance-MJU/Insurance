@@ -25,6 +25,7 @@ public class Contract {
     private String carNumber;
     private String coveragesDescription;
     private String ridersDescription;
+    private String productName;
 
     public enum Status {
         ACTIVE, EXPIRED, CANCELLED;
@@ -72,6 +73,7 @@ public class Contract {
     public String getCarNumber()                  { return carNumber; }
     public String getCoveragesDescription()       { return coveragesDescription; }
     public String getRidersDescription()          { return ridersDescription; }
+    public String getProductName()                { return productName; }
 
     public void setBeneficiaries(List<Party> v)           { this.beneficiaries = v; }
     public void setContractId(String v)                   { this.contractId = v; }
@@ -91,4 +93,5 @@ public class Contract {
     public void setCarNumber(String v)                    { this.carNumber = v; }
     public void setCoveragesDescription(String v)         { this.coveragesDescription = v; }
     public void setRidersDescription(String v)            { this.ridersDescription = v; }
+    public void setProductName(String v)                  { this.productName = v; }
 }
