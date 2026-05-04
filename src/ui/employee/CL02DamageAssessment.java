@@ -3,12 +3,15 @@ package ui.employee;
 import domain.Accident;
 import domain.Claim;
 import infra.Context;
+import infra.repository.AccidentRepository;
 import infra.repository.ClaimRepository;
 
 import java.util.Scanner;
 
 public class CL02DamageAssessment {
     private final Scanner sc = Context.getInstance().scanner();
+
+    private static final String DEFAULT_PERSONAL_INJURY_LIMIT = "1,000만원";
 
     public void run() {
         System.out.println("\n[CL-02] 손해액을 산정한다");
@@ -24,7 +27,7 @@ public class CL02DamageAssessment {
             System.out.println("[산정 대상 조회]");
 
             // Step 4: 레포지토리에서 사고 초기 접수 내역 조회
-            Accident accident = ClaimRepository.findAccidentById(accNo);
+            Accident accident = AccidentRepository.findById(accNo);
 
             System.out.println("\n[ 손해액 산정 폼 - 사고 초기 접수 내역 ]");
             System.out.println("------------------------------------------------------------");
@@ -55,9 +58,9 @@ public class CL02DamageAssessment {
             new CL03DamageInvestigation().run();
 
             // Step 6: 보상 한도액 출력 (레포지토리 데이터 반영)
-            String personalLimit  = (accident != null && accident.getPersonalInjuryLimit() != null)
-                ? accident.getPersonalInjuryLimit() : "1,000만원";
-            String coverageLimit  = (accident != null) ? accident.getCoverageLimit() : "2,000만원";
+            String personalLimit = (accident != null && accident.getPersonalInjuryLimit() != null)
+                ? accident.getPersonalInjuryLimit() : DEFAULT_PERSONAL_INJURY_LIMIT;
+            String coverageLimit = (accident != null) ? accident.getCoverageLimit() : "2,000만원";
 
             System.out.println("\n[ 보상 한도액 ]");
             System.out.println("------------------------------------------------------------");
@@ -107,13 +110,13 @@ public class CL02DamageAssessment {
             System.out.println("[산정 내역 승인]");
 
             // Step 10: 레포지토리에 Claim 지급 정보 저장 및 상태 업데이트
-            Claim claim = ClaimRepository.findClaimByAccidentId(accNo);
+            Claim claim = ClaimRepository.findByAccidentId(accNo);
             if (claim != null) {
                 claim.setSettlement(settlement);
                 claim.setDeductible(deductible);
                 claim.setCompensationAmount(finalAmount);
                 claim.setStatus("지급대기");
-                ClaimRepository.saveClaim(claim);
+                ClaimRepository.save(claim);
             }
 
             System.out.println("\n[ 산정 내역 승인 완료 ]");
@@ -143,7 +146,7 @@ public class CL02DamageAssessment {
     }
 
     /** "2,000만원" 같은 문자열에서 숫자(2000)만 추출 */
-    private static int parseCoverageLimitManwon(domain.Accident accident) {
+    private static int parseCoverageLimitManwon(Accident accident) {
         if (accident == null || accident.getCoverageLimit() == null) return 2000;
         try {
             return Integer.parseInt(accident.getCoverageLimit().replaceAll("[^0-9]", ""));

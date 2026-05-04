@@ -3,6 +3,7 @@ package ui.employee;
 import domain.Accident;
 import domain.Claim;
 import infra.Context;
+import infra.repository.AccidentRepository;
 import infra.repository.ClaimRepository;
 import infra.repository.EmployeeRepository;
 
@@ -41,7 +42,7 @@ public class CL01AccidentRegistration {
         }
 
         // Step 4: 레포지토리에서 사고 목록 조회
-        List<Accident> accidents = ClaimRepository.findByDateAndStatus(period, status);
+        List<Accident> accidents = AccidentRepository.findByDateAndStatus(period, status);
 
         System.out.println("\n[ 미처리 사고 청구 목록 ]");
         System.out.println("------------------------------------------------------------");
@@ -78,7 +79,7 @@ public class CL01AccidentRegistration {
         }
 
         // Step 6: 레포지토리에서 사고 상세 정보 조회
-        Accident accident = ClaimRepository.findAccidentByCustomerName(customerName);
+        Accident accident = AccidentRepository.findByCustomerName(customerName);
 
         System.out.println("\n[ 사고 상세 정보 - " + customerName + " / " + phone + " ]");
         System.out.println("------------------------------------------------------------");
@@ -130,7 +131,7 @@ public class CL01AccidentRegistration {
         System.out.println("[배당 및 접수 확정]");
 
         // Step 10: 레포지토리에 Claim 저장 및 Accident 상태 업데이트
-        String claimId = ClaimRepository.nextClaimId();
+        String claimId = ClaimRepository.nextId();
         String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
         if (accident != null) {
@@ -141,8 +142,8 @@ public class CL01AccidentRegistration {
                 accident.getDescription(), "처리중"
             );
             claim.setAssignedEmployee(empNo);
-            ClaimRepository.saveClaim(claim);
-            ClaimRepository.updateAccidentStatus(accident.getAccidentId(), "처리중");
+            ClaimRepository.save(claim);
+            AccidentRepository.updateStatus(accident.getAccidentId(), "처리중");
         }
 
         System.out.println("\n담당자가 배당되었습니다.");

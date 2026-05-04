@@ -3,7 +3,8 @@ package ui.employee;
 import domain.Accident;
 import domain.DamageInvestigation;
 import infra.Context;
-import infra.repository.ClaimRepository;
+import infra.repository.AccidentRepository;
+import infra.repository.InvestigationRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,7 +26,7 @@ public class CL03DamageInvestigation {
         System.out.println("[현장 조사 및 피해 입력]");
 
         // 레포지토리에서 사고 정보 조회
-        Accident accident = ClaimRepository.findAccidentById(accNo);
+        Accident accident = AccidentRepository.findById(accNo);
 
         // Step 3 부터 A1/E1 발생 시 재시작
         while (true) {
@@ -139,8 +140,8 @@ public class CL03DamageInvestigation {
             inv.setCompensationLimit(compensationLimit);
             inv.setFinalOpinion(finalOpinion);
             inv.setSavedAt(savedAt);
-            ClaimRepository.saveInvestigation(inv);
-            ClaimRepository.updateAccidentStatus(accNo, "처리중");
+            InvestigationRepository.save(inv);
+            AccidentRepository.updateStatus(accNo, "처리중");
 
             System.out.println("\n┌──────────────────────────────────────────────────────────────┐");
             System.out.println("│  조사 내역이 저장되었습니다. 일시: " + savedAt + "       │");
