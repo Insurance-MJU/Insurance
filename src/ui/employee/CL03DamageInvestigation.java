@@ -1,7 +1,12 @@
 package ui.employee;
 
+import domain.Accident;
 import domain.DamageInvestigation;
 import infra.Context;
+import infra.repository.ClaimRepository;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class CL03DamageInvestigation {
@@ -18,6 +23,9 @@ public class CL03DamageInvestigation {
         System.out.print("사고 접수 번호 (예: ACC-2026-001): ");
         String accNo = sc.nextLine().trim();
         System.out.println("[현장 조사 및 피해 입력]");
+
+        // 레포지토리에서 사고 정보 조회
+        Accident accident = ClaimRepository.findAccidentById(accNo);
 
         // Step 3 부터 A1/E1 발생 시 재시작
         while (true) {
@@ -53,14 +61,14 @@ public class CL03DamageInvestigation {
                 continue;
             }
 
-            // Step 4: 보상 한도 범위 출력 및 과실 비율 입력
-            DamageInvestigation investigation = new DamageInvestigation();
-            investigation.investigateDamage();
+            // Step 4: 레포지토리 데이터 기반 보상 한도 범위 출력
+            String expectedRepairCost = "800,000원";
+            String compensationLimit = (accident != null) ? accident.getCoverageLimit() : "1,000만원";
 
             System.out.println("\n[ 보상 한도 범위 ]");
             System.out.println("------------------------------------------------------------");
-            System.out.println("  예상 수리비       : 800,000원");
-            System.out.println("  대인 보상 한도     : 1,000,000원");
+            System.out.println("  예상 수리비       : " + expectedRepairCost);
+            System.out.println("  대인 보상 한도     : " + compensationLimit);
             System.out.println("------------------------------------------------------------");
 
             // Step 5: 과실 비율 입력
@@ -99,8 +107,6 @@ public class CL03DamageInvestigation {
             System.out.println("[면/부책 판정]");
 
             // Step 8: 손해 조사 내역 취합 (조사 보고서 초안)
-            investigation.updateAccidentDetail(opinion);
-
             System.out.println("\n[ 손해 조사 내역 취합 - 조사 보고서 초안 ]");
             System.out.println("------------------------------------------------------------");
             System.out.println("  접수 번호      : " + accNo);
@@ -115,12 +121,28 @@ public class CL03DamageInvestigation {
             // Step 9: 최종 조사 의견 입력
             System.out.println("\n[ 조사 완료 및 저장 ]");
             System.out.print("최종 조사 의견 (예: 합의금 산출 진행 요망): ");
-            sc.nextLine();
+            String finalOpinion = sc.nextLine().trim();
             System.out.println("[조사 완료 및 저장]");
 
-            // Step 10: 저장 완료 팝업
+            // Step 10: 레포지토리에 조사 결과 저장
+            String savedAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd.HH:mm:ss"));
+            DamageInvestigation inv = new DamageInvestigation();
+            inv.setAccidentId(accNo);
+            inv.setOpinion(opinion);
+            inv.setDamageCode(damageCode);
+            inv.setInjuryGrade(injuryGrade);
+            inv.setOurFault(ourFault);
+            inv.setOtherFault(otherFault);
+            inv.setLiability(liability);
+            inv.setExpectedRepairCost(expectedRepairCost);
+            inv.setCompensationLimit(compensationLimit);
+            inv.setFinalOpinion(finalOpinion);
+            inv.setSavedAt(savedAt);
+            ClaimRepository.saveInvestigation(inv);
+            ClaimRepository.updateAccidentStatus(accNo, "처리중");
+
             System.out.println("\n┌──────────────────────────────────────────────────────────────┐");
-            System.out.println("│  조사 내역이 저장되었습니다. 일시: 2026.04.23.10:31:22       │");
+            System.out.println("│  조사 내역이 저장되었습니다. 일시: " + savedAt + "       │");
             System.out.println("└──────────────────────────────────────────────────────────────┘");
             System.out.println("  → CL-02 손해액 산정 Basic Flow 6번으로 이동합니다.");
 

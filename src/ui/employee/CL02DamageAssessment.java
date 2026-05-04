@@ -1,7 +1,10 @@
 package ui.employee;
 
+import domain.Accident;
 import domain.Claim;
 import infra.Context;
+import infra.repository.ClaimRepository;
+
 import java.util.Scanner;
 
 public class CL02DamageAssessment {
@@ -22,15 +25,21 @@ public class CL02DamageAssessment {
             String accNo = sc.nextLine().trim();
             System.out.println("[산정 대상 조회]");
 
-            // Step 4: 사고 초기 접수 내역 출력
+            // Step 4: 레포지토리에서 사고 초기 접수 내역 조회
+            Accident accident = ClaimRepository.findAccidentById(accNo);
+
             System.out.println("\n[ 손해액 산정 폼 - 사고 초기 접수 내역 ]");
             System.out.println("------------------------------------------------------------");
             System.out.println("  접수 번호  : " + accNo);
             System.out.println("  담당자     : " + empNo);
-            System.out.println("  사고 일시  : 2026-04-19 08:45");
-            System.out.println("  사고 유형  : 자동차 대물 사고");
-            System.out.println("  사고 장소  : 서울 강남구 테헤란로");
-            System.out.println("  피해 차량  : 12가 3456 (현대 소나타)");
+            if (accident != null) {
+                System.out.println("  사고 일시  : " + accident.getAccidentDate());
+                System.out.println("  사고 유형  : " + accident.getDescription());
+                System.out.println("  사고 장소  : " + accident.getAccidentLocation());
+                System.out.println("  피해 차량  : " + accident.getVehicleInfo());
+            } else {
+                System.out.println("  [해당 접수번호의 사고 정보를 찾을 수 없습니다]");
+            }
             System.out.println("------------------------------------------------------------");
 
             // Step 5 + A1: 피해 내역 조사 진행 여부
@@ -47,11 +56,13 @@ public class CL02DamageAssessment {
             // <<include>> CL-03
             new CL03DamageInvestigation().run();
 
-            // Step 6: 보상 한도액 및 입력란 출력 (CL-03 완료 후 진입)
+            // Step 6: 보상 한도액 출력 (레포지토리 데이터 반영)
+            String coverageLimit = (accident != null) ? accident.getCoverageLimit() : LIMIT_PROPERTY + "만원";
+
             System.out.println("\n[ 보상 한도액 ]");
             System.out.println("------------------------------------------------------------");
             System.out.println("  대인 한도 : 1,000만원");
-            System.out.println("  대물 한도 : " + LIMIT_PROPERTY + "만원");
+            System.out.println("  대물 한도 : " + coverageLimit);
             System.out.println("------------------------------------------------------------");
 
             // Step 7 + E1: 합의금·자기부담금 입력
@@ -94,9 +105,15 @@ public class CL02DamageAssessment {
             String opinion = sc.nextLine().trim();
             System.out.println("[산정 내역 승인]");
 
-            // Step 10: 승인 완료 및 지급 대기 상태 출력
-            Claim claim = new Claim();
-            claim.updateStatus(null);
+            // Step 10: 레포지토리에 Claim 지급 정보 저장 및 상태 업데이트
+            Claim claim = ClaimRepository.findClaimByAccidentId(accNo);
+            if (claim != null) {
+                claim.setSettlement(settlement);
+                claim.setDeductible(deductible);
+                claim.setCompensationAmount(finalAmount);
+                claim.setStatus("지급대기");
+                ClaimRepository.saveClaim(claim);
+            }
 
             System.out.println("\n[ 산정 내역 승인 완료 ]");
             System.out.println("------------------------------------------------------------");

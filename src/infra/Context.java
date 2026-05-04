@@ -6,7 +6,7 @@ import java.util.Scanner;
 public class Context {
     private static final Context INSTANCE = new Context();
     private User currentUser;
-    private final Scanner scanner = new Scanner(System.in);
+    private Scanner scanner = new Scanner(System.in);
 
     private Context() {}
 
@@ -17,4 +17,5 @@ public class Context {
     public boolean isLoggedIn() { return currentUser != null; }
     public User getCurrentUser() { return currentUser; }
     public Scanner scanner() { return scanner; }
+    public void setScanner(Scanner s) { this.scanner = s; }
 }

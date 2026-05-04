@@ -3,6 +3,11 @@ package ui.employee;
 import domain.Accident;
 import domain.Claim;
 import infra.Context;
+import infra.repository.ClaimRepository;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Scanner;
 
 public class CL01AccidentRegistration {
@@ -34,13 +39,21 @@ public class CL01AccidentRegistration {
             break;
         }
 
-        // Step 4: 미처리 사고 청구 목록 출력
+        // Step 4: 레포지토리에서 사고 목록 조회
+        List<Accident> accidents = ClaimRepository.findByDateAndStatus(period, status);
+
         System.out.println("\n[ 미처리 사고 청구 목록 ]");
         System.out.println("------------------------------------------------------------");
         System.out.printf("%-22s %-12s %-20s%n", "접수 일시", "고객명", "청구 사유");
         System.out.println("------------------------------------------------------------");
-        System.out.printf("%-22s %-12s %-20s%n", "2026-04-19 09:32", "홍길동", "자동차 대물 사고");
-        System.out.printf("%-22s %-12s %-20s%n", "2026-04-19 11:15", "김철수", "차량 파손");
+        if (accidents.isEmpty()) {
+            System.out.println("  조회된 사고 접수 건이 없습니다.");
+        } else {
+            for (Accident a : accidents) {
+                System.out.printf("%-22s %-12s %-20s%n",
+                    a.getAccidentDate(), a.getReportedBy(), a.getDescription());
+            }
+        }
         System.out.println("------------------------------------------------------------");
 
         // Step 5 + A1: 고객명·전화번호 필수 검색 조건 검증
@@ -63,21 +76,25 @@ public class CL01AccidentRegistration {
             break;
         }
 
-        // Step 6: 사고 상세 정보 출력
-        Accident accident = new Accident();
-        accident.getAccidentInfo();
+        // Step 6: 레포지토리에서 사고 상세 정보 조회
+        Accident accident = ClaimRepository.findAccidentByCustomerName(customerName);
 
         System.out.println("\n[ 사고 상세 정보 - " + customerName + " / " + phone + " ]");
         System.out.println("------------------------------------------------------------");
-        System.out.println("[제출된 사고 경위서]");
-        System.out.println("  - 발생일시: 2026-04-19 08:45");
-        System.out.println("  - 사고 내용: 신호 대기 중 후방 추돌 사고 발생");
-        System.out.println("[증빙 서류 뷰어]");
-        System.out.println("  - 사고현장사진.jpg");
-        System.out.println("  - 차량수리견적서.pdf");
-        System.out.println("[계약 원장 정보]");
-        System.out.println("  - 계약번호: CNT-20240315-001");
-        System.out.println("  - 담보: 자동차 대물 / 한도: 2,000만원");
+        if (accident != null) {
+            System.out.println("[제출된 사고 경위서]");
+            System.out.println("  - 발생일시: " + accident.getAccidentDate());
+            System.out.println("  - 사고 내용: " + accident.getAccidentDetail());
+            System.out.println("[증빙 서류 뷰어]");
+            for (String doc : accident.getDocuments().split(",")) {
+                System.out.println("  - " + doc.trim());
+            }
+            System.out.println("[계약 원장 정보]");
+            System.out.println("  - 계약번호: " + accident.getContractId());
+            System.out.println("  - 담보: " + accident.getCoverageDescription() + " / 한도: " + accident.getCoverageLimit());
+        } else {
+            System.out.println("  [해당 고객의 사고 접수 정보를 찾을 수 없습니다]");
+        }
         System.out.println("------------------------------------------------------------");
 
         // Step 7: 배당 담당자 검색 조건 입력
@@ -103,13 +120,25 @@ public class CL01AccidentRegistration {
         String empNo = sc.nextLine().trim();
         System.out.println("[배당 및 접수 확정]");
 
-        // Step 10: 배당 완료 안내
-        Claim claim = new Claim();
-        claim.createClaim();
+        // Step 10: 레포지토리에 Claim 저장 및 Accident 상태 업데이트
+        String claimId = ClaimRepository.nextClaimId();
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
+        if (accident != null) {
+            Claim claim = new Claim(
+                claimId, accident.getAccidentId(),
+                customerName, now,
+                accident.getContractId(),
+                accident.getDescription(), "처리중"
+            );
+            claim.setAssignedEmployee(empNo);
+            ClaimRepository.saveClaim(claim);
+            ClaimRepository.updateAccidentStatus(accident.getAccidentId(), "처리중");
+        }
 
         System.out.println("\n담당자가 배당되었습니다.");
         System.out.println("  - 배당 직원: " + empNo);
-        System.out.println("  - 접수 번호: CL-" + String.format("%05d", System.currentTimeMillis() % 100000));
+        System.out.println("  - 접수 번호: " + claimId);
 
         System.out.print("\nEnter를 누르면 메인 메뉴로 돌아갑니다...");
         sc.nextLine();

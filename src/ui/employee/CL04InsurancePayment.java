@@ -2,6 +2,9 @@ package ui.employee;
 
 import domain.Claim;
 import infra.Context;
+import infra.repository.ClaimRepository;
+
+import java.util.List;
 import java.util.Scanner;
 
 public class CL04InsurancePayment {
@@ -13,12 +16,21 @@ public class CL04InsurancePayment {
         System.out.println("\n[CL-04] 보험금을 지급한다");
         System.out.println("========================================");
 
-        // Step 1: 지급 대기 목록 출력
+        // Step 1: 레포지토리에서 지급 대기 목록 조회
+        List<Claim> waitingList = ClaimRepository.findClaimsAwaitingPayment();
+
         System.out.println("\n[ 지급 대기 중인 접수 목록 ]");
         System.out.println("------------------------------------------------------------");
         System.out.printf("%-15s %-12s %-10s%n", "접수 번호", "고객명", "지급액");
         System.out.println("------------------------------------------------------------");
-        System.out.printf("%-15s %-12s %-10s%n", "ACC-2026-001", "홍길동", "1,480만원");
+        if (waitingList.isEmpty()) {
+            System.out.println("  지급 대기 중인 건이 없습니다.");
+        } else {
+            for (Claim c : waitingList) {
+                System.out.printf("%-15s %-12s %-10s%n",
+                    c.getAccidentId(), c.getClaimantName(), c.getCompensationAmount() + "만원");
+            }
+        }
         System.out.println("------------------------------------------------------------");
 
         // Step 2: 접수번호 입력
@@ -26,13 +38,20 @@ public class CL04InsurancePayment {
         String accNo = sc.nextLine().trim();
         System.out.println("[지급 정보 확인]");
 
+        // 레포지토리에서 청구 정보 조회
+        Claim claim = ClaimRepository.findClaimByAccidentId(accNo);
+
         // Steps 3~11: E1 발생 시 Step 3부터 재시작
         while (true) {
             // Step 3: 지급 대상 고객 정보 출력
             System.out.println("\n[ 지급 대상 고객 정보 - " + accNo + " ]");
             System.out.println("------------------------------------------------------------");
-            System.out.println("  성명   : 홍길동");
-            System.out.println("  지급액 : 1,480만원");
+            if (claim != null) {
+                System.out.println("  성명   : " + claim.getClaimantName());
+                System.out.println("  지급액 : " + claim.getCompensationAmount() + "만원");
+            } else {
+                System.out.println("  [해당 접수번호의 청구 정보를 찾을 수 없습니다]");
+            }
             System.out.println("------------------------------------------------------------");
 
             // Step 4 + A1: 수령 은행명·계좌번호 필수
@@ -76,9 +95,11 @@ public class CL04InsurancePayment {
             System.out.println("[결재 상신]");
 
             // Step 7: 이체 품의서 요약 출력
+            String payAmount = (claim != null) ? claim.getCompensationAmount() + "만원" : "0만원";
+
             System.out.println("\n[ 이체 품의서 요약 내역 ]");
             System.out.println("------------------------------------------------------------");
-            System.out.println("  지급액     : 1,480만원");
+            System.out.println("  지급액     : " + payAmount);
             System.out.println("  수령 은행  : " + bank);
             System.out.println("  계좌 번호  : " + accountNo);
             System.out.println("  첨부 파일  : " + fileName);
@@ -101,9 +122,14 @@ public class CL04InsurancePayment {
             sc.nextLine();
             System.out.println("[사고 처리 종결]");
 
-            // Step 11: 지급 종결 내역 출력
-            Claim claim = new Claim();
-            claim.updateStatus(null);
+            // Step 11: 레포지토리에 지급 완료 상태 저장
+            if (claim != null) {
+                claim.setBankName(bank);
+                claim.setAccountNumber(accountNo);
+                claim.setStatus("지급완료");
+                ClaimRepository.saveClaim(claim);
+                ClaimRepository.updateAccidentStatus(accNo, "완료");
+            }
 
             System.out.println("\n[ 사고 건 지급 종결 내역 ]");
             System.out.println("------------------------------------------------------------");
