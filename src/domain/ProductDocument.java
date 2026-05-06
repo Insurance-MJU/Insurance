@@ -21,6 +21,30 @@ public class ProductDocument implements Serializable {
         PROFITABILITY_REPORT, DISCLOSURE
     }
 
+    // ── 정적 팩토리 ───────────────────────────────────────────
+    public static ProductDocument create(String productId, DocType docType, String title, String filePath) {
+        ProductDocument doc = new ProductDocument();
+        doc.productDocumentId = "DOC-" + System.nanoTime();
+        doc.productId  = productId;
+        doc.docType    = docType;
+        doc.title      = title;
+        doc.note       = filePath;
+        doc.createdAt  = new Date();
+        return doc;
+    }
+
+    public static ProductDocument createSubmitted(String productId, DocType docType, String title, String filePath) {
+        ProductDocument doc = create(productId, docType, title, filePath);
+        doc.submittedAt = new Date();
+        return doc;
+    }
+
+    public static ProductDocument createReceived(String productId, DocType docType, String title, String filePath) {
+        ProductDocument doc = create(productId, docType, title, filePath);
+        doc.receivedAt = new Date();
+        return doc;
+    }
+
     // Setters
     public void setCreatedAt(Date v)            { this.createdAt = v; }
     public void setDocType(DocType v)           { this.docType = v; }

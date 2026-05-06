@@ -59,14 +59,8 @@ public class CT06SaleConfirmation {
                 if (path != null) break;
                 System.out.println("   [경고] 필수 서류입니다. 파일 경로를 입력해야 합니다.");
             }
-            ProductDocument doc = new ProductDocument();
-            doc.setProductDocumentId("DOC-SALE-" + System.currentTimeMillis() + i);
-            doc.setProductId(product.getProductId());
-            doc.setDocType(DOC_TYPES[i]);
-            doc.setTitle(REQUIRED_DOCS[i]);
-            doc.setNote(path);
-            doc.setCreatedAt(new Date());
-            uploadedDocs.add(doc);
+            uploadedDocs.add(ProductDocument.create(
+                product.getProductId(), DOC_TYPES[i], REQUIRED_DOCS[i], path));
         }
 
         // ── Step 9: [금융감독원 제출] 클릭 ───────────────────
@@ -80,8 +74,7 @@ public class CT06SaleConfirmation {
         }
 
         // ── Step 10: 제출 완료 ────────────────────────────────
-        if (product.getDocuments() == null) product.setDocuments(new ArrayList<>());
-        product.getDocuments().addAll(uploadedDocs);
+        product.addDocuments(uploadedDocs);
         product.applySalePermit();
         productRepo.save(product);
         System.out.println("\n[안내] 금융감독원으로 서류를 제출하였습니다.");

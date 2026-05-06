@@ -173,20 +173,8 @@ public class CT01ProductDesign {
         System.out.print("\n[상품 확정] (Enter): ");
         sc.nextLine();
 
-        Product product = new Product();
-        product.setProductId("PROD-" + System.currentTimeMillis());
-        product.setProductCode(productCode);
-        product.setProductName(productName);
-        product.setDescription(description);
-        product.setTarget(target);
-        product.setLineOfBusiness(Product.LineOfBusiness.AUTO);
-        product.setSaleStartDate(saleStart);
-        product.setSaleEndDate(saleEnd);
-        product.setDocuments(new ArrayList<>());
-        product.setCoverages(new ArrayList<>());
+        Product product = Product.design(productCode, productName, description, target, saleStart, saleEnd);
         product.setRiders(buildProductRiders(selectedRiders));
-        product.completeDesign();
-        product.setCreatedAt(new Date());
         productRepo.save(product);
 
         // ── Step 12: 완료 팝업 ────────────────────────────────
@@ -197,17 +185,9 @@ public class CT01ProductDesign {
     }
 
     private List<ProductRider> buildProductRiders(List<Rider> riders) {
-        List<ProductRider> list = new ArrayList<>();
-        for (Rider r : riders) {
-            ProductRider pr = new ProductRider();
-            pr.setProductRiderId("PR-" + r.getRiderId());
-            pr.setRiderId(r.getRiderId());
-            pr.setRiderCode(r.getRiderCode());
-            pr.setRiderName(r.getRiderName());
-            if (r.getDiscountRate() != null) pr.setDiscountRate(r.getDiscountRate());
-            list.add(pr);
-        }
-        return list;
+        return riders.stream()
+                .map(ProductRider::from)
+                .collect(Collectors.toList());
     }
 
     private List<Integer> parseNumbers(String input, int max) {

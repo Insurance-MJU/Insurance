@@ -49,16 +49,9 @@ public class CT04ProductApproval {
         System.out.print("\n[저장] (Enter): ");
         sc.nextLine();
 
-        ProductDocument appDoc = new ProductDocument();
-        appDoc.setProductDocumentId("DOC-APP-" + System.currentTimeMillis());
-        appDoc.setProductId(product.getProductId());
-        appDoc.setDocType(ProductDocument.DocType.APPROVAL_APPLICATION);
-        appDoc.setTitle("보험상품 인가신청서");
-        appDoc.setNote(appPath);
-        appDoc.setCreatedAt(new Date());
-        appDoc.setSubmittedAt(new Date());
-        if (product.getDocuments() == null) product.setDocuments(new ArrayList<>());
-        product.getDocuments().add(appDoc);
+        product.addDocument(ProductDocument.createSubmitted(
+            product.getProductId(), ProductDocument.DocType.APPROVAL_APPLICATION,
+            "보험상품 인가신청서", appPath));
 
         // ── Step 9: [인가 신청] 클릭 ─────────────────────────
         System.out.print("\n[인가 신청] (Enter): ");

@@ -51,21 +51,13 @@ public class CT03DocumentRegistration {
                 System.out.println("   → 건너뜀");
                 continue;
             }
-            ProductDocument doc = new ProductDocument();
-            doc.setProductDocumentId("DOC-" + System.currentTimeMillis() + i);
-            doc.setProductId(product.getProductId());
-            doc.setDocType(DOC_TYPES[i]);
-            doc.setTitle(DOC_NAMES[i]);
-            doc.setNote(path);
-            doc.setCreatedAt(new Date());
-            newDocs.add(doc);
+            newDocs.add(ProductDocument.create(product.getProductId(), DOC_TYPES[i], DOC_NAMES[i], path));
         }
 
         System.out.print("\n[저장] (Enter): ");
         sc.nextLine();
 
-        if (product.getDocuments() == null) product.setDocuments(new ArrayList<>());
-        product.getDocuments().addAll(newDocs);
+        product.addDocuments(newDocs);
 
         System.out.println("\n┌──────────────────────────────────────┐");
         System.out.println("│  파일이 성공적으로 저장되었습니다.    │");

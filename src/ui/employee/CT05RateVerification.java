@@ -80,16 +80,9 @@ public class CT05RateVerification {
         sc.nextLine();
 
         // 요율확인서 ProductDocument 저장
-        ProductDocument rateDoc = new ProductDocument();
-        rateDoc.setProductDocumentId("DOC-RATE-" + System.currentTimeMillis());
-        rateDoc.setProductId(product.getProductId());
-        rateDoc.setDocType(ProductDocument.DocType.RATE_VERIFICATION);
-        rateDoc.setTitle("요율확인서");
-        rateDoc.setNote(confirmPath);
-        rateDoc.setCreatedAt(new Date());
-        rateDoc.setReceivedAt(new Date());
-        if (product.getDocuments() == null) product.setDocuments(new ArrayList<>());
-        product.getDocuments().add(rateDoc);
+        product.addDocument(ProductDocument.createReceived(
+            product.getProductId(), ProductDocument.DocType.RATE_VERIFICATION,
+            "요율확인서", confirmPath));
 
         // ── Step 7: 인가신청서 등록 안내 ─────────────────────
         System.out.println("\n[안내] 요율확인서가 등록되었습니다. 인가신청서를 등록하시겠습니까?");

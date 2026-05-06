@@ -11,6 +11,17 @@ public class ProductRider implements Serializable {
     private String riderId;
     private String riderName;
 
+    // ── 정적 팩토리: Rider 마스터로부터 생성 ─────────────────
+    public static ProductRider from(Rider rider) {
+        ProductRider pr = new ProductRider();
+        pr.productRiderId = "PR-" + rider.getRiderId();
+        pr.riderId        = rider.getRiderId();
+        pr.riderCode      = rider.getRiderCode();
+        pr.riderName      = rider.getRiderName();
+        pr.discountRate   = rider.getDiscountRate();
+        return pr;
+    }
+
     // Setters
     public void setDiscountRate(Double v)     { this.discountRate = v; }
     public void setProductId(String v)        { this.productId = v; }

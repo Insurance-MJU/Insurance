@@ -1,6 +1,7 @@
 package domain;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -48,6 +49,37 @@ public class Product implements Serializable {
         }
         public String getDescription() { return description; }
         public String getAutoLabel()   { return autoPrefix + "자동차보험"; }
+    }
+
+    // ── 정적 팩토리: 신규 상품 설계 ──────────────────────────
+    public static Product design(String productCode, String productName, String description,
+                                  Target target, Date saleStart, Date saleEnd) {
+        Product p = new Product();
+        p.productId      = "PROD-" + System.currentTimeMillis();
+        p.productCode    = productCode;
+        p.productName    = productName;
+        p.description    = description;
+        p.target         = target;
+        p.lineOfBusiness = LineOfBusiness.AUTO;
+        p.saleStartDate  = saleStart;
+        p.saleEndDate    = saleEnd;
+        p.createdAt      = new Date();
+        p.documents      = new ArrayList<>();
+        p.coverages      = new ArrayList<>();
+        p.riders         = new ArrayList<>();
+        p.completeDesign();
+        return p;
+    }
+
+    // ── 비즈니스 메서드: 서류 추가 ────────────────────────────
+    public void addDocument(ProductDocument doc) {
+        if (this.documents == null) this.documents = new ArrayList<>();
+        this.documents.add(doc);
+    }
+
+    public void addDocuments(List<ProductDocument> docs) {
+        if (this.documents == null) this.documents = new ArrayList<>();
+        this.documents.addAll(docs);
     }
 
     public void discontinue()      { this.status = Status.DISCONTINUED; }
