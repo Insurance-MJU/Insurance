@@ -45,7 +45,8 @@ public class CS03PremiumEstimate {
         returnToMenu();
     }
 
-    public boolean runAsInclude(Product product, long stdValue, Car.Purpose purpose) {
+    /** @return 최종 보험료(양수) 또는 취소 시 -1 */
+    public long runAsInclude(Product product, long stdValue, Car.Purpose purpose) {
         System.out.println("\n========================================");
         System.out.println(" CS-03: 예상보험료를 산출한다");
         System.out.println("========================================");
@@ -137,16 +138,16 @@ public class CS03PremiumEstimate {
         System.out.print("\n위 내용을 이해하였습니까? (Y/N): ");
         if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
             System.out.println("[안내] 가입이 취소되었습니다.");
-            return false;
+            return -1;
         }
         System.out.print("[가입] 버튼 - 최종 가입을 신청하시겠습니까? (Y/N): ");
         if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
             System.out.println("[안내] 가입이 취소되었습니다.");
-            return false;
+            return -1;
         }
 
         System.out.println("\n보험가입을 신청하는 중입니다...");
-        return true;
+        return finalPremium;
     }
 
     private void returnToMenu() {

@@ -3,6 +3,7 @@ package infra.repository;
 import domain.Contract;
 import domain.Party;
 import domain.common.Money;
+import infra.util.FileStore;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -12,10 +13,20 @@ import java.util.stream.Collectors;
 
 public class ContractRepository {
 
-    private static final List<Contract> STORE = new ArrayList<>();
+    private static final List<Contract> STORE;
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
 
     static {
+        List<Contract> loaded = FileStore.load("contracts.dat");
+        if (loaded != null) {
+            STORE = loaded;
+        } else {
+            STORE = new ArrayList<>();
+            initDefaults();
+        }
+    }
+
+    private static void initDefaults() {
         STORE.add(build("IN-2026-001", "CNT-20240315-001",
             "MZ세대 다이렉트 개인용자동차보험",
             Contract.Status.ACTIVE, "2026-04-01", "2026-04-01", "2027-04-01",
@@ -33,6 +44,8 @@ public class ContractRepository {
             Contract.Status.EXPIRED, "2023-12-10", "2023-12-10", "2024-12-10",
             2_100_000L, "대인배상I, 대물배상, 자기차량손해", "없음",
             "56다9012", "이영희"));
+
+        FileStore.save("contracts.dat", STORE);
     }
 
     private static Contract build(String policyNo, String contractId, String productName,
@@ -90,5 +103,20 @@ public class ContractRepository {
                 return true;
             })
             .collect(Collectors.toList());
+    }
+
+    public static void save(Contract contract) {
+        STORE.removeIf(c -> c.getContractId().equals(contract.getContractId()));
+        STORE.add(contract);
+        FileStore.save("contracts.dat", STORE);
+    }
+
+    public static String nextPolicyNo() {
+        return String.format("IN-2026-%03d", STORE.size() + 1);
+    }
+
+    public static String nextContractId() {
+        return String.format("CNT-%d-%03d",
+            java.time.LocalDate.now().getYear(), STORE.size() + 1);
     }
 }

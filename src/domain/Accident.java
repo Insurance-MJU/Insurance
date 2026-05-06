@@ -1,6 +1,9 @@
 package domain;
 
-public class Accident {
+import java.io.Serializable;
+
+public class Accident implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String accidentId;
     private String accidentDate;
     private String accidentDetail;

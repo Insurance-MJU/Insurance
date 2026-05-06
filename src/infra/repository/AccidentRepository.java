@@ -1,6 +1,7 @@
 package infra.repository;
 
 import domain.Accident;
+import infra.util.FileStore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,9 +9,19 @@ import java.util.stream.Collectors;
 
 public class AccidentRepository {
 
-    private static final List<Accident> STORE = new ArrayList<>();
+    private static final List<Accident> STORE;
 
     static {
+        List<Accident> loaded = FileStore.load("accidents.dat");
+        if (loaded != null) {
+            STORE = loaded;
+        } else {
+            STORE = new ArrayList<>();
+            initDefaults();
+        }
+    }
+
+    private static void initDefaults() {
         Accident a1 = new Accident(
             "ACC-2026-001", "2026-04-19 09:32",
             "홍길동", "010-1234-5678",
@@ -61,6 +72,8 @@ public class AccidentRepository {
         a3.setExpectedRepairCost("3,500,000원");
         a3.setRegionCode("INCHEON-01");
         STORE.add(a3);
+
+        FileStore.save("accidents.dat", STORE);
     }
 
     public static List<Accident> findByDateAndStatus(String date, String status) {
@@ -91,6 +104,7 @@ public class AccidentRepository {
     public static void save(Accident accident) {
         STORE.removeIf(a -> a.getAccidentId().equals(accident.getAccidentId()));
         STORE.add(accident);
+        FileStore.save("accidents.dat", STORE);
     }
 
     public static void updateStatus(String accidentId, String status) {
@@ -98,6 +112,7 @@ public class AccidentRepository {
             .filter(a -> a.getAccidentId().equals(accidentId))
             .findFirst()
             .ifPresent(a -> a.setStatus(status));
+        FileStore.save("accidents.dat", STORE);
     }
 
     public static String nextId() {

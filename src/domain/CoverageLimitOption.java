@@ -1,8 +1,10 @@
 package domain;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class CoverageLimitOption {
+public class CoverageLimitOption implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int coverageMasterId;
     private List<CoverageLimitDetail> details;
     private int optionId;

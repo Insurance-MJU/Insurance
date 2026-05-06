@@ -1,8 +1,10 @@
 package domain;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class DamageInvestigation {
+public class DamageInvestigation implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String accidentCause;
     private String claimId;
     private String damageDetail;

@@ -1,8 +1,10 @@
 package domain;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class Party {
+public class Party implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String address;
     private Date birthDate;
     private String name;

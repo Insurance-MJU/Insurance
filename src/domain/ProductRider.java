@@ -1,6 +1,9 @@
 package domain;
 
-public class ProductRider {
+import java.io.Serializable;
+
+public class ProductRider implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Double discountRate;
     private String productId;
     private String productRiderId;

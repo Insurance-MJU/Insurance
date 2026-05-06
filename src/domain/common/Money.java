@@ -1,6 +1,9 @@
 package domain.common;
 
-public class Money {
+import java.io.Serializable;
+
+public class Money implements Serializable {
+    private static final long serialVersionUID = 1L;
     private long amount;
     private String currency;
 

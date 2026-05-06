@@ -1,6 +1,9 @@
 package domain;
 
-public class Claim {
+import java.io.Serializable;
+
+public class Claim implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String claimId;
     private String accidentId;
     private String claimantName;

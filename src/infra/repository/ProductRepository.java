@@ -1,13 +1,24 @@
 package infra.repository;
 
 import domain.*;
+import infra.util.FileStore;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class ProductRepository {
-    private static final List<Product> STORE = new ArrayList<>();
+    private static final List<Product> STORE;
 
     static {
+        List<Product> loaded = FileStore.load("products.dat");
+        if (loaded != null) {
+            STORE = loaded;
+        } else {
+            STORE = new ArrayList<>();
+            initDefaults();
+        }
+    }
+
+    private static void initDefaults() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         // ── 1. 개인용 (판매중) ──────────────────────────────────
@@ -117,6 +128,8 @@ public class ProductRepository {
         design.setRiders(new ArrayList<>());
         design.setDocuments(new ArrayList<>());
         STORE.add(design);
+
+        FileStore.save("products.dat", STORE);
     }
 
     public List<Product> findAll() {
@@ -137,9 +150,11 @@ public class ProductRepository {
         for (int i = 0; i < STORE.size(); i++) {
             if (STORE.get(i).getProductId().equals(p.getProductId())) {
                 STORE.set(i, p);
+                FileStore.save("products.dat", STORE);
                 return;
             }
         }
         STORE.add(p);
+        FileStore.save("products.dat", STORE);
     }
 }

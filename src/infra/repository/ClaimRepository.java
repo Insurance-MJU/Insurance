@@ -1,6 +1,7 @@
 package infra.repository;
 
 import domain.Claim;
+import infra.util.FileStore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,9 +9,19 @@ import java.util.stream.Collectors;
 
 public class ClaimRepository {
 
-    private static final List<Claim> STORE = new ArrayList<>();
+    private static final List<Claim> STORE;
 
     static {
+        List<Claim> loaded = FileStore.load("claims.dat");
+        if (loaded != null) {
+            STORE = loaded;
+        } else {
+            STORE = new ArrayList<>();
+            initDefaults();
+        }
+    }
+
+    private static void initDefaults() {
         Claim c = new Claim(
             "CL-00001", "ACC-2026-003",
             "이영희", "2026-04-18",
@@ -22,6 +33,8 @@ public class ClaimRepository {
         c.setDeductible(0);
         c.setCompensationAmount(1480);
         STORE.add(c);
+
+        FileStore.save("claims.dat", STORE);
     }
 
     public static Claim findByAccidentId(String accidentId) {
@@ -45,6 +58,7 @@ public class ClaimRepository {
     public static void save(Claim claim) {
         STORE.removeIf(c -> c.getClaimId().equals(claim.getClaimId()));
         STORE.add(claim);
+        FileStore.save("claims.dat", STORE);
     }
 
     public static void updateStatus(String claimId, String status) {
@@ -52,6 +66,7 @@ public class ClaimRepository {
             .filter(c -> c.getClaimId().equals(claimId))
             .findFirst()
             .ifPresent(c -> c.setStatus(status));
+        FileStore.save("claims.dat", STORE);
     }
 
     public static String nextId() {

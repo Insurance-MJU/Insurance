@@ -1,6 +1,9 @@
 package domain;
 
-public class CoverageLimitDetail {
+import java.io.Serializable;
+
+public class CoverageLimitDetail implements Serializable {
+    private static final long serialVersionUID = 1L;
     private int amount;
     private int detailId;
     private DetailType detailType;

@@ -1,6 +1,9 @@
 package domain;
 
-public class SelectedRider {
+import java.io.Serializable;
+
+public class SelectedRider implements Serializable {
+    private static final long serialVersionUID = 1L;
     private double discountRate;
     private String riderCode;
     private String riderId;

@@ -1,8 +1,11 @@
 package ui.customer;
 
 import domain.*;
-import infra.repository.CarRepository;
+import domain.common.Money;
 import infra.Context;
+import infra.repository.CarRepository;
+import infra.repository.ContractRepository;
+import java.util.Date;
 import java.util.Scanner;
 
 public class CS01ProductSubscription {
@@ -133,8 +136,8 @@ public class CS01ProductSubscription {
         }
 
         // ── Step 8: <<include>> CS-03 예상보험료 산출 ─────────
-        boolean confirmed = new CS03PremiumEstimate().runAsInclude(selectedProduct, stdValue, purpose);
-        if (!confirmed) {
+        long confirmedPremium = new CS03PremiumEstimate().runAsInclude(selectedProduct, stdValue, purpose);
+        if (confirmedPremium < 0) {
             returnToMenu();
             return;
         }
@@ -146,16 +149,38 @@ public class CS01ProductSubscription {
             return;
         }
 
-        // ── Step 9: 완료 ──────────────────────────────────────
+        // ── Step 9: Contract 생성 및 저장 ────────────────────
+        Party holder = new Party();
+        holder.setPartyId("PARTY-" + System.currentTimeMillis());
+        holder.setName(name);
+        holder.setPhone(phone);
+
+        Contract contract = new Contract();
+        contract.setPolicyNo(ContractRepository.nextPolicyNo());
+        contract.setContractId(ContractRepository.nextContractId());
+        contract.setProductName(selectedProduct.getProductName());
+        contract.setStatus(Contract.Status.ACTIVE);
+        contract.setPolicyholder(holder);
+        contract.setPremium(new Money(confirmedPremium, "KRW"));
+        contract.setCarNumber(car.getCarNumber());
+        contract.setCoveragesDescription("대인배상I, 대인배상II, 대물배상, 자동차상해, 무보험차상해, 자기차량손해");
+        contract.setRidersDescription(driverScope.getScopeLabel());
+        contract.setIssueDate(new Date());
+        contract.setStartDate(new Date());
+        ContractRepository.save(contract);
+
+        // ── Step 10: 완료 ─────────────────────────────────────
         System.out.println("\n========================================");
         System.out.println(" 보험가입이 완료되었습니다.");
         System.out.println("========================================");
+        System.out.printf(" 증권번호    : %s%n", contract.getPolicyNo());
         System.out.printf(" 상품명      : %s%n", selectedProduct.getProductName());
         System.out.printf(" 가입자      : %s%n", name);
         System.out.printf(" 전화번호    : %s%n", phone);
         System.out.printf(" 차량번호    : %s%n", car.getCarNumber());
         System.out.printf(" 운행용도    : %s%n", car.getPurposeLabel());
         System.out.printf(" 운전자범위  : %s%n", driverScope.getScopeLabel());
+        System.out.printf(" 보험료      : %,d원/년%n", confirmedPremium);
         returnToMenu();
     }
 

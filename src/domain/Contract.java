@@ -1,12 +1,14 @@
 package domain;
 
+import java.io.Serializable;
 import domain.common.Money;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-public class Contract {
+public class Contract implements Serializable {
+    private static final long serialVersionUID = 1L;
     private List<Party> beneficiaries;
     private String contractId;
     private Date endDate;
