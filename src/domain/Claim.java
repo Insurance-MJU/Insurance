@@ -38,6 +38,26 @@ public class Claim implements Serializable {
     public String getClaimInfo() { return null; }
     public boolean updateStatus(ClaimStatus s) { return false; }
 
+    /** 손해액 산정 완료: 합의금·자기부담금으로 보상금 계산 후 지급대기 상태로 전환 */
+    public void assess(int settlement, int deductible) {
+        this.settlement = settlement;
+        this.deductible = deductible;
+        this.compensationAmount = settlement - deductible;
+        this.status = "지급대기";
+    }
+
+    /** 보험금 지급 완료: 계좌 정보 저장 후 지급완료 상태로 전환 */
+    public void completePayment(String bank, String accountNo) {
+        this.bankName = bank;
+        this.accountNumber = accountNo;
+        this.status = "지급완료";
+    }
+
+    /** 계좌번호 숫자 자릿수가 14자리 이하인지 검증 */
+    public static boolean isValidAccountNumber(String accountNo) {
+        return accountNo.replaceAll("[^0-9]", "").length() <= 14;
+    }
+
     public String getClaimId() { return claimId; }
     public String getAccidentId() { return accidentId; }
     public String getClaimantName() { return claimantName; }

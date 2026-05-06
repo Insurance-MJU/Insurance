@@ -6,8 +6,6 @@ import infra.Context;
 import infra.repository.AccidentRepository;
 import infra.repository.InvestigationRepository;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class CL03DamageInvestigation {
@@ -94,12 +92,11 @@ public class CL03DamageInvestigation {
             // Step 6: 과실 비율 검증 결과 출력
             System.out.println("\n[ 과실 비율 검증 결과 ]");
             System.out.println("------------------------------------------------------------");
-            int total = ourFault + otherFault;
-            if (total != 100) {
-                System.out.println("  합계: " + total + "% → 합계가 100%가 되어야 합니다.\n");
+            if (!DamageInvestigation.validateFaultRatio(ourFault, otherFault)) {
+                System.out.println("  합계: " + (ourFault + otherFault) + "% → 합계가 100%가 되어야 합니다.\n");
                 continue;
             }
-            System.out.println("  합계: " + total + "% → 100% 일치 확인");
+            System.out.println("  합계: 100% → 100% 일치 확인");
             System.out.println("------------------------------------------------------------");
 
             // Step 7: 면/부책 판정
@@ -127,24 +124,16 @@ public class CL03DamageInvestigation {
             System.out.println("[조사 완료 및 저장]");
 
             // Step 10: 레포지토리에 조사 결과 저장
-            String savedAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd.HH:mm:ss"));
-            DamageInvestigation inv = new DamageInvestigation();
-            inv.setAccidentId(accNo);
-            inv.setOpinion(opinion);
-            inv.setDamageCode(damageCode);
-            inv.setInjuryGrade(injuryGrade);
-            inv.setOurFault(ourFault);
-            inv.setOtherFault(otherFault);
-            inv.setLiability(liability);
-            inv.setExpectedRepairCost(expectedRepairCost);
-            inv.setCompensationLimit(compensationLimit);
-            inv.setFinalOpinion(finalOpinion);
-            inv.setSavedAt(savedAt);
+            DamageInvestigation inv = DamageInvestigation.create(
+                accNo, opinion, damageCode, injuryGrade,
+                ourFault, otherFault, liability,
+                expectedRepairCost, compensationLimit, finalOpinion
+            );
             InvestigationRepository.save(inv);
             AccidentRepository.updateStatus(accNo, "처리중");
 
             System.out.println("\n┌──────────────────────────────────────────────────────────────┐");
-            System.out.println("│  조사 내역이 저장되었습니다. 일시: " + savedAt + "       │");
+            System.out.println("│  조사 내역이 저장되었습니다. 일시: " + inv.getSavedAt() + "       │");
             System.out.println("└──────────────────────────────────────────────────────────────┘");
             System.out.println("  → CL-02 손해액 산정 Basic Flow 6번으로 이동합니다.");
 

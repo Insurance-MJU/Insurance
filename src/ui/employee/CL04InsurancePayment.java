@@ -11,7 +11,6 @@ import java.util.Scanner;
 public class CL04InsurancePayment {
     private final Scanner sc = Context.getInstance().scanner();
 
-    private static final int MAX_ACCOUNT_DIGITS = 14;
 
     public void run() {
         System.out.println("\n[CL-04] 보험금을 지급한다");
@@ -75,8 +74,7 @@ public class CL04InsurancePayment {
             }
 
             // E1: 계좌번호 자릿수 초과
-            String digitsOnly = accountNo.replaceAll("[^0-9]", "");
-            if (digitsOnly.length() > MAX_ACCOUNT_DIGITS) {
+            if (!Claim.isValidAccountNumber(accountNo)) {
                 System.out.println("\n[오류] >>> 계좌 번호 <<< 입력된 계좌번호 자릿수 값이 허용 범위를 초과하였습니다.\n");
                 continue;
             }
@@ -125,9 +123,7 @@ public class CL04InsurancePayment {
 
             // Step 11: 레포지토리에 지급 완료 상태 저장
             if (claim != null) {
-                claim.setBankName(bank);
-                claim.setAccountNumber(accountNo);
-                claim.setStatus("지급완료");
+                claim.completePayment(bank, accountNo);
                 ClaimRepository.save(claim);
                 AccidentRepository.updateStatus(accNo, "완료");
             }

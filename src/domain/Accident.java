@@ -77,6 +77,16 @@ public class Accident implements Serializable {
     public boolean validateAccident()    { return accidentDate != null && !accidentDate.isEmpty()
                                               && accidentLocation != null && !accidentLocation.isEmpty(); }
 
+    /** coverageLimit 문자열("2,000만원")에서 숫자(2000)만 추출 */
+    public int getCoverageLimitManwon() {
+        if (coverageLimit == null) return 2000;
+        try {
+            return Integer.parseInt(coverageLimit.replaceAll("[^0-9]", ""));
+        } catch (NumberFormatException e) {
+            return 2000;
+        }
+    }
+
     public String getAccidentId() { return accidentId; }
     public String getAccidentDate() { return accidentDate; }
     public String getAccidentDetail() { return accidentDetail; }

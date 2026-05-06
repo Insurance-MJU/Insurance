@@ -87,7 +87,7 @@ public class CL02DamageAssessment {
             }
 
             // E1: 대물 한도 초과
-            int limitManwon = parseCoverageLimitManwon(accident);
+            int limitManwon = (accident != null) ? accident.getCoverageLimitManwon() : 2000;
             if (settlement > limitManwon) {
                 System.out.println("\n[오류] >>> 최종 합의금 <<< 입력된 합의금 한도 값이 허용 범위를 초과하였습니다.");
                 System.out.println("       대물 한도(" + limitManwon + "만원) 이하로 입력해 주세요.\n");
@@ -95,7 +95,7 @@ public class CL02DamageAssessment {
             }
 
             // Step 8: 최종 결정 손해액 출력
-            int finalAmount = settlement - deductible;
+            int finalAmount = settlement - deductible; // 화면 출력용 (실제 계산은 claim.assess())
             System.out.println("\n[ 최종 결정 손해액 ]");
             System.out.println("------------------------------------------------------------");
             System.out.println("  최종 합의금     : " + settlement + "만원");
@@ -112,10 +112,7 @@ public class CL02DamageAssessment {
             // Step 10: 레포지토리에 Claim 지급 정보 저장 및 상태 업데이트
             Claim claim = ClaimRepository.findByAccidentId(accNo);
             if (claim != null) {
-                claim.setSettlement(settlement);
-                claim.setDeductible(deductible);
-                claim.setCompensationAmount(finalAmount);
-                claim.setStatus("지급대기");
+                claim.assess(settlement, deductible);
                 ClaimRepository.save(claim);
             }
 
@@ -145,13 +142,4 @@ public class CL02DamageAssessment {
         System.out.println();
     }
 
-    /** "2,000만원" 같은 문자열에서 숫자(2000)만 추출 */
-    private static int parseCoverageLimitManwon(Accident accident) {
-        if (accident == null || accident.getCoverageLimit() == null) return 2000;
-        try {
-            return Integer.parseInt(accident.getCoverageLimit().replaceAll("[^0-9]", ""));
-        } catch (NumberFormatException e) {
-            return 2000;
-        }
-    }
 }
