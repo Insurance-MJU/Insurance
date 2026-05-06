@@ -7,8 +7,6 @@ import infra.repository.RiskAnalysisRepository;
 import infra.repository.SubscriptionRepository;
 
 import java.text.NumberFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
@@ -30,12 +28,9 @@ public class UW01ContractReview {
         System.out.println("------------------------------------------------------------");
         for (Subscription s : pendingList) {
             System.out.printf(" %-20s %-10s %-25s %-12s %-12s %-10s%n",
-                s.getSubscriptionNo(),
-                s.getApplicantName(),
-                s.getProductName(),
+                s.getSubscriptionNo(), s.getApplicantName(), s.getProductName(),
                 NF.format(s.getPremium().getAmount()) + "원",
-                s.getSubscriptionDate(),
-                s.getStatus().getLabel());
+                s.getSubscriptionDate(), s.getStatus().getLabel());
         }
         System.out.println("------------------------------------------------------------");
 
@@ -85,15 +80,13 @@ public class UW01ContractReview {
         System.out.println(" 심사 가이드    : " + report.getReviewGuide());
         System.out.println("------------------------------------------------------------");
 
-        // Step 7: 최종 심사 의견 입력 + 직업/연령 참고 정보
+        // Step 7: 최종 심사 의견 입력
         System.out.println("\n[ 청약자 참고 정보 ]");
         System.out.println(" 직업: " + sub.getOccupation() + "  /  연령: 만 " + sub.getAge() + "세");
         System.out.print("\n최종 심사 의견을 입력하세요: ");
         String opinion = sc.nextLine().trim();
 
-        report.setReviewOpinion(opinion);
-        report.setReviewerName("김민욱");
-        report.setReviewDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+        report.confirm("김민욱", opinion);
         RiskAnalysisRepository.save(report);
         System.out.println("[저장]");
 
@@ -115,11 +108,12 @@ public class UW01ContractReview {
         System.out.print(" 선택: ");
         String decision = sc.nextLine().trim();
 
-        // Step 9: 인수 결정
+        // Step 9: 인수 결정 — 도메인 메서드로 상태 전이
         switch (decision) {
             case "1":
                 // Step 10: 인수 승인
-                SubscriptionRepository.updateStatus(sub.getSubscriptionNo(), Subscription.Status.APPROVED);
+                sub.approve();
+                SubscriptionRepository.save(sub);
                 int seq = Integer.parseInt(sub.getSubscriptionNo().split("-")[1]);
                 String contractNo = String.format("CN-2026-%04d", 9980 + seq);
                 System.out.println("\n[인수 승인]");
@@ -130,20 +124,22 @@ public class UW01ContractReview {
                 // A1: 인수 거절
                 System.out.print("\n인수 거절 사유를 입력하세요: ");
                 String rejectReason = sc.nextLine().trim();
-                SubscriptionRepository.updateStatus(sub.getSubscriptionNo(), Subscription.Status.REJECTED);
+                sub.reject(rejectReason);
+                SubscriptionRepository.save(sub);
                 System.out.println("[인수 거절]");
                 System.out.println("인수 거절과 함께 거절 사유를 전송했습니다.");
-                System.out.println(" 거절 사유: " + rejectReason);
+                System.out.println(" 거절 사유: " + sub.getRejectReason());
                 break;
 
             case "3":
                 // A2: 서류보완 요청
                 System.out.print("\n보완 요청할 서류를 입력하세요 (예: 운전경력증명서): ");
-                String docRequest = sc.nextLine().trim();
-                SubscriptionRepository.updateStatus(sub.getSubscriptionNo(), Subscription.Status.SUPPLEMENT_REQUIRED);
+                String docs = sc.nextLine().trim();
+                sub.requestSupplement(docs);
+                SubscriptionRepository.save(sub);
                 System.out.println("[서류보완 요청]");
                 System.out.println("서류 보완을 요청했습니다.");
-                System.out.println(" 요청 서류: " + docRequest);
+                System.out.println(" 요청 서류: " + sub.getSupplementDocuments());
                 break;
 
             default:

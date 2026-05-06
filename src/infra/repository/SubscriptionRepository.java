@@ -22,23 +22,15 @@ public class SubscriptionRepository {
     }
 
     private static void initDefaults() {
-        Subscription s = new Subscription();
-        s.setSubscriptionNo("20260401-0001");
-        s.setApplicantName("박수현");
-        s.setSsn("020101-3******");
-        s.setAddress("서울시 강남구");
-        s.setCarNumber("64마0866");
-        s.setChassisNumber("KMHCT41DBLU123");
-        s.setProductName("MZ세대 다이렉트 차보험");
-        s.setPremium(new Money(2_907_200L, "KRW"));
-        s.setBasePremium(new Money(2_794_010L, "KRW"));
-        s.setSubscriptionDate("2026-04-01");
-        s.setStatus(Subscription.Status.PENDING_REVIEW);
-        s.setOccupation("대학생");
-        s.setAge(24);
-        s.setCoveragesDescription("대인I/II, 대물 5억, 자상 1억, 무보험 2억, 자차 가입");
-        STORE.add(s);
-
+        STORE.add(Subscription.register(
+            "20260401-0001", "박수현", "020101-3******",
+            "서울시 강남구", "64마0866", "KMHCT41DBLU123",
+            "MZ세대 다이렉트 차보험",
+            new Money(2_907_200L, "KRW"),
+            new Money(2_794_010L, "KRW"),
+            "2026-04-01", "대학생", 24,
+            "대인I/II, 대물 5억, 자상 1억, 무보험 2억, 자차 가입"
+        ));
         FileStore.save("subscriptions.dat", STORE);
     }
 
@@ -48,7 +40,7 @@ public class SubscriptionRepository {
 
     public static List<Subscription> findPendingReview() {
         return STORE.stream()
-            .filter(s -> s.getStatus() == Subscription.Status.PENDING_REVIEW)
+            .filter(Subscription::isPendingReview)
             .collect(Collectors.toList());
     }
 
@@ -58,11 +50,9 @@ public class SubscriptionRepository {
             .findFirst().orElse(null);
     }
 
-    public static void updateStatus(String subscriptionNo, Subscription.Status status) {
-        STORE.stream()
-            .filter(s -> s.getSubscriptionNo().equals(subscriptionNo))
-            .findFirst()
-            .ifPresent(s -> s.setStatus(status));
+    public static void save(Subscription subscription) {
+        STORE.removeIf(s -> s.getSubscriptionNo().equals(subscription.getSubscriptionNo()));
+        STORE.add(subscription);
         FileStore.save("subscriptions.dat", STORE);
     }
 }

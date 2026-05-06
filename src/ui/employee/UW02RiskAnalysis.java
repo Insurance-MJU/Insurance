@@ -9,7 +9,6 @@ import infra.repository.CreditInfoRepository;
 import infra.repository.RiskAnalysisRepository;
 
 import java.text.NumberFormat;
-import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -27,13 +26,11 @@ public class UW02RiskAnalysis {
         System.out.print(" 차량번호: ");
         String carNo = sc.nextLine().trim();
 
-        Subscription tempSub = new Subscription();
-        tempSub.setSubscriptionNo("STANDALONE");
-        tempSub.setApplicantName(name);
-        tempSub.setSsn(ssn);
-        tempSub.setCarNumber(carNo);
-        tempSub.setBasePremium(new Money(0L, "KRW"));
-
+        Subscription tempSub = Subscription.register(
+            "STANDALONE", name, ssn, "", carNo, "",
+            "", new Money(0L, "KRW"), new Money(0L, "KRW"),
+            "", "", 0, ""
+        );
         runAsInclude(tempSub);
 
         System.out.print("\nEnter를 누르면 메인 메뉴로 돌아갑니다...");
@@ -71,7 +68,8 @@ public class UW02RiskAnalysis {
         // A1: 신규 가입자 데이터 없음
         if (creditInfo == null) {
             System.out.println("\n[안내] 신용정보원에 해당 청약자의 조회 이력이 없습니다. 기본 위험등급(3등급)이 적용됩니다.");
-            RiskAnalysisReport defaultReport = buildDefaultReport(sub);
+            RiskAnalysisReport defaultReport =
+                RiskAnalysisReport.defaultForNewApplicant(sub.getSubscriptionNo(), sub.getBasePremium());
             RiskAnalysisRepository.save(defaultReport);
             printSummary(defaultReport);
             confirmResult();
@@ -80,11 +78,10 @@ public class UW02RiskAnalysis {
 
         System.out.println("\n[ 신용정보원 조회 결과 ]");
         System.out.println("------------------------------------------------------------");
-        List<CreditInfo.AccidentRecord> accidents = creditInfo.getAccidentHistory();
-        if (accidents == null || accidents.isEmpty()) {
+        if (!creditInfo.hasAccidentHistory()) {
             System.out.println(" 최근 3년 사고이력 : 없음");
         } else {
-            for (CreditInfo.AccidentRecord acc : accidents) {
+            for (CreditInfo.AccidentRecord acc : creditInfo.getAccidentHistory()) {
                 System.out.printf(" 최근 3년 사고이력 : %s - %s (%s원)%n",
                     acc.getDate(), acc.getDescription(),
                     NF.format(acc.getAmount().getAmount()));
@@ -100,7 +97,9 @@ public class UW02RiskAnalysis {
         sc.nextLine();
         System.out.println("[위험등급 산출]");
 
-        RiskAnalysisReport report = calculateRisk(sub, creditInfo);
+        // 도메인이 직접 분석 수행
+        RiskAnalysisReport report =
+            RiskAnalysisReport.analyze(sub.getSubscriptionNo(), sub.getBasePremium(), creditInfo);
         RiskAnalysisRepository.save(report);
 
         // Step 5: 위험 분석 결과 요약
@@ -111,10 +110,10 @@ public class UW02RiskAnalysis {
         sc.nextLine();
 
         // Step 7: 위험등급 산출 상세 내역
-        int accidentCount = accidents != null ? accidents.size() : 0;
         System.out.println("\n[ 위험등급 산출 상세 내역 ]");
         System.out.println("------------------------------------------------------------");
-        System.out.printf(" 사고 건수    : %d건  →  -%.1f점%n", accidentCount, report.getAccidentScore());
+        System.out.printf(" 사고 건수    : %d건  →  -%.1f점%n",
+            creditInfo.getAccidentCount(), report.getAccidentScore());
         System.out.printf(" 운전 경력    : %d년  →  -%.1f점%n",
             creditInfo.getDrivingExperienceYears(), report.getDrivingExpScore());
         System.out.printf(" 신용등급     : %s → -%.1f점%n",
@@ -148,85 +147,5 @@ public class UW02RiskAnalysis {
         // Step 9: 완료
         System.out.println("\n위험 분석 데이터가 성공적으로 반영되었습니다.");
         System.out.println("  → UW-01: 계약인수를 심사한다. Basic Flow 6번으로 이동합니다.");
-    }
-
-    private RiskAnalysisReport calculateRisk(Subscription sub, CreditInfo creditInfo) {
-        List<CreditInfo.AccidentRecord> accidents = creditInfo.getAccidentHistory();
-        int accidentCount = (accidents != null) ? accidents.size() : 0;
-
-        double accidentScore    = accidentCount * 1.2;
-        double drivingExpScore  = creditInfo.getDrivingExperienceYears() <= 2 ? 0.3 : 0.0;
-        double creditGradeScore = parseCreditGradeScore(creditInfo.getCreditGrade());
-        double totalScore       = accidentScore + drivingExpScore + creditGradeScore;
-
-        int grade          = scoreToGrade(totalScore);
-        double surchargeRate = gradeToSurchargeRate(grade);
-
-        long base      = sub.getBasePremium().getAmount();
-        long surcharge = Math.round(base * surchargeRate);
-        long total     = base + surcharge;
-
-        RiskAnalysisReport report = new RiskAnalysisReport();
-        report.setSubscriptionNo(sub.getSubscriptionNo());
-        report.setRiskScore(totalScore);
-        report.setRiskGrade(grade);
-        report.setAccidentScore(accidentScore);
-        report.setDrivingExpScore(drivingExpScore);
-        report.setCreditGradeScore(creditGradeScore);
-        report.setTrafficViolationScore(0.0);
-        report.setSurchargeRate(surchargeRate);
-        report.setBasePremium(new Money(base, "KRW"));
-        report.setSurchargeAmount(new Money(surcharge, "KRW"));
-        report.setTotalPremium(new Money(total, "KRW"));
-        report.setReviewGuide(grade <= 3 ? "사고이력 존재하나 할증 범위 내" : "고위험 인수 재검토 필요");
-        return report;
-    }
-
-    private RiskAnalysisReport buildDefaultReport(Subscription sub) {
-        double surchargeRate = 0.05;
-        long base      = sub.getBasePremium().getAmount();
-        long surcharge = Math.round(base * surchargeRate);
-
-        RiskAnalysisReport report = new RiskAnalysisReport();
-        report.setSubscriptionNo(sub.getSubscriptionNo());
-        report.setRiskScore(0.0);
-        report.setRiskGrade(3);
-        report.setAccidentScore(0.0);
-        report.setDrivingExpScore(0.0);
-        report.setCreditGradeScore(0.0);
-        report.setTrafficViolationScore(0.0);
-        report.setSurchargeRate(surchargeRate);
-        report.setBasePremium(new Money(base, "KRW"));
-        report.setSurchargeAmount(new Money(surcharge, "KRW"));
-        report.setTotalPremium(new Money(base + surcharge, "KRW"));
-        report.setReviewGuide("신규 가입자 기본 위험등급 적용");
-        return report;
-    }
-
-    private double parseCreditGradeScore(String creditGrade) {
-        // NICE 등급별 감점: 1~3등급 0점, 4등급 0.05점, 5등급 0.1점, 6등급 이상 0.2점
-        if (creditGrade == null) return 0.0;
-        if (creditGrade.contains("5등급") || creditGrade.contains("6등급")) return 0.1;
-        if (creditGrade.contains("7등급") || creditGrade.contains("8등급")
-                || creditGrade.contains("9등급") || creditGrade.contains("10등급")) return 0.2;
-        if (creditGrade.contains("4등급")) return 0.05;
-        return 0.0;
-    }
-
-    private int scoreToGrade(double score) {
-        if (score <= 0.5) return 1;
-        if (score <= 1.0) return 2;
-        if (score <= 2.0) return 3;
-        if (score <= 3.0) return 4;
-        return 5;
-    }
-
-    private double gradeToSurchargeRate(int grade) {
-        switch (grade) {
-            case 3: return 0.05;
-            case 4: return 0.10;
-            case 5: return 0.20;
-            default: return 0.0;
-        }
     }
 }
