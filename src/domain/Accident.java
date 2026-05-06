@@ -45,9 +45,37 @@ public class Accident implements Serializable {
         this.status = status;
     }
 
-    public String getAccidentInfo() { return null; }
+    // ── 정적 팩토리: 고객 보험금 청구 접수 ───────────────────
+    public static Accident report(String accidentId, String reportedBy,
+                                   String accidentDate, String accidentLocation,
+                                   String accidentDetail, String documents,
+                                   Contract contract) {
+        Accident a = new Accident();
+        a.accidentId          = accidentId;
+        a.reportedBy          = reportedBy;
+        a.phone               = "";
+        a.description         = "보험금 청구";
+        a.accidentDate        = accidentDate;
+        a.accidentLocation    = accidentLocation;
+        a.accidentDetail      = accidentDetail;
+        a.documents           = documents;
+        a.contractId          = contract.getContractId();
+        a.coverageDescription = contract.getCoveragesDescription();
+        a.coverageLimit       = "";
+        a.vehicleInfo         = contract.getCarNumber();
+        a.status              = "미처리";
+        return a;
+    }
+
+    // ── 비즈니스 메서드: 상태 전이 ────────────────────────────
+    public void transferToCompensation() { this.status = "보상팀 이관"; }
+    public void startProcessing()        { this.status = "처리중"; }
+    public void complete()               { this.status = "처리완료"; }
+    public boolean isPending()           { return "미처리".equals(status); }
+
     public boolean updateAccidentDetail(String detail) { this.accidentDetail = detail; return true; }
-    public boolean validateAccident() { return false; }
+    public boolean validateAccident()    { return accidentDate != null && !accidentDate.isEmpty()
+                                              && accidentLocation != null && !accidentLocation.isEmpty(); }
 
     public String getAccidentId() { return accidentId; }
     public String getAccidentDate() { return accidentDate; }

@@ -42,6 +42,25 @@ public class Contract implements Serializable {
         }
     }
 
+    // ── 정적 팩토리: 신규 계약 발행 ──────────────────────────
+    public static Contract issue(String policyNo, String contractId, String productName,
+                                  Party holder, Money premium, String carNumber,
+                                  String coveragesDescription, String ridersDescription) {
+        Contract c = new Contract();
+        c.policyNo             = policyNo;
+        c.contractId           = contractId;
+        c.productName          = productName;
+        c.policyholder         = holder;
+        c.premium              = premium;
+        c.carNumber            = carNumber;
+        c.coveragesDescription = coveragesDescription;
+        c.ridersDescription    = ridersDescription;
+        c.issueDate            = new java.util.Date();
+        c.startDate            = new java.util.Date();
+        c.activate();
+        return c;
+    }
+
     public void activate()   { this.status = Status.ACTIVE; }
     public void cancel()     { this.status = Status.CANCELLED; }
     public void mature()     { this.status = Status.EXPIRED; }

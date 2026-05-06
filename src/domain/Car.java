@@ -11,6 +11,11 @@ public class Car extends Insured {
 
     public enum Purpose { COMMUTE, BUSINESS, COMMERCIAL }
 
+    // ── 비즈니스 메서드 ───────────────────────────────────────
+    public void changePurpose(Purpose purpose) {
+        this.purpose = purpose;
+    }
+
     public boolean isDriverAllowed(int age) {
         if (driverScope == null) return true;
         return driverScope.allowsAge(age);

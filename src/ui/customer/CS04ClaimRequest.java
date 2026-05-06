@@ -14,9 +14,6 @@ public class CS04ClaimRequest {
         System.out.println(" CS-04: 보험금을 청구한다");
         System.out.println("========================================");
 
-        // Step 1
-        System.out.println("\n[사고접수 및 보험금 청구]");
-
         // Step 2~3: 본인 인증
         System.out.println("\n[본인 인증 수단 선택]");
         System.out.println(" 1. 공동인증서  2. 간편비밀번호  3. 휴대폰 인증");
@@ -42,7 +39,7 @@ public class CS04ClaimRequest {
             return;
         }
 
-        // A1: 청구 대상 계약 미선택 처리
+        // A1: 청구 대상 계약 미선택
         Contract selectedContract = new CS05ContractInquiry().runAsInclude();
         if (selectedContract == null) {
             System.out.println("\n[경고] 대상 보험 계약은 필수 선택 사항입니다. 대상을 리스트에 추가해 주세요.");
@@ -59,7 +56,7 @@ public class CS04ClaimRequest {
         System.out.print(" 상세 경위 (예: 후방 추돌): ");
         String accidentDetail = sc.nextLine().trim();
 
-        // E1: 사고 발생 일시가 보험 가입 기간 외인 경우 (간단 검증)
+        // E1: 사고 발생 일시가 보험 가입 기간 외인 경우
         if (accidentDate.contains("2025") || accidentDate.isEmpty()) {
             System.out.println("\n[오류] 입력된 사고 일시 값이 허용 범위를 초과하였습니다.");
             System.out.println("       사고 일시를 수정하고 다시 시도해주세요.");
@@ -87,26 +84,26 @@ public class CS04ClaimRequest {
             return;
         }
 
-        // Step 12: AccidentRepository에 사고 저장 후 청구 완료
-        String accNo = AccidentRepository.nextId();
-        Accident newAccident = new Accident(
-            accNo, accidentDate, authName, "",
-            "보험금 청구", accidentPlace, accidentDetail,
+        // Step 12: 사고 접수 후 보상팀 이관
+        Accident accident = Accident.report(
+            AccidentRepository.nextId(),
+            authName,
+            accidentDate,
+            accidentPlace,
+            accidentDetail,
             doc1 + "," + doc2,
-            selectedContract.getContractId(),
-            selectedContract.getCoveragesDescription(), "",
-            selectedContract.getCarNumber(),
-            "미처리"
+            selectedContract
         );
-        AccidentRepository.save(newAccident);
+        accident.transferToCompensation();
+        AccidentRepository.save(accident);
 
         System.out.println("\n[보험금 청구 완료]");
         System.out.println("------------------------------------------------------------");
-        System.out.println(" 접수 번호   : " + accNo);
-        System.out.println(" 사고 일시   : " + accidentDate);
-        System.out.println(" 사고 장소   : " + accidentPlace);
-        System.out.println(" 경위        : " + accidentDetail);
-        System.out.println(" 처리 상태   : 보상팀 이관 완료");
+        System.out.println(" 접수 번호   : " + accident.getAccidentId());
+        System.out.println(" 사고 일시   : " + accident.getAccidentDate());
+        System.out.println(" 사고 장소   : " + accident.getAccidentLocation());
+        System.out.println(" 경위        : " + accident.getAccidentDetail());
+        System.out.println(" 처리 상태   : " + accident.getStatus());
         System.out.println(" 안내        : 담당자가 배정되면 연락드리겠습니다. (1~3 영업일 소요)");
         System.out.println("------------------------------------------------------------");
         System.out.println("\n보험금 청구가 완료되었습니다.");
