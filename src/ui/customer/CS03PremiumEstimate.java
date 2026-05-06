@@ -95,22 +95,23 @@ public class CS03PremiumEstimate {
         System.out.print(" 선택 (쉼표로 복수 선택, 예: 1,2): ");
         String discountChoice = sc.nextLine().trim();
 
-        // Step 7: 최종 보험료 산출
-        long base     = Math.round(stdValue * 0.04);
+        // Step 7: 최종 보험료 산출 (담보별 개별 요율 × 차량기준가액)
+        double purposeMult = 1.0;
+        if (purpose == Car.Purpose.BUSINESS)   purposeMult = 1.1;
+        if (purpose == Car.Purpose.COMMERCIAL) purposeMult = 1.3;
+
         double disc   = 0.0;
         if (discountChoice.contains("1")) disc += 0.047;
         if (discountChoice.contains("2")) disc += 0.030;
         if (discountChoice.contains("3")) disc += 0.020;
-        if (purpose == Car.Purpose.BUSINESS)   base = Math.round(base * 1.1);
-        if (purpose == Car.Purpose.COMMERCIAL) base = Math.round(base * 1.3);
 
-        long 대인1   = Math.round(base * 0.18);
-        long 대인2   = Math.round(base * 0.22);
-        long 대물    = Math.round(base * 0.25);
-        long 자상    = Math.round(base * 0.05);
-        long 무보험  = Math.round(base * 0.07);
-        long 자차    = Math.round(base * 0.18);
-        long 긴급    = Math.round(base * 0.05);
+        long 대인1   = Math.round(stdValue * 0.00989 * purposeMult);
+        long 대인2   = Math.round(stdValue * 0.01771 * purposeMult);
+        long 대물    = Math.round(stdValue * 0.02967 * purposeMult);
+        long 자상    = Math.round(stdValue * 0.00044 * purposeMult);
+        long 무보험  = Math.round(stdValue * 0.00093 * purposeMult);
+        long 자차    = Math.round(stdValue * 0.01417 * purposeMult);
+        long 긴급    = Math.round(stdValue * 0.00146 * purposeMult);
         long subtotal = 대인1 + 대인2 + 대물 + 자상 + 무보험 + 자차 + 긴급;
         long 할인금액 = Math.round(subtotal * disc);
         long finalPremium = subtotal - 할인금액;
