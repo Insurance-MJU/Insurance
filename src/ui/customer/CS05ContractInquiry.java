@@ -2,7 +2,6 @@ package ui.customer;
 
 import domain.contract.Contract;
 import infra.Context;
-import infra.repository.ContractRepository;
 import java.util.List;
 import java.util.Scanner;
 
@@ -76,7 +75,7 @@ public class CS05ContractInquiry {
         String statusChoice = sc.nextLine().trim();
         System.out.println("[조회]");
 
-        List<Contract> contracts = ContractRepository.findByCondition(holderName, periodChoice, statusChoice);
+        List<Contract> contracts = Contract.findByCondition(holderName, periodChoice, statusChoice);
 
         System.out.println("\n[보험 계약 목록]");
         System.out.println("------------------------------------------------------------");

@@ -5,10 +5,10 @@ import domain.contract.Contract;
 import domain.product.*;
 import domain.product.insured.Car;
 import domain.product.insured.DriverScope;
+import domain.product.insured.Insured;
 import domain.product.insured.Model;
 import infra.Context;
 import infra.repository.CarRepository;
-import infra.repository.ContractRepository;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -161,22 +161,31 @@ public class CS01ProductSubscription {
         holder.setName(name);
         holder.setPhone(phone);
 
-        // WARN-1: 담보·특약 정보를 하드코딩 대신 선택 상품에서 가져옴
-        String coveragesDesc = selectedProduct.getDefaultCoverageDescription();
-        String ridersDesc = buildRidersDescription(selectedProduct.getRiders());
+        Insured insured = Insured.ofDriver(name, ssn);
+
+        List<SelectedCoverage> selectedCoverages = (selectedProduct.getCoverages() != null)
+            ? selectedProduct.getCoverages().stream()
+                .map(SelectedCoverage::from)
+                .collect(Collectors.toList())
+            : List.of();
+        List<SelectedRider> selectedRiders = (selectedProduct.getRiders() != null)
+            ? selectedProduct.getRiders().stream()
+                .map(SelectedRider::from)
+                .collect(Collectors.toList())
+            : List.of();
 
         Contract contract = Contract.issue(
-            ContractRepository.nextPolicyNo(),
-            ContractRepository.nextContractId(),
-            selectedProduct.getProductName(),
+            Contract.nextPolicyNo(),
+            Contract.nextContractId(),
+            selectedProduct,
             holder,
+            insured,
             new Money(confirmedPremium, "KRW"),
             car.getCarNumber(),
-            coveragesDesc,
-            "2,000만원",
-            ridersDesc
+            selectedCoverages,
+            selectedRiders
         );
-        ContractRepository.save(contract);
+        Contract.save(contract);
 
         // ── Step 10: 완료 ─────────────────────────────────────
         System.out.println("\n========================================");
@@ -191,13 +200,6 @@ public class CS01ProductSubscription {
         System.out.printf(" 운전자범위  : %s%n", driverScope.getScopeLabel());
         System.out.printf(" 보험료      : %,d원/년%n", confirmedPremium);
         returnToMenu();
-    }
-
-    private String buildRidersDescription(List<ProductRider> riders) {
-        if (riders == null || riders.isEmpty()) return "없음";
-        return riders.stream()
-            .map(ProductRider::getRiderName)
-            .collect(Collectors.joining(", "));
     }
 
     private void returnToMenu() {
