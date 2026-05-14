@@ -8,7 +8,7 @@ import domain.product.insured.DriverScope;
 import domain.product.insured.Insured;
 import domain.product.insured.Model;
 import infra.Context;
-import infra.repository.CarRepository;
+import infra.external.CarClient;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class CS01ProductSubscription {
 
     private final Scanner sc = Context.getInstance().scanner();
-    private final CarRepository carRepo = new CarRepository();
+    private final CarClient carClient = new CarClient();
 
     public void run() {
         System.out.println("\n========================================");
@@ -67,7 +67,7 @@ public class CS01ProductSubscription {
         while (car == null) {
             System.out.print(" 차량번호를 입력하세요: ");
             String carNo = sc.nextLine().trim();
-            car = carRepo.findByCarNumber(carNo);
+            car = carClient.findByCarNumber(carNo);
 
             if (car == null) {
                 // A1: 차량 정보 없음
@@ -81,8 +81,8 @@ public class CS01ProductSubscription {
         }
 
         Model model = car.getModel();
-        String safetyDevices = carRepo.getSafetyDevices(car.getCarNumber());
-        long stdValue = carRepo.getStandardValue(car.getCarNumber());
+        String safetyDevices = carClient.getSafetyDevices(car.getCarNumber());
+        long stdValue = carClient.getStandardValue(car.getCarNumber());
 
         System.out.println("\n[조회된 차량 정보]");
         System.out.printf(" 차량번호    : %s%n",      car.getCarNumber());
@@ -117,14 +117,16 @@ public class CS01ProductSubscription {
         car.changePurpose(purpose);
 
         System.out.println("\n 운전자 범위:");
-        System.out.println("  1. 본인한정");
-        System.out.println("  2. 가족한정");
+        DriverScope.ScopeType[] scopeOptions = { DriverScope.ScopeType.SELF, DriverScope.ScopeType.FAMILY };
+        for (int i = 0; i < scopeOptions.length; i++) {
+            System.out.printf("  %d. %s%n", i + 1, scopeOptions[i].getLabel());
+        }
         System.out.print(" 선택: ");
         String scopeStr = sc.nextLine().trim();
 
         DriverScope driverScope = car.getDriverScope();
         if ("2".equals(scopeStr)) {
-            // A2: 가족한정 → 가족 정보 입력
+            // A2: 가족한정 → 가족 Party 생성 및 등록
             System.out.println("\n[가족 정보 입력]");
             System.out.print(" 이름: ");
             String familyName = sc.nextLine().trim();
@@ -132,8 +134,15 @@ public class CS01ProductSubscription {
             String relation = sc.nextLine().trim();
             System.out.print(" 생년월일 (예: 070101): ");
             String birthDate = sc.nextLine().trim();
-            driverScope.restrictToFamily(familyName + " / " + relation + " / " + birthDate);
-            System.out.println(" → 가족 정보 등록: " + driverScope.getFamilyMemberInfo());
+
+            int familyAge = calcAgeFromBirthDate(birthDate);
+            Party familyParty = new Party();
+            familyParty.setPartyId("PARTY-FAM-" + System.currentTimeMillis());
+            familyParty.setName(familyName);
+            familyParty.setRole(Party.Role.INSURED);
+
+            driverScope.restrictToFamily(familyParty, familyAge);
+            System.out.printf(" → 가족 정보 등록: %s (%s, 만 %d세)%n", familyName, relation, familyAge);
         } else {
             driverScope.restrictToSelf();
         }
@@ -185,6 +194,11 @@ public class CS01ProductSubscription {
             selectedCoverages,
             selectedRiders
         );
+        // 가족한정인 경우 가족 구성원을 기명피보험자로 등록
+        if (driverScope.getScopeType() == DriverScope.ScopeType.FAMILY
+                && driverScope.getFamilyMember() != null) {
+            contract.setNamedInsured(driverScope.getFamilyMember());
+        }
         Contract.save(contract);
 
         // ── Step 10: 완료 ─────────────────────────────────────
@@ -200,6 +214,18 @@ public class CS01ProductSubscription {
         System.out.printf(" 운전자범위  : %s%n", driverScope.getScopeLabel());
         System.out.printf(" 보험료      : %,d원/년%n", confirmedPremium);
         returnToMenu();
+    }
+
+    /** YYMMDD 6자리 생년월일로 만 나이 계산. 파싱 실패 시 0 반환. */
+    private int calcAgeFromBirthDate(String yymmdd) {
+        try {
+            int yy = Integer.parseInt(yymmdd.substring(0, 2));
+            int currentYY = java.time.LocalDate.now().getYear() % 100;
+            int birthYear = (yy <= currentYY) ? 2000 + yy : 1900 + yy;
+            return java.time.LocalDate.now().getYear() - birthYear;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private void returnToMenu() {
