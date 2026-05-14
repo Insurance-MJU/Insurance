@@ -1,4 +1,4 @@
-package domain;
+package domain.provision;
 
 import java.io.Serializable;
 

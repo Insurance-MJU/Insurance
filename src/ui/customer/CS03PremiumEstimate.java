@@ -1,6 +1,8 @@
 package ui.customer;
 
 import domain.*;
+import domain.product.insured.Car;
+import domain.product.Product;
 import infra.repository.CarRepository;
 import infra.Context;
 import java.util.ArrayList;

@@ -1,6 +1,9 @@
 package ui.customer;
 
-import domain.*;
+import domain.product.Product;
+import domain.product.ProductDocument;
+import domain.product.ProductRider;
+import domain.provision.Rider;
 import infra.Context;
 import infra.repository.ProductRepository;
 import infra.repository.RiderRepository;

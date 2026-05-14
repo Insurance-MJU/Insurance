@@ -1,4 +1,7 @@
-package domain;
+package domain.product;
+
+import domain.provision.Coverage;
+import domain.provision.CoverageLimitOption;
 
 import java.io.Serializable;
 import java.util.List;

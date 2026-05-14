@@ -1,4 +1,6 @@
-package domain;
+package domain.claim;
+
+import domain.contract.Contract;
 
 import java.io.Serializable;
 

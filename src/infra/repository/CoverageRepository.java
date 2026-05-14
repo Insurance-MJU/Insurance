@@ -1,7 +1,7 @@
 package infra.repository;
 
-import domain.Coverage;
-import domain.CoverageLimitOption;
+import domain.provision.Coverage;
+import domain.provision.CoverageLimitOption;
 import java.util.*;
 
 public class CoverageRepository {

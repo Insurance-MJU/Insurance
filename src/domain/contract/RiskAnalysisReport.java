@@ -1,12 +1,36 @@
-package domain;
+package domain.contract;
 
 import domain.common.Money;
+import infra.util.FileStore;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RiskAnalysisReport implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    // ── 정적 저장소 ───────────────────────────────────────────
+    private static final List<RiskAnalysisReport> STORE;
+
+    static {
+        List<RiskAnalysisReport> loaded = FileStore.load("risk_analysis.dat");
+        STORE = (loaded != null) ? loaded : new ArrayList<>();
+    }
+
+    public static RiskAnalysisReport findBySubscriptionNo(String subscriptionNo) {
+        return STORE.stream()
+            .filter(r -> r.getSubscriptionNo().equals(subscriptionNo))
+            .findFirst().orElse(null);
+    }
+
+    public static void save(RiskAnalysisReport report) {
+        STORE.removeIf(r -> r.getSubscriptionNo().equals(report.getSubscriptionNo()));
+        STORE.add(report);
+        FileStore.save("risk_analysis.dat", STORE);
+    }
 
     private String subscriptionNo;
     private double riskScore;

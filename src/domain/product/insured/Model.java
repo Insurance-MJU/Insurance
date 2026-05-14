@@ -1,4 +1,4 @@
-package domain;
+package domain.product.insured;
 
 import java.util.Date;
 

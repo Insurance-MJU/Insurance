@@ -1,7 +1,8 @@
-package domain;
+package domain.product;
 
 import java.io.Serializable;
 import domain.common.Money;
+import domain.provision.Coverage;
 
 public class SelectedCoverage implements Serializable {
     private static final long serialVersionUID = 1L;

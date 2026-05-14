@@ -1,7 +1,13 @@
-package domain;
+package domain.contract;
 
 import java.io.Serializable;
+
+import domain.product.SelectedCoverage;
 import domain.common.Money;
+import domain.product.insured.Insured;
+import domain.product.Party;
+import domain.product.Product;
+import domain.product.SelectedRider;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

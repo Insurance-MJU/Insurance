@@ -1,7 +1,7 @@
 package ui.customer;
 
-import domain.Accident;
-import domain.Contract;
+import domain.claim.Accident;
+import domain.contract.Contract;
 import infra.Context;
 import infra.repository.AccidentRepository;
 import java.text.ParseException;

@@ -1,7 +1,7 @@
 package infra.repository;
 
-import domain.Contract;
-import domain.Party;
+import domain.contract.Contract;
+import domain.product.Party;
 import domain.common.Money;
 import infra.util.FileStore;
 

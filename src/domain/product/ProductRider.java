@@ -1,4 +1,6 @@
-package domain;
+package domain.product;
+
+import domain.provision.Rider;
 
 import java.io.Serializable;
 

@@ -1,7 +1,11 @@
 package ui.customer;
 
-import domain.*;
 import domain.common.Money;
+import domain.contract.Contract;
+import domain.product.*;
+import domain.product.insured.Car;
+import domain.product.insured.DriverScope;
+import domain.product.insured.Model;
 import infra.Context;
 import infra.repository.CarRepository;
 import infra.repository.ContractRepository;

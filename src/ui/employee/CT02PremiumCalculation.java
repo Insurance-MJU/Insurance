@@ -1,6 +1,6 @@
 package ui.employee;
 
-import domain.*;
+import domain.product.Product;
 import infra.Context;
 import infra.external.KidiClient;
 import infra.repository.ProductRepository;

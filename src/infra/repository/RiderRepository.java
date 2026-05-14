@@ -1,6 +1,6 @@
 package infra.repository;
 
-import domain.Rider;
+import domain.provision.Rider;
 import java.util.*;
 
 

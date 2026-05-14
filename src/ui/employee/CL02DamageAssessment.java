@@ -1,7 +1,7 @@
 package ui.employee;
 
-import domain.Accident;
-import domain.Claim;
+import domain.claim.Accident;
+import domain.claim.Claim;
 import infra.Context;
 import infra.repository.AccidentRepository;
 import infra.repository.ClaimRepository;

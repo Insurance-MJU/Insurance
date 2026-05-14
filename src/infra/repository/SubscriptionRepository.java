@@ -1,6 +1,6 @@
 package infra.repository;
 
-import domain.Subscription;
+import domain.contract.Subscription;
 import domain.common.Money;
 import infra.util.FileStore;
 

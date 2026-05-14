@@ -1,4 +1,4 @@
-package domain;
+package domain.product;
 
 import domain.common.Money;
 

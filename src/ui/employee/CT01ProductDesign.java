@@ -1,6 +1,9 @@
 package ui.employee;
 
-import domain.*;
+import domain.product.*;
+import domain.provision.Coverage;
+import domain.provision.CoverageLimitOption;
+import domain.provision.Rider;
 import infra.Context;
 import infra.repository.CoverageRepository;
 import infra.repository.ProductRepository;

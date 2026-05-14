@@ -1,4 +1,4 @@
-package domain;
+package domain.product;
 
 public class Exclusion {
     private String description;

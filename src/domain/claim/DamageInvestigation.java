@@ -1,4 +1,4 @@
-package domain;
+package domain.claim;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

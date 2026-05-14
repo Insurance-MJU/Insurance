@@ -1,6 +1,6 @@
 package infra.repository;
 
-import domain.DamageInvestigation;
+import domain.claim.DamageInvestigation;
 import infra.util.FileStore;
 
 import java.util.ArrayList;

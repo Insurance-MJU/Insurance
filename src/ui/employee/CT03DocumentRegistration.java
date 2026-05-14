@@ -1,6 +1,7 @@
 package ui.employee;
 
-import domain.*;
+import domain.product.Product;
+import domain.product.ProductDocument;
 import infra.Context;
 import infra.repository.ProductRepository;
 import infra.util.DocumentUploadHelper;

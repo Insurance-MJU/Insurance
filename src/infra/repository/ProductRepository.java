@@ -1,6 +1,8 @@
 package infra.repository;
 
-import domain.*;
+import domain.product.Product;
+import domain.product.ProductDocument;
+import domain.product.ProductRider;
 import infra.util.FileStore;
 import java.text.SimpleDateFormat;
 import java.util.*;

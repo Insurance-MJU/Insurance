@@ -1,4 +1,6 @@
-package domain;
+package domain.provision;
+
+import domain.product.Exclusion;
 
 import java.util.List;
 

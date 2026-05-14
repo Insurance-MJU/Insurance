@@ -1,6 +1,7 @@
-package domain;
+package domain.contract;
 
 import domain.common.Money;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +47,15 @@ public class CreditInfo implements Serializable {
         return drivingExperienceYears == 0;
     }
 
+    // ── Setters (외부 시스템 클라이언트 전용) ────────────────────
+    public void setApplicantName(String v)                 { this.applicantName = v; }
+    public void setSsn(String v)                           { this.ssn = v; }
+    public void setCarNumber(String v)                     { this.carNumber = v; }
+    public void setAccidentHistory(List<AccidentRecord> v) { this.accidentHistory = v; }
+    public void setDrivingExperienceYears(int v)           { this.drivingExperienceYears = v; }
+    public void setCreditGrade(String v)                   { this.creditGrade = v; }
+    public void setFraudHistory(String v)                  { this.fraudHistory = v; }
+
     // ── Getters ───────────────────────────────────────────────
     public String getApplicantName()              { return applicantName; }
     public String getSsn()                        { return ssn; }
@@ -57,12 +67,4 @@ public class CreditInfo implements Serializable {
     public String getCreditGrade()                { return creditGrade; }
     public String getFraudHistory()               { return fraudHistory; }
 
-    // ── Setters (레포지토리 초기화 전용) ─────────────────────
-    public void setApplicantName(String v)              { this.applicantName = v; }
-    public void setSsn(String v)                        { this.ssn = v; }
-    public void setCarNumber(String v)                  { this.carNumber = v; }
-    public void setAccidentHistory(List<AccidentRecord> v) { this.accidentHistory = v; }
-    public void setDrivingExperienceYears(int v)        { this.drivingExperienceYears = v; }
-    public void setCreditGrade(String v)                { this.creditGrade = v; }
-    public void setFraudHistory(String v)               { this.fraudHistory = v; }
 }

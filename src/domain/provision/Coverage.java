@@ -1,6 +1,8 @@
-package domain;
+package domain.provision;
 
 import domain.common.Money;
+import domain.product.Deductible;
+
 import java.util.List;
 
 public class Coverage {

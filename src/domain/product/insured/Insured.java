@@ -1,4 +1,4 @@
-package domain;
+package domain.product.insured;
 
 import java.io.Serializable;
 import domain.common.Money;
