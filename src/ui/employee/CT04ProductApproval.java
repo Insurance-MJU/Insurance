@@ -3,13 +3,11 @@ package ui.employee;
 import domain.*;
 import infra.Context;
 import infra.external.FssClient;
-import infra.repository.ProductRepository;
 import infra.util.DocumentUploadHelper;
 import java.util.*;
 
 public class CT04ProductApproval {
     private final Scanner sc = Context.getInstance().scanner();
-    private final ProductRepository productRepo = new ProductRepository();
     private final FssClient fssClient = new FssClient();
 
     public void run() {
@@ -73,7 +71,7 @@ public class CT04ProductApproval {
 
         // ── Step 10: 신청 완료 ────────────────────────────────
         product.applyForApproval();
-        productRepo.save(product);
+        product.save();
         System.out.println("\n[안내] 인가 신청이 완료되었습니다. 15일 이내에 확인 결과가 통보됩니다.");
 
         // ── Step 11: [인가 완료] 클릭 ────────────────────────
@@ -84,7 +82,7 @@ public class CT04ProductApproval {
         // A1/A2: 심사 결과 (mock - 승인)
         System.out.println("\n[금융감독원 심사 결과: 승인]");
         product.completeApproval();
-        productRepo.save(product);
+        product.save();
 
         // ── Step 12: 인가 완료 팝업 ──────────────────────────
         System.out.println("\n┌────────────────────────────────────────┐");
@@ -94,7 +92,7 @@ public class CT04ProductApproval {
     }
 
     private Product selectProduct() {
-        List<Product> products = productRepo.findAll();
+        List<Product> products = new ArrayList<>(Product.findAll());
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

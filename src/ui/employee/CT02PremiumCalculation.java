@@ -3,15 +3,12 @@ package ui.employee;
 import domain.*;
 import infra.Context;
 import infra.external.KidiClient;
-import infra.repository.ProductRepository;
-import domain.ProfitabilityCalculator;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class CT02PremiumCalculation {
     private final Scanner sc = Context.getInstance().scanner();
-    private final ProductRepository productRepo = new ProductRepository();
     private final KidiClient kidiClient = new KidiClient();
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -25,7 +22,7 @@ public class CT02PremiumCalculation {
         System.out.println(" CT-02: 보험료를 산출한다");
         System.out.println("========================================");
 
-        List<Product> products = productRepo.findAll();
+        List<Product> products = new ArrayList<>(Product.findAll());
         System.out.println("\n[상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

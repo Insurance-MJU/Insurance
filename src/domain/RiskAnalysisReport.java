@@ -1,9 +1,12 @@
 package domain;
 
 import domain.common.Money;
+import infra.util.FileStore;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class RiskAnalysisReport implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -137,4 +140,19 @@ public class RiskAnalysisReport implements Serializable {
     public Date getReviewDate()              { return reviewDate; }
     public String getReviewDateDisplay()     { return reviewDate != null ? new SimpleDateFormat("yyyy-MM-dd HH:mm").format(reviewDate) : ""; }
     public String getReviewOpinion()         { return reviewOpinion; }
+
+    // ── 영속성 ────────────────────────────────────────────────
+    private static final List<RiskAnalysisReport> STORE;
+    static {
+        List<RiskAnalysisReport> loaded = FileStore.load("risk_analysis.dat");
+        STORE = (loaded != null) ? loaded : new ArrayList<>();
+    }
+    public static RiskAnalysisReport findBySubscriptionNo(String subscriptionNo) {
+        return STORE.stream().filter(r -> r.subscriptionNo.equals(subscriptionNo)).findFirst().orElse(null);
+    }
+    public static void save(RiskAnalysisReport report) {
+        STORE.removeIf(r -> r.subscriptionNo.equals(report.subscriptionNo));
+        STORE.add(report);
+        FileStore.save("risk_analysis.dat", STORE);
+    }
 }

@@ -70,4 +70,22 @@ public class CreditInfo implements Serializable {
     public void setDrivingExperienceYears(int v)        { this.drivingExperienceYears = v; }
     public void setCreditGrade(String v)                { this.creditGrade = v; }
     public void setFraudHistory(String v)               { this.fraudHistory = v; }
+
+    // ── 영속성 ────────────────────────────────────────────────
+    public static CreditInfo findByApplicant(String ssn, String carNumber) {
+        if ("020101-3******".equals(ssn) && "64마0866".equals(carNumber)) {
+            CreditInfo info = new CreditInfo();
+            info.setApplicantName("박수현");
+            info.setSsn(ssn);
+            info.setCarNumber(carNumber);
+            info.setAccidentHistory(java.util.Arrays.asList(
+                new AccidentRecord("2025-08-01", "타차가해, 대인처리 1건", new domain.common.Money(3_000_000L, "KRW"))
+            ));
+            info.setDrivingExperienceYears(2);
+            info.setCreditGrade("NICE 5등급");
+            info.setFraudHistory("해당 없음");
+            return info;
+        }
+        return null;
+    }
 }

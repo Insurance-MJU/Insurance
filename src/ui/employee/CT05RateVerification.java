@@ -3,13 +3,11 @@ package ui.employee;
 import domain.*;
 import infra.Context;
 import infra.external.KidiClient;
-import infra.repository.ProductRepository;
 import infra.util.DocumentUploadHelper;
 import java.util.*;
 
 public class CT05RateVerification {
     private final Scanner sc = Context.getInstance().scanner();
-    private final ProductRepository productRepo = new ProductRepository();
     private final KidiClient kidiClient = new KidiClient();
 
     private static final String[] REQUIRED_DOCS = {"요율 산출 근거서", "담보별 기준 순보험료 산출표"};
@@ -97,7 +95,7 @@ public class CT05RateVerification {
     }
 
     private Product selectProduct() {
-        List<Product> products = productRepo.findAll();
+        List<Product> products = new ArrayList<>(Product.findAll());
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

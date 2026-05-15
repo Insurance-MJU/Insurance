@@ -1,6 +1,10 @@
 package infra.repository;
 
+import domain.Accident;
 import domain.Claim;
+import domain.Deductible;
+import domain.DamageAssessment;
+import domain.common.Money;
 import infra.util.FileStore;
 
 import java.util.ArrayList;
@@ -22,16 +26,16 @@ public class ClaimRepository {
     }
 
     private static void initDefaults() {
+        Accident accident = Accident.findById("ACC-2026-003");
         Claim c = new Claim(
-            "CL-00001", "ACC-2026-003",
+            "CL-00001", accident,
             "이영희", "2026-04-18",
             "CNT-20231210-003",
-            "차량 전손", "지급대기"
+            "차량 전손", Claim.ClaimStatus.PAYMENT_PENDING
         );
         c.setAssignedEmployee("EMP-1023");
-        c.setSettlement(1480);
-        c.setDeductible(0);
-        c.setCompensationAmount(1480);
+        Money settlement = new Money(14_800_000, "KRW");
+        c.setDamageAssessment(new DamageAssessment(settlement, Deductible.none(), new Money(14_800_000, "KRW")));
         STORE.add(c);
 
         FileStore.save("claims.dat", STORE);
@@ -39,7 +43,7 @@ public class ClaimRepository {
 
     public static Claim findByAccidentId(String accidentId) {
         return STORE.stream()
-            .filter(c -> c.getAccidentId().equals(accidentId))
+            .filter(c -> accidentId.equals(c.getAccidentId()))
             .findFirst().orElse(null);
     }
 
@@ -51,7 +55,7 @@ public class ClaimRepository {
 
     public static List<Claim> findAwaitingPayment() {
         return STORE.stream()
-            .filter(c -> "지급대기".equals(c.getStatus()))
+            .filter(c -> c.getClaimStatus() == Claim.ClaimStatus.PAYMENT_PENDING)
             .collect(Collectors.toList());
     }
 
@@ -61,11 +65,11 @@ public class ClaimRepository {
         FileStore.save("claims.dat", STORE);
     }
 
-    public static void updateStatus(String claimId, String status) {
+    public static void updateStatus(String claimId, Claim.ClaimStatus status) {
         STORE.stream()
             .filter(c -> c.getClaimId().equals(claimId))
             .findFirst()
-            .ifPresent(c -> c.setStatus(status));
+            .ifPresent(c -> c.setClaimStatus(status));
         FileStore.save("claims.dat", STORE);
     }
 

@@ -2,6 +2,7 @@ package ui.employee;
 
 import domain.Accident;
 import domain.Claim;
+import domain.common.Money;
 import infra.Context;
 
 import java.util.List;
@@ -26,8 +27,10 @@ public class CL04InsurancePayment {
             System.out.println("  지급 대기 중인 건이 없습니다.");
         } else {
             for (Claim c : waitingList) {
+                Money compMoney = c.getCompensationAmount();
+                String compStr = compMoney != null ? compMoney.getAmount() / 10_000 + "만원" : "0만원";
                 System.out.printf("%-15s %-12s %-10s%n",
-                    c.getAccidentId(), c.getClaimantName(), c.getCompensationAmount() + "만원");
+                    c.getAccidentId(), c.getClaimantName(), compStr);
             }
         }
         System.out.println("------------------------------------------------------------");
@@ -46,8 +49,10 @@ public class CL04InsurancePayment {
             System.out.println("\n[ 지급 대상 고객 정보 - " + accNo + " ]");
             System.out.println("------------------------------------------------------------");
             if (claim != null) {
+                Money compMoney = claim.getCompensationAmount();
+                String compStr = compMoney != null ? compMoney.getAmount() / 10_000 + "만원" : "0만원";
                 System.out.println("  성명   : " + claim.getClaimantName());
-                System.out.println("  지급액 : " + claim.getCompensationAmount() + "만원");
+                System.out.println("  지급액 : " + compStr);
             } else {
                 System.out.println("  [해당 접수번호의 청구 정보를 찾을 수 없습니다]");
             }
@@ -93,7 +98,9 @@ public class CL04InsurancePayment {
             System.out.println("[결재 상신]");
 
             // Step 7: 이체 품의서 요약 출력
-            String payAmount = (claim != null) ? claim.getCompensationAmount() + "만원" : "0만원";
+            String payAmount = "0만원";
+            if (claim != null && claim.getCompensationAmount() != null)
+                payAmount = claim.getCompensationAmount().getAmount() / 10_000 + "만원";
 
             System.out.println("\n[ 이체 품의서 요약 내역 ]");
             System.out.println("------------------------------------------------------------");

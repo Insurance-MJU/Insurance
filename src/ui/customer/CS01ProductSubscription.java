@@ -3,8 +3,6 @@ package ui.customer;
 import domain.*;
 import domain.common.Money;
 import infra.Context;
-import infra.repository.CarRepository;
-import infra.repository.ContractRepository;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -12,7 +10,6 @@ import java.util.stream.Collectors;
 public class CS01ProductSubscription {
 
     private final Scanner sc = Context.getInstance().scanner();
-    private final CarRepository carRepo = new CarRepository();
 
     public void run() {
         System.out.println("\n========================================");
@@ -63,7 +60,7 @@ public class CS01ProductSubscription {
         while (car == null) {
             System.out.print(" 차량번호를 입력하세요: ");
             String carNo = sc.nextLine().trim();
-            car = carRepo.findByCarNumber(carNo);
+            car = Car.findByCarNumber(carNo);
 
             if (car == null) {
                 // A1: 차량 정보 없음
@@ -77,8 +74,8 @@ public class CS01ProductSubscription {
         }
 
         Model model = car.getModel();
-        String safetyDevices = carRepo.getSafetyDevices(car.getCarNumber());
-        long stdValue = carRepo.getStandardValue(car.getCarNumber());
+        String safetyDevices = Car.getSafetyDevices(car.getCarNumber());
+        long stdValue = Car.getStandardValue(car.getCarNumber());
 
         System.out.println("\n[조회된 차량 정보]");
         System.out.printf(" 차량번호    : %s%n",      car.getCarNumber());
@@ -162,8 +159,8 @@ public class CS01ProductSubscription {
         String ridersDesc = buildRidersDescription(selectedProduct.getRiders());
 
         Contract contract = Contract.issue(
-            ContractRepository.nextPolicyNo(),
-            ContractRepository.nextContractId(),
+            Contract.nextPolicyNo(),
+            Contract.nextContractId(),
             selectedProduct.getProductName(),
             holder,
             new Money(confirmedPremium, "KRW"),
@@ -172,7 +169,7 @@ public class CS01ProductSubscription {
             "2,000만원",
             ridersDesc
         );
-        ContractRepository.save(contract);
+        contract.save();
 
         // ── Step 10: 완료 ─────────────────────────────────────
         System.out.println("\n========================================");

@@ -1,7 +1,9 @@
 package ui.employee;
 
 import domain.Accident;
+import domain.Claim;
 import domain.DamageInvestigation;
+import domain.common.Money;
 import infra.Context;
 
 import java.util.Scanner;
@@ -72,14 +74,20 @@ public class CL03DamageInvestigation {
             }
 
             // Step 4: 보상 한도 범위 출력
-            String expectedRepairCost = (accident != null && accident.getExpectedRepairCost() != null)
-                ? accident.getExpectedRepairCost() : "미산정";
-            String compensationLimit = (accident != null) ? accident.getCoverageLimit() : "1,000만원";
+            Money expectedRepairCostMoney = (accident != null && accident.getExpectedRepairCost() != null)
+                ? accident.getExpectedRepairCost() : new Money(0, "KRW");
+            Money compensationLimitMoney = (accident != null && accident.getCoverageLimit() != null)
+                ? accident.getCoverageLimit() : new Money(10_000_000, "KRW");
+
+            String expectedRepairCostDisplay = (accident != null && accident.getExpectedRepairCost() != null)
+                ? String.format("%,d원", accident.getExpectedRepairCost().getAmount()) : "미산정";
+            String compensationLimitDisplay = (accident != null && accident.getCoverageLimit() != null)
+                ? accident.getCoverageLimit().getAmount() / 10_000 + "만원" : "1,000만원";
 
             System.out.println("\n[ 보상 한도 범위 ]");
             System.out.println("------------------------------------------------------------");
-            System.out.println("  예상 수리비       : " + expectedRepairCost);
-            System.out.println("  대인 보상 한도     : " + compensationLimit);
+            System.out.println("  예상 수리비       : " + expectedRepairCostDisplay);
+            System.out.println("  대인 보상 한도     : " + compensationLimitDisplay);
             System.out.println("------------------------------------------------------------");
 
             // Step 5: 과실 비율 입력
@@ -135,10 +143,11 @@ public class CL03DamageInvestigation {
             System.out.println("[조사 완료 및 저장]");
 
             // Step 10: 저장
+            Claim claim = Claim.findByAccidentId(accNo);
             DamageInvestigation inv = DamageInvestigation.create(
                 accNo, opinion, damageCode, injuryGrade,
                 ourFault, otherFault, liability,
-                expectedRepairCost, compensationLimit, finalOpinion
+                expectedRepairCostMoney, compensationLimitMoney, finalOpinion, claim
             );
             inv.save();
             if (accident != null) { accident.setStatus("처리중"); accident.save(); }

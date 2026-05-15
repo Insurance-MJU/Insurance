@@ -2,11 +2,9 @@ package ui;
 
 import domain.common.User;
 import infra.Context;
-import infra.repository.UserRepository;
 import java.util.Scanner;
 
 public class LoginController {
-    private final UserRepository userRepo = new UserRepository();
     private final Scanner sc = Context.getInstance().scanner();
 
     public void run() {
@@ -20,7 +18,7 @@ public class LoginController {
             System.out.print("비밀번호: ");
             String password = sc.nextLine().trim();
 
-            User user = userRepo.findByCredentials(userId, password);
+            User user = User.findByCredentials(userId, password);
             if (user != null) {
                 Context.getInstance().login(user);
                 System.out.println("\n안녕하세요, " + user.getName() + "님!\n");

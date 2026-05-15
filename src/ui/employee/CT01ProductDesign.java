@@ -2,18 +2,12 @@ package ui.employee;
 
 import domain.*;
 import infra.Context;
-import infra.repository.CoverageRepository;
-import infra.repository.ProductRepository;
-import infra.repository.RiderRepository;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class CT01ProductDesign {
     private final Scanner sc = Context.getInstance().scanner();
-    private final ProductRepository  productRepo  = new ProductRepository();
-    private final CoverageRepository coverageRepo = new CoverageRepository();
-    private final RiderRepository    riderRepo    = new RiderRepository();
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
 
     public void run() {
@@ -32,7 +26,7 @@ public class CT01ProductDesign {
         while (true) {
             System.out.print(" 상품코드 (예: CAR-2026-MZ): ");
             productCode = sc.nextLine().trim();
-            if (productRepo.existsByCode(productCode)) {
+            if (Product.existsByCode(productCode)) {
                 System.out.println("[오류] 이미 사용 중인 상품코드입니다.");
             } else {
                 break;
@@ -67,7 +61,7 @@ public class CT01ProductDesign {
         sc.nextLine();
 
         // ── Step 4~5: 담보 선택 (CoverageRepository) ─────────────
-        List<Coverage> allCoverages = coverageRepo.findAll();
+        List<Coverage> allCoverages = Coverage.findAll();
         Map<Coverage, List<CoverageLimitOption>> selectedOptions;
 
         while (true) {
@@ -115,7 +109,7 @@ public class CT01ProductDesign {
         sc.nextLine();
 
         // ── Step 6~7: 특약 선택 (RiderRepository) ────────────────
-        List<Rider> allRiders = riderRepo.findAll();
+        List<Rider> allRiders = Rider.findAll();
         System.out.println("\n── 특약 목록 ──────────────────────────");
         for (int i = 0; i < allRiders.size(); i++) {
             Rider r = allRiders.get(i);
@@ -175,7 +169,7 @@ public class CT01ProductDesign {
 
         Product product = Product.design(productCode, productName, description, target, saleStart, saleEnd);
         product.setRiders(buildProductRiders(selectedRiders));
-        productRepo.save(product);
+        product.save();
 
         // ── Step 12: 완료 팝업 ────────────────────────────────
         System.out.println("\n┌──────────────────────────────────────┐");

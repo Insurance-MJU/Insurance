@@ -2,14 +2,14 @@ package ui.employee;
 
 import domain.Accident;
 import domain.Claim;
+import domain.Deductible;
+import domain.common.Money;
 import infra.Context;
 
 import java.util.Scanner;
 
 public class CL02DamageAssessment {
     private final Scanner sc = Context.getInstance().scanner();
-
-    private static final String DEFAULT_PERSONAL_INJURY_LIMIT = "1,000만원";
 
     public void run() {
         System.out.println("\n[CL-02] 손해액을 산정한다");
@@ -56,14 +56,21 @@ public class CL02DamageAssessment {
             new CL03DamageInvestigation().runAsInclude(accNo);
 
             // Step 6: 보상 한도액 출력 (레포지토리 데이터 반영)
-            String personalLimit = (accident != null && accident.getPersonalInjuryLimit() != null)
-                ? accident.getPersonalInjuryLimit() : DEFAULT_PERSONAL_INJURY_LIMIT;
-            String coverageLimit = (accident != null) ? accident.getCoverageLimit() : "2,000만원";
+            String personalLimitDisplay;
+            if (accident != null && accident.getPersonalInjuryLimit() != null)
+                personalLimitDisplay = accident.getPersonalInjuryLimit().getAmount() / 10_000 + "만원";
+            else
+                personalLimitDisplay = "1,000만원";
+            String coverageLimitDisplay;
+            if (accident != null && accident.getCoverageLimit() != null)
+                coverageLimitDisplay = accident.getCoverageLimit().getAmount() / 10_000 + "만원";
+            else
+                coverageLimitDisplay = "2,000만원";
 
             System.out.println("\n[ 보상 한도액 ]");
             System.out.println("------------------------------------------------------------");
-            System.out.println("  대인 한도 : " + personalLimit);
-            System.out.println("  대물 한도 : " + coverageLimit);
+            System.out.println("  대인 한도 : " + personalLimitDisplay);
+            System.out.println("  대물 한도 : " + coverageLimitDisplay);
             System.out.println("------------------------------------------------------------");
 
             // Step 7 + E1: 합의금·자기부담금 입력
@@ -93,7 +100,7 @@ public class CL02DamageAssessment {
             }
 
             // Step 8: 최종 결정 손해액 출력
-            int finalAmount = settlement - deductible; // 화면 출력용 (실제 계산은 claim.assess())
+            int finalAmount = settlement - deductible;
             System.out.println("\n[ 최종 결정 손해액 ]");
             System.out.println("------------------------------------------------------------");
             System.out.println("  최종 합의금     : " + settlement + "만원");
@@ -110,7 +117,11 @@ public class CL02DamageAssessment {
             // Step 10: 레포지토리에 Claim 지급 정보 저장 및 상태 업데이트
             Claim claim = Claim.findByAccidentId(accNo);
             if (claim != null) {
-                claim.assess(settlement, deductible);
+                Money settlementMoney = new Money(settlement * 10_000L, "KRW");
+                Deductible deductibleObj = deductible == 0
+                    ? Deductible.none()
+                    : Deductible.fixedAmount(new Money(deductible * 10_000L, "KRW"));
+                claim.assess(settlementMoney, deductibleObj);
                 claim.save();
             }
 

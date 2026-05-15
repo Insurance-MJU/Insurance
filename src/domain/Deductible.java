@@ -1,16 +1,18 @@
 package domain;
 
 import domain.common.Money;
+import java.io.Serializable;
 
-public class Deductible {
+public class Deductible implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Money amount;
     private Double rate;
     private DeductibleType type;
 
     public enum DeductibleType {
-        NONE,        // 자기부담금 없음
-        FIXED,       // 정액 (예: 20만원 고정)
-        RATE         // 비율 (예: 손해액의 20%)
+        NONE,
+        FIXED,
+        RATE
     }
 
     private Deductible() {}
@@ -18,16 +20,20 @@ public class Deductible {
     public static Deductible fixedAmount(Money amount) {
         Deductible d = new Deductible();
         d.amount = amount;
+        d.type = DeductibleType.FIXED;
         return d;
     }
 
     public static Deductible none() {
-        return new Deductible();
+        Deductible d = new Deductible();
+        d.type = DeductibleType.NONE;
+        return d;
     }
 
     public static Deductible rate(Double rate) {
         Deductible d = new Deductible();
         d.rate = rate;
+        d.type = DeductibleType.RATE;
         return d;
     }
 

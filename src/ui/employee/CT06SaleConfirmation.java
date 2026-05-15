@@ -3,13 +3,11 @@ package ui.employee;
 import domain.*;
 import infra.Context;
 import infra.external.FssClient;
-import infra.repository.ProductRepository;
 import infra.util.DocumentUploadHelper;
 import java.util.*;
 
 public class CT06SaleConfirmation {
     private final Scanner sc = Context.getInstance().scanner();
-    private final ProductRepository productRepo = new ProductRepository();
     private final FssClient fssClient = new FssClient();
 
     private static final String[] REQUIRED_DOCS = {"상품 신고서", "수익성 분석 보고서", "공시자료"};
@@ -76,7 +74,7 @@ public class CT06SaleConfirmation {
         // ── Step 10: 제출 완료 ────────────────────────────────
         product.addDocuments(uploadedDocs);
         product.applySalePermit();
-        productRepo.save(product);
+        product.save();
         System.out.println("\n[안내] 금융감독원으로 서류를 제출하였습니다.");
 
         // ── Step 11: [판매개시] 클릭 ─────────────────────────
@@ -87,7 +85,7 @@ public class CT06SaleConfirmation {
         // A1/A2: 판매 승인 결과 (mock - 승인)
         System.out.println("\n[금융감독원 판매 확정 승인: 승인]");
         product.onsale();
-        productRepo.save(product);
+        product.save();
 
         System.out.println("\n┌────────────────────────────────────────────┐");
         System.out.println("│  상품 판매가 확정되었습니다. 판매를 개시합니다. │");
@@ -96,7 +94,7 @@ public class CT06SaleConfirmation {
     }
 
     private Product selectProduct() {
-        List<Product> products = productRepo.findAll();
+        List<Product> products = new ArrayList<>(Product.findAll());
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

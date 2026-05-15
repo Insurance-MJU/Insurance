@@ -2,8 +2,8 @@ package ui.employee;
 
 import domain.Accident;
 import domain.Claim;
+import domain.Employee;
 import infra.Context;
-import infra.repository.EmployeeRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -91,7 +91,9 @@ public class CL01AccidentRegistration {
             }
             System.out.println("[계약 원장 정보]");
             System.out.println("  - 계약번호: " + accident.getContractId());
-            System.out.println("  - 담보: " + accident.getCoverageDescription() + " / 한도: " + accident.getCoverageLimit());
+            String limitDisplay = accident.getCoverageLimit() != null
+                ? accident.getCoverageLimit().getAmount() / 10_000 + "만원" : "-";
+            System.out.println("  - 담보: " + accident.getCoverageDescription() + " / 한도: " + limitDisplay);
         } else {
             System.out.println("  [해당 고객의 사고 접수 정보를 찾을 수 없습니다]");
         }
@@ -111,12 +113,12 @@ public class CL01AccidentRegistration {
         System.out.println("------------------------------------------------------------");
         System.out.printf("%-15s %-14s %-10s%n", "직원 번호", "직원명", "미결 건수");
         System.out.println("------------------------------------------------------------");
-        List<EmployeeRepository.FieldInvestigator> investigators =
-            EmployeeRepository.findBySpecialty(specialty);
+        List<Employee.FieldInvestigator> investigators =
+            Employee.findBySpecialty(specialty);
         if (investigators.isEmpty()) {
             System.out.println("  해당 조건에 맞는 현장조사역이 없습니다.");
         } else {
-            for (EmployeeRepository.FieldInvestigator emp : investigators) {
+            for (Employee.FieldInvestigator emp : investigators) {
                 System.out.printf("%-15s %-14s %-10s%n",
                     emp.getEmployeeId(), emp.getName(), emp.getOpenCaseCount() + "건");
             }
@@ -135,10 +137,10 @@ public class CL01AccidentRegistration {
 
         if (accident != null) {
             Claim claim = new Claim(
-                claimId, accident.getAccidentId(),
+                claimId, accident,
                 customerName, now,
                 accident.getContractId(),
-                accident.getDescription(), "처리중"
+                accident.getDescription(), Claim.ClaimStatus.INVESTIGATING
             );
             claim.setAssignedEmployee(empNo);
             claim.save();

@@ -1,5 +1,6 @@
 package domain;
 
+import domain.common.Money;
 import infra.util.FileStore;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -10,7 +11,7 @@ import java.util.List;
 public class DamageInvestigation implements Serializable {
     private static final long serialVersionUID = 1L;
     private String accidentCause;
-    private String claimId;
+    private Claim claim;
     private String damageDetail;
     private Date investigationDate;
     private String investigationId;
@@ -25,8 +26,8 @@ public class DamageInvestigation implements Serializable {
     private int ourFault;
     private int otherFault;
     private String liability;
-    private String expectedRepairCost;
-    private String compensationLimit;
+    private Money expectedRepairCost;
+    private Money compensationLimit;
     private String finalOpinion;
     private Date savedAt;
 
@@ -45,9 +46,10 @@ public class DamageInvestigation implements Serializable {
     /** 손해조사 결과를 한 번에 생성하는 팩토리 메서드 */
     public static DamageInvestigation create(String accidentId, String opinion, String damageCode,
             int injuryGrade, int ourFault, int otherFault, String liability,
-            String expectedRepairCost, String compensationLimit, String finalOpinion) {
+            Money expectedRepairCost, Money compensationLimit, String finalOpinion, Claim claim) {
         DamageInvestigation inv = new DamageInvestigation();
         inv.accidentId = accidentId;
+        inv.claim = claim;
         inv.opinion = opinion;
         inv.damageCode = damageCode;
         inv.injuryGrade = injuryGrade;
@@ -65,7 +67,7 @@ public class DamageInvestigation implements Serializable {
     public String getSavedAtDisplay() { return savedAt != null ? new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(savedAt) : ""; }
 
     public String getAccidentCause() { return accidentCause; }
-    public String getClaimId() { return claimId; }
+    public Claim getClaim() { return claim; }
     public String getDamageDetail() { return damageDetail; }
     public Date getInvestigationDate() { return investigationDate; }
     public String getInvestigationId() { return investigationId; }
@@ -78,12 +80,12 @@ public class DamageInvestigation implements Serializable {
     public int getOurFault() { return ourFault; }
     public int getOtherFault() { return otherFault; }
     public String getLiability() { return liability; }
-    public String getExpectedRepairCost() { return expectedRepairCost; }
-    public String getCompensationLimit() { return compensationLimit; }
+    public Money getExpectedRepairCost() { return expectedRepairCost; }
+    public Money getCompensationLimit() { return compensationLimit; }
     public String getFinalOpinion() { return finalOpinion; }
 
     public void setAccidentCause(String v) { this.accidentCause = v; }
-    public void setClaimId(String v) { this.claimId = v; }
+    public void setClaim(Claim v) { this.claim = v; }
     public void setDamageDetail(String v) { this.damageDetail = v; }
     public void setInvestigationId(String v) { this.investigationId = v; }
     public void setInvestigationResult(String v) { this.investigationResult = v; }
@@ -95,8 +97,8 @@ public class DamageInvestigation implements Serializable {
     public void setOurFault(int v) { this.ourFault = v; }
     public void setOtherFault(int v) { this.otherFault = v; }
     public void setLiability(String v) { this.liability = v; }
-    public void setExpectedRepairCost(String v) { this.expectedRepairCost = v; }
-    public void setCompensationLimit(String v) { this.compensationLimit = v; }
+    public void setExpectedRepairCost(Money v) { this.expectedRepairCost = v; }
+    public void setCompensationLimit(Money v) { this.compensationLimit = v; }
     public void setFinalOpinion(String v) { this.finalOpinion = v; }
     public void setSavedAt(Date v) { this.savedAt = v; }
 

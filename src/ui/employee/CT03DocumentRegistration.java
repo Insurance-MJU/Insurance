@@ -2,13 +2,11 @@ package ui.employee;
 
 import domain.*;
 import infra.Context;
-import infra.repository.ProductRepository;
 import infra.util.DocumentUploadHelper;
 import java.util.*;
 
 public class CT03DocumentRegistration {
     private final Scanner sc = Context.getInstance().scanner();
-    private final ProductRepository productRepo = new ProductRepository();
 
     private static final String[] DOC_NAMES = {"사업방법서", "보험약관", "산출방법서"};
     private static final ProductDocument.DocType[] DOC_TYPES = {
@@ -66,7 +64,7 @@ public class CT03DocumentRegistration {
     }
 
     private Product selectProduct() {
-        List<Product> products = productRepo.findAll();
+        List<Product> products = new ArrayList<>(Product.findAll());
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

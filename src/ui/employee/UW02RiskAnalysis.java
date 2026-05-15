@@ -5,8 +5,6 @@ import domain.RiskAnalysisReport;
 import domain.Subscription;
 import domain.common.Money;
 import infra.Context;
-import infra.repository.CreditInfoRepository;
-import infra.repository.RiskAnalysisRepository;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -63,14 +61,14 @@ public class UW02RiskAnalysis {
         System.out.println("[조회]");
 
         // Step 3: 신용정보원 조회 결과
-        CreditInfo creditInfo = CreditInfoRepository.findByApplicant(sub.getSsn(), sub.getCarNumber());
+        CreditInfo creditInfo = CreditInfo.findByApplicant(sub.getSsn(), sub.getCarNumber());
 
         // A1: 신규 가입자 데이터 없음
         if (creditInfo == null) {
             System.out.println("\n[안내] 신용정보원에 해당 청약자의 조회 이력이 없습니다. 기본 위험등급(3등급)이 적용됩니다.");
             RiskAnalysisReport defaultReport =
                 RiskAnalysisReport.defaultForNewApplicant(sub.getSubscriptionNo(), sub.getBasePremium());
-            RiskAnalysisRepository.save(defaultReport);
+            RiskAnalysisReport.save(defaultReport);
             printSummary(defaultReport);
             confirmResult();
             return;
@@ -100,7 +98,7 @@ public class UW02RiskAnalysis {
         // 도메인이 직접 분석 수행
         RiskAnalysisReport report =
             RiskAnalysisReport.analyze(sub.getSubscriptionNo(), sub.getBasePremium(), creditInfo);
-        RiskAnalysisRepository.save(report);
+        RiskAnalysisReport.save(report);
 
         // Step 5: 위험 분석 결과 요약
         printSummary(report);

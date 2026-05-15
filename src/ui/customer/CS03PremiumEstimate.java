@@ -1,7 +1,6 @@
 package ui.customer;
 
 import domain.*;
-import infra.repository.CarRepository;
 import infra.Context;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +8,6 @@ import java.util.Scanner;
 
 public class CS03PremiumEstimate {
     private final Scanner sc = Context.getInstance().scanner();
-    private final CarRepository carRepo = new CarRepository();
 
     public void run() {
         System.out.println("\n========================================");
@@ -25,13 +23,13 @@ public class CS03PremiumEstimate {
             System.out.println("\n[차량 정보 조회]");
             System.out.print(" 차량번호를 입력하세요: ");
             String carNo = sc.nextLine().trim();
-            car = carRepo.findByCarNumber(carNo);
+            car = Car.findByCarNumber(carNo);
             if (car == null) {
                 System.out.println("[경고] 입력하신 차량번호로 차량 정보를 조회할 수 없습니다.");
                 System.out.print(" 다시 입력하시겠습니까? (Y/N): ");
                 if (!sc.nextLine().trim().equalsIgnoreCase("Y")) { returnToMenu(); return; }
             } else {
-                stdValue = carRepo.getStandardValue(car.getCarNumber());
+                stdValue = Car.getStandardValue(car.getCarNumber());
             }
         }
 
