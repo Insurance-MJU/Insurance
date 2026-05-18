@@ -15,10 +15,19 @@ public class ProductDocument implements Serializable {
     private String title;
 
     public enum DocType {
-        GENERAL_TERMS, SPECIAL_TERMS, BASIC_DOCUMENT,
-        RATE_CALC_BASIS, RATE_VERIFICATION,
-        APPROVAL_APPLICATION, SALE_NOTIFICATION,
-        PROFITABILITY_REPORT, DISCLOSURE
+        GENERAL_TERMS("보험약관"),
+        SPECIAL_TERMS("특별약관"),
+        BASIC_DOCUMENT("사업방법서"),
+        RATE_CALC_BASIS("산출방법서"),
+        RATE_VERIFICATION("요율확인서"),
+        APPROVAL_APPLICATION("보험상품 인가신청서"),
+        SALE_NOTIFICATION("상품 신고서"),
+        PROFITABILITY_REPORT("수익성 분석 보고서"),
+        DISCLOSURE("공시자료");
+
+        private final String label;
+        DocType(String label) { this.label = label; }
+        public String getLabel() { return label; }
     }
 
     // ── 정적 팩토리 ───────────────────────────────────────────

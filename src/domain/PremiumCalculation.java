@@ -64,6 +64,20 @@ public class PremiumCalculation implements Serializable {
         return purpose != null ? purpose.getMultiplier() : 1.0;
     }
 
+    // ── 수익성 분석 결과 ──────────────────────────────────────
+    public static class PricingResult {
+        private final long finalPremium;
+        private final long reserve;
+
+        public PricingResult(long finalPremium, long reserve) {
+            this.finalPremium = finalPremium;
+            this.reserve      = reserve;
+        }
+
+        public long getFinalPremium() { return finalPremium; }
+        public long getReserve()      { return reserve; }
+    }
+
     // ── Getters ───────────────────────────────────────────────
     public long getPersonalInjuryMandatory() { return personalInjuryMandatory; }
     public long getPersonalInjuryOptional()  { return personalInjuryOptional; }
