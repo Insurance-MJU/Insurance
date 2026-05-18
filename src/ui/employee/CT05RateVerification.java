@@ -1,7 +1,7 @@
 package ui.employee;
 
-import domain.product.Product;
-import domain.product.ProductDocument;
+import domain.Product;
+import domain.ProductDocument;
 import infra.Context;
 import infra.external.KidiClient;
 import infra.util.DocumentUploadHelper;

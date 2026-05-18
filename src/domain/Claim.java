@@ -1,4 +1,4 @@
-package domain.claim;
+package domain;
 
 import java.io.Serializable;
 

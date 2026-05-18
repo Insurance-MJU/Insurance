@@ -1,13 +1,13 @@
 package ui.employee;
 
-import domain.contract.Contract;
-import domain.contract.RiskAnalysisReport;
-import domain.contract.Subscription;
-import domain.product.Party;
-import domain.product.Product;
-import domain.product.SelectedCoverage;
-import domain.product.SelectedRider;
-import domain.product.insured.Insured;
+import domain.Contract;
+import domain.RiskAnalysisReport;
+import domain.Subscription;
+import domain.Party;
+import domain.Product;
+import domain.SelectedCoverage;
+import domain.SelectedRider;
+import domain.Insured;
 import infra.Context;
 
 import java.text.NumberFormat;

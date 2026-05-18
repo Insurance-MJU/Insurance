@@ -1,7 +1,7 @@
 package infra.external;
 
 import domain.common.Money;
-import domain.contract.CreditInfo;
+import domain.CreditInfo;
 
 import java.util.Arrays;
 

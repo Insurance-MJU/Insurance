@@ -1,6 +1,4 @@
-package domain.product.insured;
-
-import domain.product.Party;
+package domain;
 
 import java.io.Serializable;
 

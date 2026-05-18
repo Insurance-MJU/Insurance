@@ -1,10 +1,12 @@
 package ui.employee;
 
 import domain.PremiumCalculation;
-import domain.product.*;
-import domain.provision.Coverage;
-import domain.provision.CoverageLimitOption;
-import domain.provision.Rider;
+import domain.Product;
+import domain.ProductCoverage;
+import domain.ProductRider;
+import domain.Coverage;
+import domain.CoverageLimitOption;
+import domain.Rider;
 import infra.Context;
 import java.text.SimpleDateFormat;
 import java.util.*;

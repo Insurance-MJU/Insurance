@@ -1,8 +1,8 @@
 package ui.employee;
 
-import domain.contract.CreditInfo;
-import domain.contract.RiskAnalysisReport;
-import domain.contract.Subscription;
+import domain.CreditInfo;
+import domain.RiskAnalysisReport;
+import domain.Subscription;
 import domain.common.Money;
 import infra.Context;
 import infra.external.CreditBureauClient;

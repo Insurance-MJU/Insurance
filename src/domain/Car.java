@@ -1,4 +1,4 @@
-package domain.product.insured;
+package domain;
 
 public class Car extends Insured {
     private String carId;

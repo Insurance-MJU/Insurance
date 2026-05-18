@@ -1,6 +1,4 @@
-package domain.provision;
-
-import domain.product.Exclusion;
+package domain;
 
 import java.util.Arrays;
 import java.util.Collections;

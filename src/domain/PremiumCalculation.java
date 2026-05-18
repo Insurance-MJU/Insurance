@@ -1,7 +1,5 @@
 package domain;
 
-import domain.product.insured.Car;
-
 import java.io.Serializable;
 import java.util.List;
 

@@ -1,8 +1,8 @@
 package infra.repository;
 
-import domain.product.insured.Car;
-import domain.product.insured.DriverScope;
-import domain.product.insured.Model;
+import domain.Car;
+import domain.DriverScope;
+import domain.Model;
 
 import java.util.Calendar;
 import java.util.HashMap;

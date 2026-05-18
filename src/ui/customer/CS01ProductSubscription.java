@@ -1,12 +1,8 @@
 package ui.customer;
 
+import domain.*;
 import domain.common.Money;
-import domain.contract.Contract;
-import domain.product.*;
-import domain.product.insured.Car;
-import domain.product.insured.DriverScope;
-import domain.product.insured.Insured;
-import domain.product.insured.Model;
+import domain.Contract;
 import infra.Context;
 import infra.external.CarClient;
 import java.util.List;

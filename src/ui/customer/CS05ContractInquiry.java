@@ -1,6 +1,6 @@
 package ui.customer;
 
-import domain.contract.Contract;
+import domain.Contract;
 import infra.Context;
 import java.util.List;
 import java.util.Scanner;

@@ -1,8 +1,8 @@
 package ui.customer;
 
 import domain.PremiumCalculation;
-import domain.product.insured.Car;
-import domain.product.Product;
+import domain.Car;
+import domain.Product;
 import infra.external.CarClient;
 import infra.Context;
 import java.util.ArrayList;

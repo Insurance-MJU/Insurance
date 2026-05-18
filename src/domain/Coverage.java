@@ -1,7 +1,6 @@
-package domain.provision;
+package domain;
 
 import domain.common.Money;
-import domain.product.Deductible;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -1,4 +1,4 @@
-package domain.provision;
+package domain;
 
 public class StandardProvisions {
     private String description;

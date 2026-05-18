@@ -1,6 +1,6 @@
 package infra.repository;
 
-import domain.contract.CreditInfo;
+import domain.CreditInfo;
 import domain.common.Money;
 
 import java.util.Arrays;

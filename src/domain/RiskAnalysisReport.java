@@ -1,4 +1,4 @@
-package domain.contract;
+package domain;
 
 import domain.common.Money;
 import infra.util.FileStore;

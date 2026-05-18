@@ -1,6 +1,6 @@
 package infra.repository;
 
-import domain.contract.RiskAnalysisReport;
+import domain.RiskAnalysisReport;
 import infra.util.FileStore;
 
 import java.util.ArrayList;

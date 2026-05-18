@@ -1,9 +1,9 @@
 package ui.customer;
 
-import domain.product.Product;
-import domain.product.ProductDocument;
-import domain.product.ProductRider;
-import domain.provision.Rider;
+import domain.Product;
+import domain.ProductDocument;
+import domain.ProductRider;
+import domain.Rider;
 import infra.Context;
 import java.text.SimpleDateFormat;
 import java.util.List;

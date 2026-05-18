@@ -1,11 +1,6 @@
-package domain.contract;
+package domain;
 
 import domain.common.Money;
-import domain.product.Party;
-import domain.product.Product;
-import domain.product.SelectedCoverage;
-import domain.product.SelectedRider;
-import domain.product.insured.Insured;
 import infra.util.FileStore;
 
 import java.io.Serializable;

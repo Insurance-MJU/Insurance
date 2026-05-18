@@ -1,7 +1,7 @@
 package ui.employee;
 
 import domain.PremiumCalculation;
-import domain.product.Product;
+import domain.Product;
 import infra.Context;
 import infra.external.KidiClient;
 import domain.ProfitabilityCalculator;
