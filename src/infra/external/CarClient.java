@@ -3,14 +3,6 @@ package infra.external;
 import domain.Car;
 import domain.DriverScope;
 import domain.Model;
-
-<<<<<<<< HEAD:src/infra/external/CarClient.java
-========
-import domain.Car;
-import domain.DriverScope;
-import domain.Model;
-
->>>>>>>> origin/main:src/infra/repository/CarRepository.java
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
