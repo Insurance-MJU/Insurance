@@ -16,7 +16,7 @@ public class Claim implements Serializable {
     private ClaimStatus claimStatus;
     private ClaimType claimType;
     private String assignedEmployee;
-    private DamageAssessment damageAssessment;
+    private DamageInvestigation damageInvestigation;
 
     public Claim() {}
 
@@ -39,14 +39,17 @@ public class Claim implements Serializable {
     public void assess(Money settlement, Money deductibleAmount) {
         long dedAmt = (deductibleAmount != null) ? deductibleAmount.getAmount() : 0L;
         Money compensation = new Money(settlement.getAmount() - dedAmt, "KRW");
-        this.damageAssessment = new DamageAssessment(settlement, deductibleAmount, compensation);
+        if (this.damageInvestigation == null) this.damageInvestigation = new DamageInvestigation();
+        this.damageInvestigation.setAssessment(new DamageAssessment(settlement, deductibleAmount, compensation));
         this.claimStatus = ClaimStatus.PAYMENT_PENDING;
     }
 
     /** 보험금 지급 완료: DamageAssessment에 지급 정보 저장 후 지급완료 상태로 전환 */
     public void completePayment(String bank, String accountNo) {
-        if (this.damageAssessment == null) this.damageAssessment = new DamageAssessment();
-        this.damageAssessment.completePayment(bank, accountNo);
+        if (this.damageInvestigation == null) this.damageInvestigation = new DamageInvestigation();
+        DamageAssessment da = this.damageInvestigation.getAssessment();
+        if (da == null) { da = new DamageAssessment(); this.damageInvestigation.setAssessment(da); }
+        da.completePayment(bank, accountNo);
         this.claimStatus = ClaimStatus.CLOSED;
     }
 
@@ -67,12 +70,13 @@ public class Claim implements Serializable {
     public ClaimStatus getClaimStatus() { return claimStatus; }
     public ClaimType getClaimType() { return claimType; }
     public String getAssignedEmployee() { return assignedEmployee; }
-    public DamageAssessment getDamageAssessment() { return damageAssessment; }
-    public ClaimPayment getClaimPayment() { return damageAssessment != null ? damageAssessment.getClaimPayment() : null; }
-    public Money getSettlement() { return damageAssessment != null ? damageAssessment.getSettlement() : null; }
-    public Money getCompensationAmount() { return damageAssessment != null ? damageAssessment.getCompensationAmount() : null; }
-    public String getBankName() { return getClaimPayment() != null ? getClaimPayment().getBankName() : null; }
-    public String getAccountNumber() { return getClaimPayment() != null ? getClaimPayment().getAccountNumber() : null; }
+    public DamageInvestigation getDamageInvestigation() { return damageInvestigation; }
+    public DamageAssessment getDamageAssessment() { return damageInvestigation != null ? damageInvestigation.getAssessment() : null; }
+    public ClaimPayment getClaimPayment() { DamageAssessment da = getDamageAssessment(); return da != null ? da.getClaimPayment() : null; }
+    public Money getSettlement() { DamageAssessment da = getDamageAssessment(); return da != null ? da.getSettlement() : null; }
+    public Money getCompensationAmount() { DamageAssessment da = getDamageAssessment(); return da != null ? da.getCompensationAmount() : null; }
+    public String getBankName() { ClaimPayment cp = getClaimPayment(); return cp != null ? cp.getBankName() : null; }
+    public String getAccountNumber() { ClaimPayment cp = getClaimPayment(); return cp != null ? cp.getAccountNumber() : null; }
 
     // ── DAO 위임 ──────────────────────────────────────────────
     public static Claim findByAccidentId(String accidentId)  { return infra.dao.ClaimDao.getInstance().findByAccidentId(accidentId); }
@@ -91,5 +95,5 @@ public class Claim implements Serializable {
     public void setClaimStatus(ClaimStatus v) { this.claimStatus = v; }
     public void setClaimType(ClaimType v) { this.claimType = v; }
     public void setAssignedEmployee(String v) { this.assignedEmployee = v; }
-    public void setDamageAssessment(DamageAssessment v) { this.damageAssessment = v; }
+    public void setDamageInvestigation(DamageInvestigation v) { this.damageInvestigation = v; }
 }

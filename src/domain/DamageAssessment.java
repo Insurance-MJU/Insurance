@@ -9,7 +9,6 @@ public class DamageAssessment implements Serializable {
     private Money deductibleAmount;
     private Money compensationAmount;
     private ClaimPayment claimPayment;
-    private DamageInvestigation investigation;
 
     public DamageAssessment() {}
 
@@ -26,12 +25,10 @@ public class DamageAssessment implements Serializable {
     public Money getSettlement()         { return settlement; }
     public Money getDeductibleAmount()   { return deductibleAmount; }
     public Money getCompensationAmount() { return compensationAmount; }
-    public ClaimPayment getClaimPayment()              { return claimPayment; }
-    public DamageInvestigation getInvestigation()      { return investigation; }
+    public ClaimPayment getClaimPayment() { return claimPayment; }
 
-    public void setSettlement(Money v)                       { this.settlement = v; }
-    public void setDeductibleAmount(Money v)                 { this.deductibleAmount = v; }
-    public void setCompensationAmount(Money v)               { this.compensationAmount = v; }
-    public void setClaimPayment(ClaimPayment v)              { this.claimPayment = v; }
-    public void setInvestigation(DamageInvestigation v)      { this.investigation = v; }
+    public void setSettlement(Money v)         { this.settlement = v; }
+    public void setDeductibleAmount(Money v)   { this.deductibleAmount = v; }
+    public void setCompensationAmount(Money v) { this.compensationAmount = v; }
+    public void setClaimPayment(ClaimPayment v) { this.claimPayment = v; }
 }

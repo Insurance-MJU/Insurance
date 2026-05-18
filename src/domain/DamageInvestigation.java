@@ -16,6 +16,7 @@ public class DamageInvestigation implements Serializable {
     private double liabilityRatio;
 
     private String accidentId;
+    private DamageAssessment assessment;
     private String opinion;
     private String damageCode;
     private InjuryGrade injuryGrade;
@@ -67,8 +68,9 @@ public class DamageInvestigation implements Serializable {
     public String getInvestigationId() { return investigationId; }
     public String getInvestigatorName() { return investigatorName; }
     public double getLiabilityRatio() { return liabilityRatio; }
-    public String getAccidentId() { return accidentId; }
-    public String getOpinion() { return opinion; }
+    public String getAccidentId()           { return accidentId; }
+    public DamageAssessment getAssessment() { return assessment; }
+    public String getOpinion()              { return opinion; }
     public String getDamageCode() { return damageCode; }
     public InjuryGrade getInjuryGrade() { return injuryGrade; }
     public int getOurFault() { return ourFault; }
@@ -87,8 +89,9 @@ public class DamageInvestigation implements Serializable {
     public void setInvestigationId(String v) { this.investigationId = v; }
     public void setInvestigationResult(String v) { this.investigationResult = v; }
     public void setInvestigatorName(String v) { this.investigatorName = v; }
-    public void setAccidentId(String v) { this.accidentId = v; }
-    public void setOpinion(String v) { this.opinion = v; }
+    public void setAccidentId(String v)        { this.accidentId = v; }
+    public void setAssessment(DamageAssessment v) { this.assessment = v; }
+    public void setOpinion(String v)           { this.opinion = v; }
     public void setDamageCode(String v) { this.damageCode = v; }
     public void setInjuryGrade(InjuryGrade v) { this.injuryGrade = v; }
     public void setOurFault(int v) { this.ourFault = v; }
