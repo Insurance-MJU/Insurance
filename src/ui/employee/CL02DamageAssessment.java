@@ -146,7 +146,8 @@ public class CL02DamageAssessment {
                 Money deductibleMoney = new Money(deductible * 10_000L, "KRW");
                 claim.assess(settlementMoney, deductibleMoney);
                 DamageInvestigation inv = DamageInvestigation.findByAccidentId(accNo);
-                if (inv != null && claim.getDamageAssessment() != null) {
+                if (inv != null) {
+                    inv.setAssessment(claim.getDamageAssessment());
                     claim.setDamageInvestigation(inv);
                 }
                 claim.save();
