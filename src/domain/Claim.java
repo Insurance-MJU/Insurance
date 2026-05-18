@@ -1,13 +1,9 @@
 package domain;
 
 import domain.common.Money;
-import infra.util.FileStore;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class Claim implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -22,9 +18,6 @@ public class Claim implements Serializable {
     private String assignedEmployee;
     private DamageAssessment damageAssessment;
     private ClaimPayment claimPayment;
-
-    public enum ClaimStatus { PENDING, INVESTIGATING, ASSESSING, PAYMENT_PENDING, CLOSED }
-    public enum ClaimType { PROPERTY, PERSONAL }
 
     public Claim() {}
 
@@ -81,6 +74,13 @@ public class Claim implements Serializable {
     public String getBankName() { return claimPayment != null ? claimPayment.getBankName() : null; }
     public String getAccountNumber() { return claimPayment != null ? claimPayment.getAccountNumber() : null; }
 
+    // ── DAO 위임 ──────────────────────────────────────────────
+    public static Claim findByAccidentId(String accidentId)  { return infra.dao.ClaimDao.getInstance().findByAccidentId(accidentId); }
+    public static Claim findById(String claimId)             { return infra.dao.ClaimDao.getInstance().findById(claimId); }
+    public static java.util.List<Claim> findAwaitingPayment(){ return infra.dao.ClaimDao.getInstance().findAwaitingPayment(); }
+    public static String nextId()                            { return infra.dao.ClaimDao.getInstance().nextId(); }
+    public void save()                                       { infra.dao.ClaimDao.getInstance().save(this); }
+
     // ── Setters ──────────────────────────────────────────────
     public void setClaimId(String v) { this.claimId = v; }
     public void setAccident(Accident v) { this.accident = v; }
@@ -93,44 +93,4 @@ public class Claim implements Serializable {
     public void setAssignedEmployee(String v) { this.assignedEmployee = v; }
     public void setDamageAssessment(DamageAssessment v) { this.damageAssessment = v; }
     public void setClaimPayment(ClaimPayment v) { this.claimPayment = v; }
-
-    // ── 영속성 ────────────────────────────────────────────────
-    private static final List<Claim> STORE;
-    static {
-        List<Claim> loaded = FileStore.load("claims.dat");
-        if (loaded != null) { STORE = loaded; }
-        else { STORE = new ArrayList<>(); initDefaults(); }
-    }
-    private static void initDefaults() {
-        Accident accident = Accident.findById("ACC-2026-003");
-        Claim c = new Claim("CL-00001", accident, "이영희", "2026-04-18",
-                            "CNT-20231210-003", "차량 전손", ClaimStatus.PAYMENT_PENDING);
-        c.setAssignedEmployee("EMP-1023");
-        Money settlement = new Money(14_800_000, "KRW");
-        c.setDamageAssessment(new DamageAssessment(settlement, Deductible.none(), new Money(14_800_000, "KRW")));
-        STORE.add(c);
-        FileStore.save("claims.dat", STORE);
-    }
-
-    public static Claim findByAccidentId(String accidentId) {
-        return STORE.stream()
-            .filter(c -> c.accident != null && accidentId.equals(c.accident.getAccidentId()))
-            .findFirst().orElse(null);
-    }
-    public static Claim findById(String claimId) {
-        return STORE.stream().filter(c -> c.claimId.equals(claimId)).findFirst().orElse(null);
-    }
-    public static List<Claim> findAwaitingPayment() {
-        return STORE.stream()
-            .filter(c -> c.claimStatus == ClaimStatus.PAYMENT_PENDING)
-            .collect(Collectors.toList());
-    }
-    public void save() {
-        STORE.removeIf(c -> c.claimId.equals(this.claimId));
-        STORE.add(this);
-        FileStore.save("claims.dat", STORE);
-    }
-    public static String nextId() {
-        return String.format("CL-%05d", STORE.size() + 1);
-    }
 }

@@ -1,12 +1,9 @@
 package domain;
 
 import domain.common.Money;
-import infra.util.FileStore;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class DamageInvestigation implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -84,6 +81,10 @@ public class DamageInvestigation implements Serializable {
     public Money getCompensationLimit() { return compensationLimit; }
     public String getFinalOpinion() { return finalOpinion; }
 
+    // ── DAO 위임 ──────────────────────────────────────────────
+    public void save()                                                     { infra.dao.DamageInvestigationDao.getInstance().save(this); }
+    public static DamageInvestigation findByAccidentId(String accidentId)  { return infra.dao.DamageInvestigationDao.getInstance().findByAccidentId(accidentId); }
+
     public void setAccidentCause(String v) { this.accidentCause = v; }
     public void setClaim(Claim v) { this.claim = v; }
     public void setDamageDetail(String v) { this.damageDetail = v; }
@@ -101,19 +102,4 @@ public class DamageInvestigation implements Serializable {
     public void setCompensationLimit(Money v) { this.compensationLimit = v; }
     public void setFinalOpinion(String v) { this.finalOpinion = v; }
     public void setSavedAt(Date v) { this.savedAt = v; }
-
-    // ── 영속성 ────────────────────────────────────────────────
-    private static final List<DamageInvestigation> STORE;
-    static {
-        List<DamageInvestigation> loaded = FileStore.load("investigations.dat");
-        STORE = (loaded != null) ? loaded : new ArrayList<>();
-    }
-    public void save() {
-        STORE.removeIf(i -> i.accidentId.equals(this.accidentId));
-        STORE.add(this);
-        FileStore.save("investigations.dat", STORE);
-    }
-    public static DamageInvestigation findByAccidentId(String accidentId) {
-        return STORE.stream().filter(i -> i.accidentId.equals(accidentId)).findFirst().orElse(null);
-    }
 }

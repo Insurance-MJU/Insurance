@@ -15,24 +15,6 @@ public class PremiumCalculation implements Serializable {
     private static final double RATE_OWN_VEHICLE_DAMAGE        = 0.01417;
     private static final double RATE_EMERGENCY_SERVICE         = 0.00146;
 
-    // ── 할인 항목 ─────────────────────────────────────────────
-    public enum DiscountItem {
-        MILEAGE("마일리지 가입", 0.047),
-        NO_ACCIDENT_3Y("3년 무사고 할인", 0.030),
-        ABS("ABS 특별요율", 0.020);
-
-        private final String label;
-        private final double rate;
-
-        DiscountItem(String label, double rate) {
-            this.label = label;
-            this.rate  = rate;
-        }
-
-        public String getLabel() { return label; }
-        public double getRate()  { return rate; }
-    }
-
     private final long personalInjuryMandatory;
     private final long personalInjuryOptional;
     private final long propertyDamage;
@@ -61,7 +43,7 @@ public class PremiumCalculation implements Serializable {
     }
 
     // ── 정적 팩토리: 보험료 산출 ──────────────────────────────
-    public static PremiumCalculation calculate(long stdValue, Car.Purpose purpose,
+    public static PremiumCalculation calculate(long stdValue, CarPurpose purpose,
                                                List<DiscountItem> discounts) {
         double mult     = purposeMultiplier(purpose);
         double discRate = discounts.stream().mapToDouble(DiscountItem::getRate).sum();
@@ -78,9 +60,9 @@ public class PremiumCalculation implements Serializable {
         return new PremiumCalculation(pim, pio, pd, ai, uv, ovd, es, sub, discRate);
     }
 
-    private static double purposeMultiplier(Car.Purpose purpose) {
-        if (purpose == Car.Purpose.BUSINESS)   return 1.1;
-        if (purpose == Car.Purpose.COMMERCIAL) return 1.3;
+    private static double purposeMultiplier(CarPurpose purpose) {
+        if (purpose == CarPurpose.BUSINESS)   return 1.1;
+        if (purpose == CarPurpose.COMMERCIAL) return 1.3;
         return 1.0;
     }
 
