@@ -39,10 +39,10 @@ public class CT01ProductDesign {
         System.out.println("  3. 영업용자동차보험");
         System.out.print(" 선택: ");
         String lobChoice = sc.nextLine().trim();
-        Product.Target target;
-        if ("2".equals(lobChoice))      target = Product.Target.BUSINESS;
-        else if ("3".equals(lobChoice)) target = Product.Target.COMMERCIAL;
-        else                            target = Product.Target.PERSONAL;
+        Target target;
+        if ("2".equals(lobChoice))      target = Target.BUSINESS;
+        else if ("3".equals(lobChoice)) target = Target.COMMERCIAL;
+        else                            target = Target.PERSONAL;
 
         System.out.print(" 판매시작일 (yyyy-MM-dd): ");
         String startStr = sc.nextLine().trim();
@@ -77,7 +77,7 @@ public class CT01ProductDesign {
             // A1: 대인배상 I(필수) 포함 여부 검사
             boolean hasMandatory = idxs.stream()
                     .map(allCoverages::get)
-                    .anyMatch(c -> c.getCoverageType() == Coverage.CoverageType.PERSONAL_INJURY_MANDATORY);
+                    .anyMatch(c -> c.getCoverageType() == CoverageType.PERSONAL_INJURY_MANDATORY);
             if (!hasMandatory) {
                 System.out.println("[경고] 대인배상 I은 자동차보험의 필수 담보입니다. 담보 리스트에 추가해 주세요.");
                 continue;

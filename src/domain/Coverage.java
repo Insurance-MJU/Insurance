@@ -8,13 +8,13 @@ public class Coverage {
     private String coverageName;
     private CoverageType coverageType;
     private Deductible deductible;
-    private List<String> exclusions;
+    private List<Exclusion> exclusions;
     private Money limitAmount;
     private List<CoverageLimitOption> limitOptions;
     private LimitType limitType;
     private LimitUnit limitUnit;
     private boolean mandatory;
-    private List<String> provisions;
+    private List<StandardProvisions> provisions;
     private List<Coverage> requiredCoverages;
 
     // ── DAO 위임 ──────────────────────────────────────────────
@@ -40,8 +40,8 @@ public class Coverage {
     public void setLimitAmount(Money v)                   { this.limitAmount = v; }
     public void setLimitType(LimitType v)                 { this.limitType = v; }
     public void setLimitUnit(LimitUnit v)                 { this.limitUnit = v; }
-    public void setExclusions(List<String> v)             { this.exclusions = v; }
-    public void setProvisions(List<String> v)             { this.provisions = v; }
+    public void setExclusions(List<Exclusion> v)             { this.exclusions = v; }
+    public void setProvisions(List<StandardProvisions> v)   { this.provisions = v; }
     public void setRequiredCoverages(List<Coverage> v)    { this.requiredCoverages = v; }
 
     // Getters
@@ -49,11 +49,11 @@ public class Coverage {
     public String getCoverageName()                { return coverageName; }
     public CoverageType getCoverageType()          { return coverageType; }
     public Deductible getDeductible()              { return deductible; }
-    public List<String> getExclusions()            { return exclusions; }
-    public Money getLimitAmount()                  { return limitAmount; }
+    public List<Exclusion> getExclusions()             { return exclusions; }
+    public Money getLimitAmount()                      { return limitAmount; }
     public List<CoverageLimitOption> getLimitOptions() { return limitOptions; }
-    public LimitType getLimitType()                { return limitType; }
-    public LimitUnit getLimitUnit()                { return limitUnit; }
-    public List<String> getProvisions()            { return provisions; }
+    public LimitType getLimitType()                    { return limitType; }
+    public LimitUnit getLimitUnit()                    { return limitUnit; }
+    public List<StandardProvisions> getProvisions()    { return provisions; }
     public List<Coverage> getRequiredCoverages()   { return requiredCoverages; }
 }

@@ -2,6 +2,7 @@ package ui.employee;
 
 import domain.Accident;
 import domain.Claim;
+import domain.ClaimStatus;
 import domain.Employee;
 import infra.Context;
 
@@ -140,7 +141,7 @@ public class CL01AccidentRegistration {
                 claimId, accident,
                 customerName, now,
                 accident.getContractId(),
-                accident.getDescription(), Claim.ClaimStatus.INVESTIGATING
+                accident.getDescription(), ClaimStatus.INVESTIGATING
             );
             claim.setAssignedEmployee(empNo);
             claim.save();

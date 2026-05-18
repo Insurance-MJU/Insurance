@@ -32,7 +32,7 @@ public class CS01ProductSubscription {
         String ssn = sc.nextLine().trim();
 
         // E1: 나이 조건 검사 (PERSONAL → 만 20~39세)
-        if (selectedProduct.getTarget() == Product.Target.PERSONAL) {
+        if (selectedProduct.getTarget() == Target.PERSONAL) {
             int age = Party.calcAge(ssn);
             if (age != -1 && (age < 20 || age > 39)) {
                 System.out.println("\n[오류] 해당 상품의 가입 대상 연령 조건에 해당하지 않아 가입이 제한됩니다.");
@@ -103,10 +103,10 @@ public class CS01ProductSubscription {
         System.out.print(" 선택: ");
         String purposeStr = sc.nextLine().trim();
 
-        Car.Purpose purpose;
-        if ("2".equals(purposeStr))      purpose = Car.Purpose.COMMERCIAL;
-        else if ("3".equals(purposeStr)) purpose = Car.Purpose.BUSINESS;
-        else                             purpose = Car.Purpose.COMMUTE;
+        CarPurpose purpose;
+        if ("2".equals(purposeStr))      purpose = CarPurpose.COMMERCIAL;
+        else if ("3".equals(purposeStr)) purpose = CarPurpose.BUSINESS;
+        else                             purpose = CarPurpose.COMMUTE;
         car.changePurpose(purpose);
 
         System.out.println("\n 운전자 범위:");
@@ -142,7 +142,7 @@ public class CS01ProductSubscription {
         // calcAge가 -1을 반환하면 SSN 파싱 실패이므로 연령 제한은 통과(E1에서 이미 검사)
         int driverAge = Party.calcAge(ssn);
         boolean ageAllowed = (driverAge == -1) || car.isDriverAllowed(driverAge);
-        if (!ageAllowed || purpose == Car.Purpose.COMMERCIAL) {
+        if (!ageAllowed || purpose == CarPurpose.COMMERCIAL) {
             System.out.println("\n[거절] 가입이 거절되었습니다. 자세한 사항은 고객 센터로 연락주세요.(1588-1000)");
             returnToMenu();
             return;

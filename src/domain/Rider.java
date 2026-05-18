@@ -7,7 +7,7 @@ public class Rider {
     private Double discountRate;
     private List<Exclusion> exclusions;
     private boolean mandatory;
-    private String provisionId;
+    private StandardProvisions provision;
     private String riderCode;
     private String riderId;
     private String riderName;
@@ -20,7 +20,7 @@ public class Rider {
     public void setDescription(String v)   { this.description = v; }
     public void setDiscountRate(Double v)  { this.discountRate = v; }
     public void setMandatory(boolean v)    { this.mandatory = v; }
-    public void setProvisionId(String v)   { this.provisionId = v; }
+    public void setProvision(StandardProvisions v) { this.provision = v; }
     public void setRiderType(RiderType v)  { this.riderType = v; }
     public void setExclusions(List<Exclusion> v) { this.exclusions = v; }
 
@@ -33,7 +33,7 @@ public class Rider {
     public Double getDiscountRate()       { return discountRate; }
     public List<Exclusion> getExclusions(){ return exclusions; }
     public boolean isMandatory()          { return mandatory; }
-    public String getProvisionId()        { return provisionId; }
+    public StandardProvisions getProvision() { return provision; }
     public String getRiderCode()          { return riderCode; }
     public String getRiderId()            { return riderId; }
     public String getRiderName()          { return riderName; }
