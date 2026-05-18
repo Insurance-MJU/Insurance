@@ -1,9 +1,6 @@
 package ui.customer;
 
-import domain.PremiumCalculation;
-import domain.Car;
-import domain.Product;
-import infra.external.CarClient;
+import domain.*;
 import infra.Context;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +8,6 @@ import java.util.Scanner;
 
 public class CS03PremiumEstimate {
     private final Scanner sc = Context.getInstance().scanner();
-    private final CarClient carClient = new CarClient();
 
     public void run() {
         System.out.println("\n========================================");
@@ -27,13 +23,13 @@ public class CS03PremiumEstimate {
             System.out.println("\n[차량 정보 조회]");
             System.out.print(" 차량번호를 입력하세요: ");
             String carNo = sc.nextLine().trim();
-            car = carClient.findByCarNumber(carNo);
+            car = Car.findByCarNumber(carNo);
             if (car == null) {
                 System.out.println("[경고] 입력하신 차량번호로 차량 정보를 조회할 수 없습니다.");
                 System.out.print(" 다시 입력하시겠습니까? (Y/N): ");
                 if (!sc.nextLine().trim().equalsIgnoreCase("Y")) { returnToMenu(); return; }
             } else {
-                stdValue = carClient.getStandardValue(car.getCarNumber());
+                stdValue = Car.getStandardValue(car.getCarNumber());
             }
         }
 
@@ -41,16 +37,16 @@ public class CS03PremiumEstimate {
         System.out.println(" 1. 출퇴근/가정용  2. 영업용  3. 업무용");
         System.out.print(" 선택: ");
         String p = sc.nextLine().trim();
-        Car.Purpose purpose = "2".equals(p) ? Car.Purpose.COMMERCIAL
-                            : "3".equals(p) ? Car.Purpose.BUSINESS
-                            : Car.Purpose.COMMUTE;
+        CarPurpose purpose = "2".equals(p) ? CarPurpose.COMMERCIAL
+                            : "3".equals(p) ? CarPurpose.BUSINESS
+                            : CarPurpose.COMMUTE;
 
         runAsInclude(product, stdValue, purpose);
         returnToMenu();
     }
 
     /** @return 최종 보험료(양수) 또는 취소 시 -1 */
-    public long runAsInclude(Product product, long stdValue, Car.Purpose purpose) {
+    public long runAsInclude(Product product, long stdValue, CarPurpose purpose) {
         System.out.println("\n========================================");
         System.out.println(" CS-03: 예상보험료를 산출한다");
         System.out.println("========================================");
@@ -92,7 +88,7 @@ public class CS03PremiumEstimate {
 
         // Step 5~6: 할인 적용 항목 선택
         System.out.println("\n[할인 적용 항목 선택]");
-        for (PremiumCalculation.DiscountItem item : PremiumCalculation.DiscountItem.values()) {
+        for (DiscountItem item : DiscountItem.values()) {
             System.out.printf(" %d. %s  (할인율: %.1f%%)%n",
                 ordinal(item) + 1, item.getLabel(), item.getRate() * 100);
         }
@@ -100,10 +96,10 @@ public class CS03PremiumEstimate {
         System.out.print(" 선택 (쉼표로 복수 선택, 예: 1,2): ");
         String discountChoice = sc.nextLine().trim();
 
-        List<PremiumCalculation.DiscountItem> discounts = new ArrayList<>();
-        if (discountChoice.contains("1")) discounts.add(PremiumCalculation.DiscountItem.MILEAGE);
-        if (discountChoice.contains("2")) discounts.add(PremiumCalculation.DiscountItem.NO_ACCIDENT_3Y);
-        if (discountChoice.contains("3")) discounts.add(PremiumCalculation.DiscountItem.ABS);
+        List<DiscountItem> discounts = new ArrayList<>();
+        if (discountChoice.contains("1")) discounts.add(DiscountItem.MILEAGE);
+        if (discountChoice.contains("2")) discounts.add(DiscountItem.NO_ACCIDENT_3Y);
+        if (discountChoice.contains("3")) discounts.add(DiscountItem.ABS);
 
         // Step 7: 도메인이 보험료 산출
         PremiumCalculation calc = PremiumCalculation.calculate(stdValue, purpose, discounts);
@@ -144,8 +140,8 @@ public class CS03PremiumEstimate {
         return calc.getFinalPremium();
     }
 
-    private int ordinal(PremiumCalculation.DiscountItem item) {
-        PremiumCalculation.DiscountItem[] values = PremiumCalculation.DiscountItem.values();
+    private int ordinal(DiscountItem item) {
+        DiscountItem[] values = DiscountItem.values();
         for (int i = 0; i < values.length; i++) {
             if (values[i] == item) return i;
         }

@@ -1,20 +1,16 @@
 package ui.employee;
 
 import domain.Contract;
+import domain.Party;
 import domain.RiskAnalysisReport;
 import domain.Subscription;
-import domain.Party;
-import domain.Product;
-import domain.SelectedCoverage;
-import domain.SelectedRider;
-import domain.Insured;
+import domain.common.Money;
 import infra.Context;
 
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class UW01ContractReview {
     private final Scanner sc = Context.getInstance().scanner();
@@ -28,13 +24,14 @@ public class UW01ContractReview {
         List<Subscription> pendingList = Subscription.findPendingReview();
         System.out.println("\n[ 심사 대기 중인 청약 목록 ]");
         System.out.println("------------------------------------------------------------");
-        System.out.printf(" %-20s %-10s %-25s %-12s %-12s %-10s%n", "청약번호", "청약자명", "상품명", "보험료", "청약일자", "상태");
+        System.out.printf(" %-20s %-10s %-25s %-12s %-12s %-10s%n",
+            "청약번호", "청약자명", "상품명", "보험료", "청약일자", "상태");
         System.out.println("------------------------------------------------------------");
         for (Subscription s : pendingList) {
             System.out.printf(" %-20s %-10s %-25s %-12s %-12s %-10s%n",
                 s.getSubscriptionNo(), s.getApplicantName(), s.getProductName(),
                 NF.format(s.getPremium().getAmount()) + "원",
-                s.getSubscriptionDate(), s.getStatus().getLabel());
+                s.getSubscriptionDateDisplay(), s.getStatus().getLabel());
         }
         System.out.println("------------------------------------------------------------");
 
@@ -103,7 +100,7 @@ public class UW01ContractReview {
             NF.format(report.getSurchargeAmount().getAmount()));
         System.out.printf(" 합계 보험료  : %s원%n", NF.format(report.getTotalPremium().getAmount()));
         System.out.println(" 심사역       : " + report.getReviewerName());
-        System.out.println(" 심사 일시    : " + report.getReviewDate());
+        System.out.println(" 심사 일시    : " + report.getReviewDateDisplay());
         System.out.println(" 심사 의견    : " + report.getReviewOpinion());
         System.out.println("------------------------------------------------------------");
         System.out.println(" 1. 인수 승인");
@@ -115,49 +112,28 @@ public class UW01ContractReview {
         // Step 9: 인수 결정 — 도메인 메서드로 상태 전이
         switch (decision) {
             case "1":
-                // Step 10: 인수 승인 → Contract 발행
+                // Step 10: 인수 승인 → 계약 발행
                 sub.approve();
                 Subscription.save(sub);
 
-                // 계약자(Party) 생성
-                Party policyholder = new Party();
-                policyholder.setPartyId("PARTY-" + sub.getSubscriptionNo());
-                policyholder.setName(sub.getApplicantName());
+                Party holder = new Party();
+                holder.setPartyId("PARTY-" + sub.getSubscriptionNo());
+                holder.setName(sub.getApplicantName());
 
-                // 기명피보험자(Insured) 생성
-                Insured insured = Insured.ofDriver(sub.getApplicantName(), sub.getSsn());
+                Money finalPremium = report.getTotalPremium();
+                String policyNo = Contract.nextPolicyNo();
+                String contractId = Contract.nextContractId();
 
-                // 상품 조회 (productName 기준)
-                Product product = Product.findAll().stream()
-                    .filter(p -> p.getProductName().equals(sub.getProductName()))
-                    .findFirst().orElse(null);
-
-                // 상품 담보/특약 스냅샷 → SelectedCoverage / SelectedRider
-                List<SelectedCoverage> selectedCoverages = (product != null && product.getCoverages() != null)
-                    ? product.getCoverages().stream()
-                        .map(SelectedCoverage::from)
-                        .collect(Collectors.toList())
-                    : List.of();
-                List<SelectedRider> selectedRiders = (product != null && product.getRiders() != null)
-                    ? product.getRiders().stream()
-                        .map(SelectedRider::from)
-                        .collect(Collectors.toList())
-                    : List.of();
-
-                // Contract 발행 및 저장
-                String policyNo    = Contract.nextPolicyNo();
-                String contractId  = Contract.nextContractId();
-                Contract contract  = Contract.issue(
-                    policyNo, contractId,
-                    product, policyholder, insured,
-                    report.getTotalPremium(), sub.getCarNumber(),
-                    selectedCoverages, selectedRiders
+                Contract contract = Contract.issue(
+                    policyNo, contractId, sub.getProductName(),
+                    holder, finalPremium, sub.getCarNumber(),
+                    sub.getCoveragesDescription(), "", ""
                 );
-                Contract.save(contract);
+                contract.setSubscriptionNo(sub.getSubscriptionNo());
+                contract.save();
 
                 System.out.println("\n[인수 승인]");
-                System.out.println("계약번호(" + contractId + ")의 인수가 승인되었습니다.");
-                System.out.println("증권번호: " + policyNo);
+                System.out.println("계약번호(" + policyNo + ")의 인수가 승인되었습니다.");
                 break;
 
             case "2":

@@ -3,7 +3,7 @@ package ui.customer;
 import domain.Accident;
 import domain.Contract;
 import infra.Context;
-import infra.repository.AccidentRepository;
+import infra.external.IdentityVerificationService;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,22 +18,11 @@ public class CS04ClaimRequest {
         System.out.println(" CS-04: 보험금을 청구한다");
         System.out.println("========================================");
 
-        // Step 2~3: 본인 인증
-        System.out.println("\n[본인 인증 수단 선택]");
-        System.out.println(" 1. 공동인증서  2. 간편비밀번호  3. 휴대폰 인증");
-        System.out.print(" 인증 수단 선택: ");
-        sc.nextLine();
-
-        System.out.print(" 이름: ");
-        String authName = sc.nextLine().trim();
-        System.out.print(" 휴대전화번호 (예: 010-1234-5678): ");
-        String authPhone = sc.nextLine().trim();
-        System.out.print(" 인증번호 (예: 123456): ");
-        sc.nextLine();
-
-        // Step 4: 본인 인증 결과
-        System.out.println("\n[본인 인증 결과]");
-        System.out.println(" 고객명 확인: " + authName);
+        // Step 2~4: 본인 인증 (외부 시스템)
+        IdentityVerificationService.AuthResult auth =
+            new IdentityVerificationService(sc).verify();
+        String authName  = auth.name;
+        String authPhone = auth.phone;
 
         // Step 5: 계약 조회 동의
         System.out.print("\n계약 조회에 동의하십니까? (Y/N): ");
@@ -93,7 +82,7 @@ public class CS04ClaimRequest {
 
         // Step 12: 사고 접수 후 보상팀 이관
         Accident accident = Accident.report(
-            AccidentRepository.nextId(),
+            Accident.nextId(),
             authName,
             authPhone,
             accidentDate,
@@ -103,15 +92,15 @@ public class CS04ClaimRequest {
             selectedContract
         );
         accident.transferToCompensation();
-        AccidentRepository.save(accident);
+        accident.save();
 
         System.out.println("\n[보험금 청구 완료]");
         System.out.println("------------------------------------------------------------");
         System.out.println(" 접수 번호   : " + accident.getAccidentId());
-        System.out.println(" 사고 일시   : " + accident.getAccidentDate());
+        System.out.println(" 사고 일시   : " + accident.getAccidentDateDisplay());
         System.out.println(" 사고 장소   : " + accident.getAccidentLocation());
         System.out.println(" 경위        : " + accident.getAccidentDetail());
-        System.out.println(" 처리 상태   : " + accident.getStatus());
+        System.out.println(" 처리 상태   : " + accident.getStatusLabel());
         System.out.println(" 안내        : 담당자가 배정되면 연락드리겠습니다. (1~3 영업일 소요)");
         System.out.println("------------------------------------------------------------");
         System.out.println("\n보험금 청구가 완료되었습니다.");

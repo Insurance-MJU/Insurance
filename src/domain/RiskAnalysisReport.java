@@ -1,36 +1,12 @@
 package domain;
 
 import domain.common.Money;
-import infra.util.FileStore;
-
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class RiskAnalysisReport implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    // ── 정적 저장소 ───────────────────────────────────────────
-    private static final List<RiskAnalysisReport> STORE;
-
-    static {
-        List<RiskAnalysisReport> loaded = FileStore.load("risk_analysis.dat");
-        STORE = (loaded != null) ? loaded : new ArrayList<>();
-    }
-
-    public static RiskAnalysisReport findBySubscriptionNo(String subscriptionNo) {
-        return STORE.stream()
-            .filter(r -> r.getSubscriptionNo().equals(subscriptionNo))
-            .findFirst().orElse(null);
-    }
-
-    public static void save(RiskAnalysisReport report) {
-        STORE.removeIf(r -> r.getSubscriptionNo().equals(report.getSubscriptionNo()));
-        STORE.add(report);
-        FileStore.save("risk_analysis.dat", STORE);
-    }
 
     private String subscriptionNo;
     private double riskScore;
@@ -45,7 +21,7 @@ public class RiskAnalysisReport implements Serializable {
     private Money totalPremium;
     private String reviewGuide;
     private String reviewerName;
-    private String reviewDate;
+    private Date reviewDate;
     private String reviewOpinion;
 
     // ── 정적 팩토리: 신용정보 기반 위험 분석 ─────────────────
@@ -99,8 +75,7 @@ public class RiskAnalysisReport implements Serializable {
     public void confirm(String reviewerName, String opinion) {
         this.reviewerName  = reviewerName;
         this.reviewOpinion = opinion;
-        this.reviewDate    = LocalDateTime.now()
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        this.reviewDate    = new Date();
     }
 
     public boolean isPassed() {
@@ -145,6 +120,10 @@ public class RiskAnalysisReport implements Serializable {
         return 0.0;
     }
 
+    // ── DAO 위임 ──────────────────────────────────────────────
+    public static RiskAnalysisReport findBySubscriptionNo(String subscriptionNo) { return infra.dao.RiskAnalysisReportDao.getInstance().findBySubscriptionNo(subscriptionNo); }
+    public static void save(RiskAnalysisReport report)                           { infra.dao.RiskAnalysisReportDao.getInstance().save(report); }
+
     // ── Getters ───────────────────────────────────────────────
     public String getSubscriptionNo()        { return subscriptionNo; }
     public double getRiskScore()             { return riskScore; }
@@ -159,6 +138,7 @@ public class RiskAnalysisReport implements Serializable {
     public Money getTotalPremium()           { return totalPremium; }
     public String getReviewGuide()           { return reviewGuide; }
     public String getReviewerName()          { return reviewerName; }
-    public String getReviewDate()            { return reviewDate; }
+    public Date getReviewDate()              { return reviewDate; }
+    public String getReviewDateDisplay()     { return reviewDate != null ? new SimpleDateFormat("yyyy-MM-dd HH:mm").format(reviewDate) : ""; }
     public String getReviewOpinion()         { return reviewOpinion; }
 }

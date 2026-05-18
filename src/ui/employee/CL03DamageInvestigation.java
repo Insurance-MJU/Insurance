@@ -1,17 +1,18 @@
 package ui.employee;
 
 import domain.Accident;
+import domain.AccidentStatus;
+import domain.Claim;
 import domain.DamageInvestigation;
+import domain.InjuryGrade;
+import domain.common.Money;
 import infra.Context;
-import infra.repository.AccidentRepository;
-import infra.repository.InvestigationRepository;
 
 import java.util.Scanner;
 
 public class CL03DamageInvestigation {
     private final Scanner sc = Context.getInstance().scanner();
 
-    private static final int MAX_INJURY_GRADE = 14;
 
     /** 메인 메뉴에서 단독 실행 — 접수번호를 직접 입력받음 */
     public void run() {
@@ -39,7 +40,7 @@ public class CL03DamageInvestigation {
 
     // ── 공통 조사 로직 ────────────────────────────────────────────────────
     private void doInvestigation(String accNo) {
-        Accident accident = AccidentRepository.findById(accNo);
+        Accident accident = Accident.findById(accNo);
 
         while (true) {
             System.out.println("\n[ 현장 조사 폼 - " + accNo + " ]");
@@ -50,7 +51,7 @@ public class CL03DamageInvestigation {
             String opinion = sc.nextLine().trim();
             System.out.print("파손 부위 코드 (예: CAR-D-03): ");
             String damageCode = sc.nextLine().trim();
-            System.out.print("부상 급수      (1~14급, 예: 12): ");
+            System.out.print("부상 급수      (1~" + InjuryGrade.maxGrade() + "급, 예: 12): ");
             String injuryInput = sc.nextLine().trim();
             System.out.println("[보상 기준 확인]");
 
@@ -61,27 +62,32 @@ public class CL03DamageInvestigation {
             }
 
             // E1: 부상 급수 허용 범위 초과
-            int injuryGrade;
+            InjuryGrade injuryGrade;
             try {
-                injuryGrade = Integer.parseInt(injuryInput);
+                injuryGrade = InjuryGrade.fromGrade(Integer.parseInt(injuryInput));
             } catch (NumberFormatException e) {
-                System.out.println("\n[오류] >>> 부상 급수 <<< 입력된 급수 값이 허용 범위를 초과하였습니다. (허용: 1~" + MAX_INJURY_GRADE + "급)\n");
-                continue;
+                injuryGrade = null;
             }
-            if (injuryGrade < 1 || injuryGrade > MAX_INJURY_GRADE) {
-                System.out.println("\n[오류] >>> 부상 급수 <<< 입력된 급수 값이 허용 범위를 초과하였습니다. (허용: 1~" + MAX_INJURY_GRADE + "급)\n");
+            if (injuryGrade == null) {
+                System.out.println("\n[오류] >>> 부상 급수 <<< 입력된 급수 값이 허용 범위를 초과하였습니다. (허용: 1~" + InjuryGrade.maxGrade() + "급)\n");
                 continue;
             }
 
             // Step 4: 보상 한도 범위 출력
-            String expectedRepairCost = (accident != null && accident.getExpectedRepairCost() != null)
-                ? accident.getExpectedRepairCost() : "미산정";
-            String compensationLimit = (accident != null) ? accident.getCoverageLimit() : "1,000만원";
+            Money expectedRepairCostMoney = (accident != null && accident.getExpectedRepairCost() != null)
+                ? accident.getExpectedRepairCost() : new Money(0, "KRW");
+            Money compensationLimitMoney = (accident != null && accident.getCoverageLimit() != null)
+                ? accident.getCoverageLimit() : new Money(10_000_000, "KRW");
+
+            String expectedRepairCostDisplay = (accident != null && accident.getExpectedRepairCost() != null)
+                ? String.format("%,d원", accident.getExpectedRepairCost().getAmount()) : "미산정";
+            String compensationLimitDisplay = (accident != null && accident.getCoverageLimit() != null)
+                ? accident.getCoverageLimit().getAmount() / 10_000 + "만원" : "1,000만원";
 
             System.out.println("\n[ 보상 한도 범위 ]");
             System.out.println("------------------------------------------------------------");
-            System.out.println("  예상 수리비       : " + expectedRepairCost);
-            System.out.println("  대인 보상 한도     : " + compensationLimit);
+            System.out.println("  예상 수리비       : " + expectedRepairCostDisplay);
+            System.out.println("  대인 보상 한도     : " + compensationLimitDisplay);
             System.out.println("------------------------------------------------------------");
 
             // Step 5: 과실 비율 입력
@@ -124,7 +130,7 @@ public class CL03DamageInvestigation {
             System.out.println("  접수 번호      : " + accNo);
             System.out.println("  현장 조사 소견 : " + opinion);
             System.out.println("  파손 부위 코드 : " + damageCode);
-            System.out.println("  부상 급수      : " + injuryGrade + "급");
+            System.out.println("  부상 급수      : " + injuryGrade.getLabel());
             System.out.println("  당사 과실      : " + ourFault + "%");
             System.out.println("  타사 과실      : " + otherFault + "%");
             System.out.println("  면/부책 여부   : " + liability);
@@ -137,16 +143,17 @@ public class CL03DamageInvestigation {
             System.out.println("[조사 완료 및 저장]");
 
             // Step 10: 저장
+            Claim claim = Claim.findByAccidentId(accNo);
             DamageInvestigation inv = DamageInvestigation.create(
                 accNo, opinion, damageCode, injuryGrade,
                 ourFault, otherFault, liability,
-                expectedRepairCost, compensationLimit, finalOpinion
+                expectedRepairCostMoney, compensationLimitMoney, finalOpinion, claim
             );
-            InvestigationRepository.save(inv);
-            AccidentRepository.updateStatus(accNo, "처리중");
+            inv.save();
+            if (accident != null) { accident.setStatus(AccidentStatus.IN_PROGRESS); accident.save(); }
 
             System.out.println("\n┌──────────────────────────────────────────────────────────────┐");
-            System.out.println("│  조사 내역이 저장되었습니다. 일시: " + inv.getSavedAt() + "       │");
+            System.out.println("│  조사 내역이 저장되었습니다. 일시: " + inv.getSavedAtDisplay() + "       │");
             System.out.println("└──────────────────────────────────────────────────────────────┘");
             System.out.println("  → CL-02 손해액 산정 Basic Flow 6번으로 이동합니다.");
 

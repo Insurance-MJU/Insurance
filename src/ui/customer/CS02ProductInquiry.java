@@ -1,11 +1,9 @@
 package ui.customer;
 
-import domain.Product;
-import domain.ProductDocument;
-import domain.ProductRider;
-import domain.Rider;
+import domain.*;
 import infra.Context;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -20,7 +18,7 @@ public class CS02ProductInquiry {
      * CS-01에서 include 시 선택된 Product를 반환하며, 취소하면 null 반환.
      */
     public Product run() {
-        List<Product> products = Product.findAll();
+        List<Product> products = new ArrayList<>(Product.findAll());
 
         while (true) {
             // Step 1: 판매 중인 상품 목록 출력

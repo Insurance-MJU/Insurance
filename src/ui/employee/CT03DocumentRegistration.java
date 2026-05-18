@@ -1,7 +1,6 @@
 package ui.employee;
 
-import domain.Product;
-import domain.ProductDocument;
+import domain.*;
 import infra.Context;
 import infra.util.DocumentUploadHelper;
 import java.util.*;
@@ -9,10 +8,11 @@ import java.util.*;
 public class CT03DocumentRegistration {
     private final Scanner sc = Context.getInstance().scanner();
 
+    private static final String[] DOC_NAMES = {"사업방법서", "보험약관", "산출방법서"};
     private static final ProductDocument.DocType[] DOC_TYPES = {
         ProductDocument.DocType.BASIC_DOCUMENT,
         ProductDocument.DocType.GENERAL_TERMS,
-        ProductDocument.DocType.RATE_CALC_BASIS
+        ProductDocument.DocType.BASIC_DOCUMENT
     };
 
     public void run() {
@@ -42,21 +42,20 @@ public class CT03DocumentRegistration {
         System.out.println(" 지원 형식: pdf, docx, xlsx, hwpx");
 
         List<ProductDocument> newDocs = new ArrayList<>();
-        for (ProductDocument.DocType type : DOC_TYPES) {
-            System.out.printf("%n [%s]%n", type.getLabel());
-            String path = DocumentUploadHelper.inputFilePath(sc, type.getLabel());
+        for (int i = 0; i < DOC_NAMES.length; i++) {
+            System.out.printf("%n [%d] %s%n", i + 1, DOC_NAMES[i]);
+            String path = DocumentUploadHelper.inputFilePath(sc, DOC_NAMES[i]);
             if (path == null) {
                 System.out.println("   → 건너뜀");
                 continue;
             }
-            newDocs.add(ProductDocument.create(product.getProductId(), type, type.getLabel(), path));
+            newDocs.add(ProductDocument.create(product.getProductId(), DOC_TYPES[i], DOC_NAMES[i], path));
         }
 
         System.out.print("\n[저장] (Enter): ");
         sc.nextLine();
 
         product.addDocuments(newDocs);
-        Product.save(product);
 
         System.out.println("\n┌──────────────────────────────────────┐");
         System.out.println("│  파일이 성공적으로 저장되었습니다.    │");
@@ -65,7 +64,7 @@ public class CT03DocumentRegistration {
     }
 
     private Product selectProduct() {
-        List<Product> products = Product.findAll();
+        List<Product> products = new ArrayList<>(Product.findAll());
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

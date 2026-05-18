@@ -8,6 +8,9 @@ import java.util.Arrays;
 // 신용정보원(NICE/KCB) 외부 시스템 Mock
 public class CreditBureauClient {
 
+    private static final CreditBureauClient INSTANCE = new CreditBureauClient();
+    public static CreditBureauClient getInstance() { return INSTANCE; }
+
     public boolean isAvailable() {
         return true;
     }

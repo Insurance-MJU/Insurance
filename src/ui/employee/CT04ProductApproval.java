@@ -1,7 +1,6 @@
 package ui.employee;
 
-import domain.Product;
-import domain.ProductDocument;
+import domain.*;
 import infra.Context;
 import infra.external.FssClient;
 import infra.util.DocumentUploadHelper;
@@ -42,7 +41,7 @@ public class CT04ProductApproval {
 
         // ── Step 8: 인가신청서 등록 ──────────────────────────
         System.out.println("\n── 보험상품 인가신청서 등록 ────────────");
-        String appPath = DocumentUploadHelper.inputFilePath(sc, ProductDocument.DocType.APPROVAL_APPLICATION.getLabel());
+        String appPath = DocumentUploadHelper.inputFilePath(sc, "인가신청서");
         if (appPath == null) { returnToMenu(); return; }
 
         System.out.print("\n[저장] (Enter): ");
@@ -50,7 +49,7 @@ public class CT04ProductApproval {
 
         product.addDocument(ProductDocument.createSubmitted(
             product.getProductId(), ProductDocument.DocType.APPROVAL_APPLICATION,
-            ProductDocument.DocType.APPROVAL_APPLICATION.getLabel(), appPath));
+            "보험상품 인가신청서", appPath));
 
         // ── Step 9: [인가 신청] 클릭 ─────────────────────────
         System.out.print("\n[인가 신청] (Enter): ");
@@ -72,7 +71,7 @@ public class CT04ProductApproval {
 
         // ── Step 10: 신청 완료 ────────────────────────────────
         product.applyForApproval();
-        Product.save(product);
+        product.save();
         System.out.println("\n[안내] 인가 신청이 완료되었습니다. 15일 이내에 확인 결과가 통보됩니다.");
 
         // ── Step 11: [인가 완료] 클릭 ────────────────────────
@@ -80,34 +79,20 @@ public class CT04ProductApproval {
         System.out.print("[인가 완료] (Enter): ");
         sc.nextLine();
 
-        FssClient.ReviewResult result = fssClient.getApprovalReviewResult(product.getProductId());
-        System.out.println("\n[금융감독원 심사 결과: " + result.getLabel() + "]");
+        // A1/A2: 심사 결과 (mock - 승인)
+        System.out.println("\n[금융감독원 심사 결과: 승인]");
+        product.completeApproval();
+        product.save();
 
-        switch (result) {
-            case APPROVED:
-                // Basic Flow: 인가 승인
-                product.completeApproval();
-                Product.save(product);
-                System.out.println("\n┌────────────────────────────────────────┐");
-                System.out.println("│  해당 상품의 인가가 최종 승인되었습니다. │");
-                System.out.println("└────────────────────────────────────────┘");
-                break;
-            case REJECTED:
-                // A1: 인가 거절 → 상품 재설계 필요
-                product.rejectApproval();
-                Product.save(product);
-                System.out.println("[안내] 인가가 거절되었습니다. 상품을 재설계한 후 다시 신청하십시오.");
-                break;
-            case SUPPLEMENT_REQUIRED:
-                // A2: 보완 요청 → 서류 보완 후 재제출
-                System.out.println("[안내] 서류 보완이 요청되었습니다. 보완 후 다시 제출하십시오.");
-                break;
-        }
+        // ── Step 12: 인가 완료 팝업 ──────────────────────────
+        System.out.println("\n┌────────────────────────────────────────┐");
+        System.out.println("│  해당 상품의 인가가 최종 승인되었습니다. │");
+        System.out.println("└────────────────────────────────────────┘");
         returnToMenu();
     }
 
     private Product selectProduct() {
-        List<Product> products = Product.findAll();
+        List<Product> products = new ArrayList<>(Product.findAll());
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

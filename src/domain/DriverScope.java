@@ -7,7 +7,8 @@ public class DriverScope implements Serializable {
 
     private int minAge;
     private ScopeType scopeType;
-    private Party familyMember;  // 가족한정 시 등록된 가족 구성원
+    private Party familyMember;
+    private String familyMemberInfo;
 
     public enum ScopeType {
         SELF("본인한정"), FAMILY("가족한정"), ALL("누구나");
@@ -29,6 +30,12 @@ public class DriverScope implements Serializable {
         this.minAge = minAge;
     }
 
+    /** CS01처럼 "이름 / 관계 / 생년월일" 문자열로 가족 정보를 등록할 때 사용 */
+    public void restrictToFamily(String info) {
+        this.scopeType = ScopeType.FAMILY;
+        this.familyMemberInfo = info;
+    }
+
     public boolean allowsAge(int age)  { return age >= minAge; }
     public boolean isRestricted()      { return scopeType != ScopeType.ALL; }
 
@@ -40,6 +47,11 @@ public class DriverScope implements Serializable {
     public int getMinAge()          { return minAge; }
     public ScopeType getScopeType() { return scopeType; }
     public Party getFamilyMember()  { return familyMember; }
+    public String getFamilyMemberInfo() {
+        if (familyMemberInfo != null) return familyMemberInfo;
+        if (familyMember != null) return familyMember.getName();
+        return "";
+    }
 
     // Setters
     public void setMinAge(int v)          { this.minAge = v; }

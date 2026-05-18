@@ -1,7 +1,6 @@
 package ui.employee;
 
-import domain.Product;
-import domain.ProductDocument;
+import domain.*;
 import infra.Context;
 import infra.external.KidiClient;
 import infra.util.DocumentUploadHelper;
@@ -72,7 +71,7 @@ public class CT05RateVerification {
 
         // ── Step 6: 요율확인서 업로드 ────────────────────────
         System.out.println("\n[안내] 보험개발원으로부터 요율확인서를 수령한 후 업로드하십시오.");
-        String confirmPath = DocumentUploadHelper.inputFilePath(sc, ProductDocument.DocType.RATE_VERIFICATION.getLabel());
+        String confirmPath = DocumentUploadHelper.inputFilePath(sc, "요율확인서");
         if (confirmPath == null) return false;
 
         System.out.print("\n[저장] (Enter): ");
@@ -81,7 +80,7 @@ public class CT05RateVerification {
         // 요율확인서 ProductDocument 저장
         product.addDocument(ProductDocument.createReceived(
             product.getProductId(), ProductDocument.DocType.RATE_VERIFICATION,
-            ProductDocument.DocType.RATE_VERIFICATION.getLabel(), confirmPath));
+            "요율확인서", confirmPath));
 
         // ── Step 7: 인가신청서 등록 안내 ─────────────────────
         System.out.println("\n[안내] 요율확인서가 등록되었습니다. 인가신청서를 등록하시겠습니까?");
@@ -96,7 +95,7 @@ public class CT05RateVerification {
     }
 
     private Product selectProduct() {
-        List<Product> products = Product.findAll();
+        List<Product> products = new ArrayList<>(Product.findAll());
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

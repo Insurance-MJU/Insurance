@@ -3,7 +3,6 @@ package infra.external;
 import domain.Car;
 import domain.DriverScope;
 import domain.Model;
-
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +12,9 @@ import java.util.Map;
  * 차량 기본 정보, 안전장치, 기준가액을 제공한다.
  */
 public class CarClient {
+
+    private static final CarClient INSTANCE = new CarClient();
+    public static CarClient getInstance() { return INSTANCE; }
 
     private static final Map<String, Car> STORE = new HashMap<>();
 

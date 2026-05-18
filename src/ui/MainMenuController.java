@@ -1,6 +1,7 @@
 package ui;
 
 import domain.common.UserRole;
+import domain.exception.ValidationException;
 import infra.Context;
 import ui.customer.*;
 import ui.employee.*;
@@ -57,6 +58,16 @@ public class MainMenuController {
     }
 
     private void dispatch(String input) {
+        try {
+            doDispatch(input);
+        } catch (ValidationException e) {
+            System.out.println();
+            e.getErrors().forEach(err -> System.out.println("[입력 오류] " + err));
+            System.out.println();
+        }
+    }
+
+    private void doDispatch(String input) {
         UserRole role = Context.getInstance().getCurrentUser().getRole();
 
         if (role == UserRole.CUSTOMER) {

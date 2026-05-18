@@ -1,12 +1,6 @@
 package ui.employee;
 
-import domain.PremiumCalculation;
-import domain.Product;
-import domain.ProductCoverage;
-import domain.ProductRider;
-import domain.Coverage;
-import domain.CoverageLimitOption;
-import domain.Rider;
+import domain.*;
 import infra.Context;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -27,19 +21,28 @@ public class CT01ProductDesign {
         System.out.print(" 상품명: ");
         String productName = sc.nextLine().trim();
 
-        System.out.print(" 상품코드 (예: CAR-2026-MZ): ");
-        String productCode = sc.nextLine().trim();
+        // E1: 상품코드 중복 검사
+        String productCode;
+        while (true) {
+            System.out.print(" 상품코드 (예: CAR-2026-MZ): ");
+            productCode = sc.nextLine().trim();
+            if (Product.existsByCode(productCode)) {
+                System.out.println("[오류] 이미 사용 중인 상품코드입니다.");
+            } else {
+                break;
+            }
+        }
 
         System.out.println(" 보험종목:");
-        Product.Target[] targets = Product.Target.values();
-        for (int i = 0; i < targets.length; i++) {
-            System.out.printf("  %d. %s%n", i + 1, targets[i].getAutoLabel());
-        }
+        System.out.println("  1. 개인용자동차보험");
+        System.out.println("  2. 업무용자동차보험");
+        System.out.println("  3. 영업용자동차보험");
         System.out.print(" 선택: ");
         String lobChoice = sc.nextLine().trim();
-        int lobIdx = 0;
-        try { lobIdx = Integer.parseInt(lobChoice) - 1; } catch (NumberFormatException ignored) {}
-        Product.Target target = (lobIdx >= 0 && lobIdx < targets.length) ? targets[lobIdx] : targets[0];
+        Target target;
+        if ("2".equals(lobChoice))      target = Target.BUSINESS;
+        else if ("3".equals(lobChoice)) target = Target.COMMERCIAL;
+        else                            target = Target.PERSONAL;
 
         System.out.print(" 판매시작일 (yyyy-MM-dd): ");
         String startStr = sc.nextLine().trim();
@@ -58,7 +61,7 @@ public class CT01ProductDesign {
         sc.nextLine();
 
         // ── Step 4~5: 담보 선택 (CoverageRepository) ─────────────
-        List<Coverage> allCoverages = Coverage.catalog();
+        List<Coverage> allCoverages = Coverage.findAll();
         Map<Coverage, List<CoverageLimitOption>> selectedOptions;
 
         while (true) {
@@ -72,8 +75,10 @@ public class CT01ProductDesign {
             List<Integer> idxs = parseNumbers(sc.nextLine().trim(), allCoverages.size());
 
             // A1: 대인배상 I(필수) 포함 여부 검사
-            List<Coverage> selectedCoverages = idxs.stream().map(allCoverages::get).collect(Collectors.toList());
-            if (!Coverage.hasMandatoryCoverage(selectedCoverages)) {
+            boolean hasMandatory = idxs.stream()
+                    .map(allCoverages::get)
+                    .anyMatch(c -> c.getCoverageType() == CoverageType.PERSONAL_INJURY_MANDATORY);
+            if (!hasMandatory) {
                 System.out.println("[경고] 대인배상 I은 자동차보험의 필수 담보입니다. 담보 리스트에 추가해 주세요.");
                 continue;
             }
@@ -104,7 +109,7 @@ public class CT01ProductDesign {
         sc.nextLine();
 
         // ── Step 6~7: 특약 선택 (RiderRepository) ────────────────
-        List<Rider> allRiders = Rider.catalog();
+        List<Rider> allRiders = Rider.findAll();
         System.out.println("\n── 특약 목록 ──────────────────────────");
         for (int i = 0; i < allRiders.size(); i++) {
             Rider r = allRiders.get(i);
@@ -147,11 +152,11 @@ public class CT01ProductDesign {
 
         List<String> selectedCoverageNames = selectedOptions.keySet().stream()
                 .map(Coverage::getCoverageName).collect(Collectors.toList());
-        PremiumCalculation.PricingResult premiumResult = new CT02PremiumCalculation().runAsInclude(productName, selectedCoverageNames, saleEnd);
+        long[] premiumResult = new CT02PremiumCalculation().runAsInclude(productName, selectedCoverageNames, saleEnd);
         if (premiumResult == null) { returnToMenu(); return; }
 
-        long finalPremium = premiumResult.getFinalPremium();
-        long reserve      = premiumResult.getReserve();
+        long finalPremium = premiumResult[0];
+        long reserve      = premiumResult[1];
 
         // ── Step 10: 최종 결과 ────────────────────────────────
         System.out.println("\n── 최종 산출 결과 ──────────────────────");
@@ -162,30 +167,15 @@ public class CT01ProductDesign {
         System.out.print("\n[상품 확정] (Enter): ");
         sc.nextLine();
 
-        Product product;
-        try {
-            product = Product.design(productCode, productName, description, target, saleStart, saleEnd);
-        } catch (IllegalArgumentException e) {
-            // E1: 상품코드 중복
-            System.out.println("\n[오류] " + e.getMessage());
-            returnToMenu();
-            return;
-        }
-        product.setCoverages(buildProductCoverages(selectedOptions));
+        Product product = Product.design(productCode, productName, description, target, saleStart, saleEnd);
         product.setRiders(buildProductRiders(selectedRiders));
-        Product.save(product);
+        product.save();
 
         // ── Step 12: 완료 팝업 ────────────────────────────────
         System.out.println("\n┌──────────────────────────────────────┐");
         System.out.println("│    상품 설계가 완료되었습니다.         │");
         System.out.println("└──────────────────────────────────────┘");
         returnToMenu();
-    }
-
-    private List<ProductCoverage> buildProductCoverages(Map<Coverage, List<CoverageLimitOption>> selectedOptions) {
-        return selectedOptions.entrySet().stream()
-            .map(e -> ProductCoverage.from(e.getKey(), e.getValue()))
-            .collect(Collectors.toList());
     }
 
     private List<ProductRider> buildProductRiders(List<Rider> riders) {

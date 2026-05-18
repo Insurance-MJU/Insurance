@@ -7,12 +7,15 @@ public class Car extends Insured {
     private DriverScope driverScope;
     private Model model;
     private String owner;
-    private Purpose purpose;
+    private CarPurpose purpose;
 
-    public enum Purpose { COMMUTE, BUSINESS, COMMERCIAL }
+    // ── DAO 위임 ──────────────────────────────────────────────
+    public static Car findByCarNumber(String carNumber)      { return infra.dao.CarDao.getInstance().findByCarNumber(carNumber); }
+    public static String getSafetyDevices(String carNumber)  { return infra.dao.CarDao.getInstance().getSafetyDevices(carNumber); }
+    public static long getStandardValue(String carNumber)    { return infra.dao.CarDao.getInstance().getStandardValue(carNumber); }
 
     // ── 비즈니스 메서드 ───────────────────────────────────────
-    public void changePurpose(Purpose purpose) {
+    public void changePurpose(CarPurpose purpose) {
         this.purpose = purpose;
     }
 
@@ -22,10 +25,7 @@ public class Car extends Insured {
     }
 
     public String getPurposeLabel() {
-        if (purpose == Purpose.COMMUTE)    return "출퇴근/가정용";
-        if (purpose == Purpose.BUSINESS)   return "업무용";
-        if (purpose == Purpose.COMMERCIAL) return "영업용";
-        return "";
+        return purpose != null ? purpose.getLabel() : "";
     }
 
     // Setters
@@ -35,7 +35,7 @@ public class Car extends Insured {
     public void setDriverScope(DriverScope v){ this.driverScope = v; }
     public void setModel(Model v)           { this.model = v; }
     public void setOwner(String v)          { this.owner = v; }
-    public void setPurpose(Purpose v)       { this.purpose = v; }
+    public void setPurpose(CarPurpose v)    { this.purpose = v; }
 
     // Getters
     public String getCarId()          { return carId; }
@@ -44,5 +44,5 @@ public class Car extends Insured {
     public DriverScope getDriverScope(){ return driverScope; }
     public Model getModel()           { return model; }
     public String getOwner()          { return owner; }
-    public Purpose getPurpose()       { return purpose; }
+    public CarPurpose getPurpose()    { return purpose; }
 }

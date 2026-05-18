@@ -3,33 +3,25 @@ package domain;
 import java.util.Date;
 
 public class ClaimDocument {
-    private String claimId;
+    private Claim claim;
     private String documentId;
     private String documentName;
-    private DocumentType documentType;
     private String filePath;
     private Date uploadDate;
     private boolean verified;
 
-    public enum DocumentType {
-        ACCIDENT_PHOTO,      // 사고 현장 사진
-        POLICE_REPORT,       // 경찰 사고 확인서
-        MEDICAL_CERTIFICATE, // 진단서
-        REPAIR_ESTIMATE,     // 수리 견적서
-        CLAIM_FORM,          // 보험금 청구서
-        ASSESSMENT_OPINION,  // 사정의견서 (CL-04 결재용)
-        INVESTIGATION_REPORT // 손해 조사 보고서 (CL-03)
-    }
+    public String getClaimId()       { return claim != null ? claim.getClaimId() : null; }
+    public Claim getClaim()          { return claim; }
+    public String getDocumentId()    { return documentId; }
+    public String getDocumentName()  { return documentName; }
+    public String getFilePath()      { return filePath; }
+    public Date getUploadDate()      { return uploadDate; }
+    public boolean isVerified()      { return verified; }
 
-    public String getDocument() { return null; }
-    public boolean uploadDocument(String filePath) { return false; }
-    public boolean verifyDocument() { return false; }
-
-    public String getClaimId() { return claimId; }
-    public String getDocumentId() { return documentId; }
-    public String getDocumentName() { return documentName; }
-    public DocumentType getDocumentType() { return documentType; }
-    public String getFilePath() { return filePath; }
-    public Date getUploadDate() { return uploadDate; }
-    public boolean isVerified() { return verified; }
+    public void setClaim(Claim v)          { this.claim = v; }
+    public void setDocumentId(String v)    { this.documentId = v; }
+    public void setDocumentName(String v)  { this.documentName = v; }
+    public void setFilePath(String v)      { this.filePath = v; }
+    public void setUploadDate(Date v)      { this.uploadDate = v; }
+    public void setVerified(boolean v)     { this.verified = v; }
 }

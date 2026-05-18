@@ -1,53 +1,40 @@
 package domain;
 
+import domain.common.Money;
+import domain.exception.ValidationException;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Accident implements Serializable {
     private static final long serialVersionUID = 1L;
     private String accidentId;
-    private String accidentDate;
+    private Date accidentDate;
     private String accidentDetail;
     private String accidentLocation;
     private String reportedBy;
     private String phone;
-    private String status;
+    private AccidentStatus status;
     private String description;
     private String documents;
     private String contractId;
     private String coverageDescription;
-    private String coverageLimit;
-    private String personalInjuryLimit;
+    private Money coverageLimit;
+    private Money personalInjuryLimit;
     private String vehicleInfo;
-    private String expectedRepairCost;
+    private Money expectedRepairCost;
     private String regionCode;
-
-    public enum AccidentType {
-        COLLISION,       // 충돌사고 (차량 간)
-        REAR_END,        // 추돌사고
-        SINGLE,          // 단독사고
-        HIT_AND_RUN,     // 뺑소니
-        FIRE,            // 차량 화재
-        FLOOD,           // 침수
-        THEFT,           // 도난
-        NATURAL_DISASTER // 자연재해 (태풍·우박 등)
-    }
-
-    public enum SeverityLevel {
-        MINOR,      // 경상 (부상 8~14급)
-        MODERATE,   // 중상 (부상 1~7급)
-        SEVERE,     // 중증
-        FATAL,      // 사망
-        TOTAL_LOSS  // 전손 (차량)
-    }
+    private AccidentType accidentType;
+    private SeverityLevel severityLevel;
 
     public Accident() {}
 
     public Accident(String accidentId, String accidentDate, String reportedBy, String phone,
                     String description, String accidentLocation, String accidentDetail,
                     String documents, String contractId, String coverageDescription,
-                    String coverageLimit, String vehicleInfo, String status) {
+                    Money coverageLimit, String vehicleInfo, AccidentStatus status) {
         this.accidentId = accidentId;
-        this.accidentDate = accidentDate;
+        try { this.accidentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(accidentDate); } catch (Exception e) { this.accidentDate = null; }
         this.reportedBy = reportedBy;
         this.phone = phone;
         this.description = description;
@@ -66,74 +53,100 @@ public class Accident implements Serializable {
                                    String accidentDate, String accidentLocation,
                                    String accidentDetail, String documents,
                                    Contract contract) {
+        java.util.List<String> errors = new java.util.ArrayList<>();
+        if (reportedBy == null || reportedBy.isBlank())         errors.add("신고자 이름은 필수입니다");
+        if (phone == null || phone.isBlank())                   errors.add("연락처는 필수입니다");
+        if (accidentDate == null || accidentDate.isBlank())     errors.add("사고일시는 필수입니다");
+        if (accidentLocation == null || accidentLocation.isBlank()) errors.add("사고장소는 필수입니다");
+        if (contract == null)                                   errors.add("계약 정보는 필수입니다");
+        if (!errors.isEmpty()) throw new ValidationException(errors);
+
         Accident a = new Accident();
         a.accidentId          = accidentId;
         a.reportedBy          = reportedBy;
         a.phone               = phone;
         a.description         = "보험금 청구";
-        a.accidentDate        = accidentDate;
+        try { a.accidentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(accidentDate); } catch (Exception e) { a.accidentDate = null; }
         a.accidentLocation    = accidentLocation;
         a.accidentDetail      = accidentDetail;
         a.documents           = documents;
         a.contractId          = contract.getContractId();
         a.coverageDescription = contract.getCoveragesDescription();
-        a.coverageLimit       = contract.getCoverageLimit();
+        a.coverageLimit       = parseMoneyString(contract.getCoverageLimit());
         a.vehicleInfo         = contract.getCarNumber();
-        a.status              = "미처리";
+        a.status              = AccidentStatus.PENDING;
         return a;
     }
 
+    private static Money parseMoneyString(String s) {
+        if (s == null || s.isEmpty()) return new Money(0, "KRW");
+        long mult = s.contains("만") ? 10_000L : 1L;
+        String digits = s.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) return new Money(0, "KRW");
+        return new Money(Long.parseLong(digits) * mult, "KRW");
+    }
+
     // ── 비즈니스 메서드: 상태 전이 ────────────────────────────
-    public void transferToCompensation() { this.status = "보상팀 이관"; }
-    public void startProcessing()        { this.status = "처리중"; }
-    public void complete()               { this.status = "처리완료"; }
-    public boolean isPending()           { return "미처리".equals(status); }
+    public void transferToCompensation() { this.status = AccidentStatus.TRANSFERRED; }
+    public void startProcessing()        { this.status = AccidentStatus.IN_PROGRESS; }
+    public void complete()               { this.status = AccidentStatus.CLOSED; }
+    public boolean isPending()           { return status == AccidentStatus.PENDING; }
 
     public boolean updateAccidentDetail(String detail) { this.accidentDetail = detail; return true; }
-    public boolean validateAccident()    { return accidentDate != null && !accidentDate.isEmpty()
-                                              && accidentLocation != null && !accidentLocation.isEmpty(); }
+    public boolean validateAccident() {
+        return accidentDate != null && accidentLocation != null && !accidentLocation.isEmpty();
+    }
 
-    /** coverageLimit 문자열("2,000만원")에서 숫자(2000)만 추출 */
     public int getCoverageLimitManwon() {
         if (coverageLimit == null) return 2000;
-        try {
-            return Integer.parseInt(coverageLimit.replaceAll("[^0-9]", ""));
-        } catch (NumberFormatException e) {
-            return 2000;
-        }
+        return (int)(coverageLimit.getAmount() / 10_000);
     }
 
     public String getAccidentId() { return accidentId; }
-    public String getAccidentDate() { return accidentDate; }
+    public Date getAccidentDate() { return accidentDate; }
+    public String getAccidentDateDisplay() { return accidentDate != null ? new SimpleDateFormat("yyyy-MM-dd HH:mm").format(accidentDate) : ""; }
     public String getAccidentDetail() { return accidentDetail; }
     public String getAccidentLocation() { return accidentLocation; }
     public String getReportedBy() { return reportedBy; }
     public String getPhone() { return phone; }
-    public String getStatus() { return status; }
+    public AccidentStatus getStatus() { return status; }
+    public String getStatusLabel() { return status != null ? status.getLabel() : ""; }
     public String getDescription() { return description; }
     public String getDocuments() { return documents; }
     public String getContractId() { return contractId; }
     public String getCoverageDescription() { return coverageDescription; }
-    public String getCoverageLimit() { return coverageLimit; }
-    public String getPersonalInjuryLimit() { return personalInjuryLimit; }
+    public Money getCoverageLimit() { return coverageLimit; }
+    public Money getPersonalInjuryLimit() { return personalInjuryLimit; }
     public String getVehicleInfo() { return vehicleInfo; }
-    public String getExpectedRepairCost() { return expectedRepairCost; }
+    public Money getExpectedRepairCost() { return expectedRepairCost; }
     public String getRegionCode() { return regionCode; }
+    public AccidentType getAccidentType() { return accidentType; }
+    public SeverityLevel getSeverityLevel() { return severityLevel; }
+
+    // ── DAO 위임 ──────────────────────────────────────────────
+    public static java.util.List<Accident> findByDateAndStatus(String date, String status) { return infra.dao.AccidentDao.getInstance().findByDateAndStatus(date, status); }
+    public static java.util.List<Accident> findPendingAccidents()                          { return infra.dao.AccidentDao.getInstance().findPendingAccidents(); }
+    public static Accident findById(String accidentId)                                     { return infra.dao.AccidentDao.getInstance().findById(accidentId); }
+    public static Accident findByCustomerName(String name)                                 { return infra.dao.AccidentDao.getInstance().findByCustomerName(name); }
+    public static String nextId()                                                          { return infra.dao.AccidentDao.getInstance().nextId(); }
+    public void save()                                                                     { infra.dao.AccidentDao.getInstance().save(this); }
 
     public void setAccidentId(String v) { this.accidentId = v; }
-    public void setAccidentDate(String v) { this.accidentDate = v; }
+    public void setAccidentDate(Date v) { this.accidentDate = v; }
     public void setAccidentDetail(String v) { this.accidentDetail = v; }
     public void setAccidentLocation(String v) { this.accidentLocation = v; }
     public void setReportedBy(String v) { this.reportedBy = v; }
     public void setPhone(String v) { this.phone = v; }
-    public void setStatus(String v) { this.status = v; }
+    public void setStatus(AccidentStatus v) { this.status = v; }
     public void setDescription(String v) { this.description = v; }
     public void setDocuments(String v) { this.documents = v; }
     public void setContractId(String v) { this.contractId = v; }
     public void setCoverageDescription(String v) { this.coverageDescription = v; }
-    public void setCoverageLimit(String v) { this.coverageLimit = v; }
-    public void setPersonalInjuryLimit(String v) { this.personalInjuryLimit = v; }
+    public void setCoverageLimit(Money v) { this.coverageLimit = v; }
+    public void setPersonalInjuryLimit(Money v) { this.personalInjuryLimit = v; }
     public void setVehicleInfo(String v) { this.vehicleInfo = v; }
-    public void setExpectedRepairCost(String v) { this.expectedRepairCost = v; }
+    public void setExpectedRepairCost(Money v) { this.expectedRepairCost = v; }
     public void setRegionCode(String v) { this.regionCode = v; }
+    public void setAccidentType(AccidentType v) { this.accidentType = v; }
+    public void setSeverityLevel(SeverityLevel v) { this.severityLevel = v; }
 }

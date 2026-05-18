@@ -2,9 +2,8 @@ package ui.customer;
 
 import domain.*;
 import domain.common.Money;
-import domain.Contract;
 import infra.Context;
-import infra.external.CarClient;
+import infra.external.IdentityVerificationService;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -12,7 +11,6 @@ import java.util.stream.Collectors;
 public class CS01ProductSubscription {
 
     private final Scanner sc = Context.getInstance().scanner();
-    private final CarClient carClient = new CarClient();
 
     public void run() {
         System.out.println("\n========================================");
@@ -26,16 +24,15 @@ public class CS01ProductSubscription {
             return;
         }
 
-        // ── Step 1: 본인 확인 ────────────────────────────────
-        System.out.println("\n[본인 확인]");
-        System.out.print(" 이름: ");
-        String name = sc.nextLine().trim();
-
-        System.out.print(" 주민등록번호 (예: 020101-3******): ");
-        String ssn = sc.nextLine().trim();
+        // ── Step 1: 본인 인증 (외부 시스템) ─────────────────
+        IdentityVerificationService.AuthResult auth =
+            new IdentityVerificationService(sc).verify();
+        String name  = auth.name;
+        String ssn   = auth.ssn;
+        String phone = auth.phone;
 
         // E1: 나이 조건 검사 (PERSONAL → 만 20~39세)
-        if (selectedProduct.getTarget() == Product.Target.PERSONAL) {
+        if (selectedProduct.getTarget() == Target.PERSONAL) {
             int age = Party.calcAge(ssn);
             if (age != -1 && (age < 20 || age > 39)) {
                 System.out.println("\n[오류] 해당 상품의 가입 대상 연령 조건에 해당하지 않아 가입이 제한됩니다.");
@@ -43,9 +40,6 @@ public class CS01ProductSubscription {
                 return;
             }
         }
-
-        System.out.print(" 전화번호 (예: 010-1234-5678): ");
-        String phone = sc.nextLine().trim();
 
         System.out.println("\n[개인정보 처리 동의]");
         System.out.println(" (필수) 개인정보 수집·이용 동의");
@@ -63,7 +57,7 @@ public class CS01ProductSubscription {
         while (car == null) {
             System.out.print(" 차량번호를 입력하세요: ");
             String carNo = sc.nextLine().trim();
-            car = carClient.findByCarNumber(carNo);
+            car = Car.findByCarNumber(carNo);
 
             if (car == null) {
                 // A1: 차량 정보 없음
@@ -77,8 +71,8 @@ public class CS01ProductSubscription {
         }
 
         Model model = car.getModel();
-        String safetyDevices = carClient.getSafetyDevices(car.getCarNumber());
-        long stdValue = carClient.getStandardValue(car.getCarNumber());
+        String safetyDevices = Car.getSafetyDevices(car.getCarNumber());
+        long stdValue = Car.getStandardValue(car.getCarNumber());
 
         System.out.println("\n[조회된 차량 정보]");
         System.out.printf(" 차량번호    : %s%n",      car.getCarNumber());
@@ -106,23 +100,21 @@ public class CS01ProductSubscription {
         System.out.print(" 선택: ");
         String purposeStr = sc.nextLine().trim();
 
-        Car.Purpose purpose;
-        if ("2".equals(purposeStr))      purpose = Car.Purpose.COMMERCIAL;
-        else if ("3".equals(purposeStr)) purpose = Car.Purpose.BUSINESS;
-        else                             purpose = Car.Purpose.COMMUTE;
+        CarPurpose purpose;
+        if ("2".equals(purposeStr))      purpose = CarPurpose.COMMERCIAL;
+        else if ("3".equals(purposeStr)) purpose = CarPurpose.BUSINESS;
+        else                             purpose = CarPurpose.COMMUTE;
         car.changePurpose(purpose);
 
         System.out.println("\n 운전자 범위:");
-        DriverScope.ScopeType[] scopeOptions = { DriverScope.ScopeType.SELF, DriverScope.ScopeType.FAMILY };
-        for (int i = 0; i < scopeOptions.length; i++) {
-            System.out.printf("  %d. %s%n", i + 1, scopeOptions[i].getLabel());
-        }
+        System.out.println("  1. 본인한정");
+        System.out.println("  2. 가족한정");
         System.out.print(" 선택: ");
         String scopeStr = sc.nextLine().trim();
 
         DriverScope driverScope = car.getDriverScope();
         if ("2".equals(scopeStr)) {
-            // A2: 가족한정 → 가족 Party 생성 및 등록
+            // A2: 가족한정 → 가족 정보 입력
             System.out.println("\n[가족 정보 입력]");
             System.out.print(" 이름: ");
             String familyName = sc.nextLine().trim();
@@ -130,15 +122,8 @@ public class CS01ProductSubscription {
             String relation = sc.nextLine().trim();
             System.out.print(" 생년월일 (예: 070101): ");
             String birthDate = sc.nextLine().trim();
-
-            int familyAge = calcAgeFromBirthDate(birthDate);
-            Party familyParty = new Party();
-            familyParty.setPartyId("PARTY-FAM-" + System.currentTimeMillis());
-            familyParty.setName(familyName);
-            familyParty.setRole(Party.Role.INSURED);
-
-            driverScope.restrictToFamily(familyParty, familyAge);
-            System.out.printf(" → 가족 정보 등록: %s (%s, 만 %d세)%n", familyName, relation, familyAge);
+            driverScope.restrictToFamily(familyName + " / " + relation + " / " + birthDate);
+            System.out.println(" → 가족 정보 등록: " + driverScope.getFamilyMemberInfo());
         } else {
             driverScope.restrictToSelf();
         }
@@ -154,53 +139,55 @@ public class CS01ProductSubscription {
         // calcAge가 -1을 반환하면 SSN 파싱 실패이므로 연령 제한은 통과(E1에서 이미 검사)
         int driverAge = Party.calcAge(ssn);
         boolean ageAllowed = (driverAge == -1) || car.isDriverAllowed(driverAge);
-        if (!ageAllowed || purpose == Car.Purpose.COMMERCIAL) {
+        if (!ageAllowed || purpose == CarPurpose.COMMERCIAL) {
             System.out.println("\n[거절] 가입이 거절되었습니다. 자세한 사항은 고객 센터로 연락주세요.(1588-1000)");
             returnToMenu();
             return;
         }
 
-        // ── Step 9: Contract 생성 및 저장 ────────────────────
+        // ── Step 9: Subscription 생성 및 저장 ────────────────
+        String coveragesDesc = selectedProduct.getDefaultCoverageDescription();
+        String ridersDesc = buildRidersDescription(selectedProduct.getRiders());
+        String today = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+
+        Subscription subscription = Subscription.register(
+            Subscription.nextSubscriptionNo(),
+            name, ssn,
+            "",                                  // 주소 (CS01에서 미수집)
+            car.getCarNumber(), "",              // 차대번호 (CS01에서 미수집)
+            selectedProduct.getProductName(),
+            new Money(confirmedPremium, "KRW"),
+            new Money(confirmedPremium, "KRW"),
+            today, "",                           // 직업 (CS01에서 미수집)
+            driverAge < 0 ? 20 : driverAge,
+            coveragesDesc
+        );
+        Subscription.save(subscription);
+
+        // ── Step 10: Contract 생성 및 저장 ───────────────────
         Party holder = new Party();
         holder.setPartyId("PARTY-" + System.currentTimeMillis());
         holder.setName(name);
         holder.setPhone(phone);
 
-        Insured insured = Insured.ofDriver(name, ssn);
-
-        List<SelectedCoverage> selectedCoverages = (selectedProduct.getCoverages() != null)
-            ? selectedProduct.getCoverages().stream()
-                .map(SelectedCoverage::from)
-                .collect(Collectors.toList())
-            : List.of();
-        List<SelectedRider> selectedRiders = (selectedProduct.getRiders() != null)
-            ? selectedProduct.getRiders().stream()
-                .map(SelectedRider::from)
-                .collect(Collectors.toList())
-            : List.of();
-
         Contract contract = Contract.issue(
             Contract.nextPolicyNo(),
             Contract.nextContractId(),
-            selectedProduct,
+            selectedProduct.getProductName(),
             holder,
-            insured,
             new Money(confirmedPremium, "KRW"),
             car.getCarNumber(),
-            selectedCoverages,
-            selectedRiders
+            coveragesDesc,
+            "2,000만원",
+            ridersDesc
         );
-        // 가족한정인 경우 가족 구성원을 기명피보험자로 등록
-        if (driverScope.getScopeType() == DriverScope.ScopeType.FAMILY
-                && driverScope.getFamilyMember() != null) {
-            contract.setNamedInsured(driverScope.getFamilyMember());
-        }
-        Contract.save(contract);
+        contract.save();
 
-        // ── Step 10: 완료 ─────────────────────────────────────
+        // ── Step 11: 완료 ─────────────────────────────────────
         System.out.println("\n========================================");
         System.out.println(" 보험가입이 완료되었습니다.");
         System.out.println("========================================");
+        System.out.printf(" 청약번호    : %s%n", subscription.getSubscriptionNo());
         System.out.printf(" 증권번호    : %s%n", contract.getPolicyNo());
         System.out.printf(" 상품명      : %s%n", selectedProduct.getProductName());
         System.out.printf(" 가입자      : %s%n", name);
@@ -212,16 +199,11 @@ public class CS01ProductSubscription {
         returnToMenu();
     }
 
-    /** YYMMDD 6자리 생년월일로 만 나이 계산. 파싱 실패 시 0 반환. */
-    private int calcAgeFromBirthDate(String yymmdd) {
-        try {
-            int yy = Integer.parseInt(yymmdd.substring(0, 2));
-            int currentYY = java.time.LocalDate.now().getYear() % 100;
-            int birthYear = (yy <= currentYY) ? 2000 + yy : 1900 + yy;
-            return java.time.LocalDate.now().getYear() - birthYear;
-        } catch (Exception e) {
-            return 0;
-        }
+    private String buildRidersDescription(List<ProductRider> riders) {
+        if (riders == null || riders.isEmpty()) return "없음";
+        return riders.stream()
+            .map(ProductRider::getRiderName)
+            .collect(Collectors.joining(", "));
     }
 
     private void returnToMenu() {

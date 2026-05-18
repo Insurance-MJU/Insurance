@@ -5,7 +5,6 @@ import domain.RiskAnalysisReport;
 import domain.Subscription;
 import domain.common.Money;
 import infra.Context;
-import infra.external.CreditBureauClient;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -25,11 +24,12 @@ public class UW02RiskAnalysis {
         System.out.print(" 차량번호: ");
         String carNo = sc.nextLine().trim();
 
-        Subscription tempSub = Subscription.register(
-            "STANDALONE", name, ssn, "", carNo, "",
-            "", new Money(0L, "KRW"), new Money(0L, "KRW"),
-            "", "", 0, ""
-        );
+        Subscription tempSub = new Subscription();
+        tempSub.setSubscriptionNo("STANDALONE");
+        tempSub.setApplicantName(name);
+        tempSub.setSsn(ssn);
+        tempSub.setCarNumber(carNo);
+        tempSub.setBasePremium(new Money(0L, "KRW"));
         runAsInclude(tempSub);
 
         System.out.print("\nEnter를 누르면 메인 메뉴로 돌아갑니다...");
@@ -41,7 +41,8 @@ public class UW02RiskAnalysis {
         // Step 1: 신용정보원 조회 화면
         System.out.println("\n[ 신용정보원 조회 ]");
         System.out.println("------------------------------------------------------------");
-        System.out.println(" 조회 대상  : " + sub.getApplicantName() + " / " + sub.getSsn() + " / " + sub.getCarNumber());
+        System.out.println(" 조회 대상  : " + sub.getApplicantName()
+            + " / " + sub.getSsn() + " / " + sub.getCarNumber());
         System.out.println("------------------------------------------------------------");
 
         // Step 2: 조회 항목 선택
@@ -53,26 +54,21 @@ public class UW02RiskAnalysis {
         System.out.print("\n위 항목으로 조회하시겠습니까? (Y/N): ");
         String proceed = sc.nextLine().trim();
 
-        if (!"Y".equalsIgnoreCase(proceed)) {
-            System.out.println("\n조회를 취소합니다.");
-            return;
-        }
-
         // E1: 신용정보원 시스템 연결 실패
-        CreditBureauClient creditBureau = new CreditBureauClient();
-        if (!creditBureau.isAvailable()) {
+        if (!"Y".equalsIgnoreCase(proceed)) {
             System.out.println("\n[경고] 신용정보원 시스템 연결에 실패하였습니다. 잠시 후 다시 시도해 주세요.");
             return;
         }
         System.out.println("[조회]");
 
         // Step 3: 신용정보원 조회 결과
-        CreditInfo creditInfo = creditBureau.findByApplicant(sub.getSsn(), sub.getCarNumber());
+        CreditInfo creditInfo = CreditInfo.findByApplicant(sub.getSsn(), sub.getCarNumber());
 
         // A1: 신규 가입자 데이터 없음
         if (creditInfo == null) {
             System.out.println("\n[안내] 신용정보원에 해당 청약자의 조회 이력이 없습니다. 기본 위험등급(3등급)이 적용됩니다.");
-            RiskAnalysisReport defaultReport = RiskAnalysisReport.defaultForNewApplicant(sub.getSubscriptionNo(), sub.getBasePremium());
+            RiskAnalysisReport defaultReport =
+                RiskAnalysisReport.defaultForNewApplicant(sub.getSubscriptionNo(), sub.getBasePremium());
             RiskAnalysisReport.save(defaultReport);
             printSummary(defaultReport);
             confirmResult();
@@ -86,7 +82,7 @@ public class UW02RiskAnalysis {
         } else {
             for (CreditInfo.AccidentRecord acc : creditInfo.getAccidentHistory()) {
                 System.out.printf(" 최근 3년 사고이력 : %s - %s (%s원)%n",
-                    acc.getDate(), acc.getDescription(),
+                    acc.getDateDisplay(), acc.getDescription(),
                     NF.format(acc.getAmount().getAmount()));
             }
         }
@@ -101,7 +97,8 @@ public class UW02RiskAnalysis {
         System.out.println("[위험등급 산출]");
 
         // 도메인이 직접 분석 수행
-        RiskAnalysisReport report = RiskAnalysisReport.analyze(sub.getSubscriptionNo(), sub.getBasePremium(), creditInfo);
+        RiskAnalysisReport report =
+            RiskAnalysisReport.analyze(sub.getSubscriptionNo(), sub.getBasePremium(), creditInfo);
         RiskAnalysisReport.save(report);
 
         // Step 5: 위험 분석 결과 요약
@@ -114,9 +111,12 @@ public class UW02RiskAnalysis {
         // Step 7: 위험등급 산출 상세 내역
         System.out.println("\n[ 위험등급 산출 상세 내역 ]");
         System.out.println("------------------------------------------------------------");
-        System.out.printf(" 사고 건수    : %d건  →  -%.1f점%n", creditInfo.getAccidentCount(), report.getAccidentScore());
-        System.out.printf(" 운전 경력    : %d년  →  -%.1f점%n", creditInfo.getDrivingExperienceYears(), report.getDrivingExpScore());
-        System.out.printf(" 신용등급     : %s → -%.1f점%n", creditInfo.getCreditGrade(), report.getCreditGradeScore());
+        System.out.printf(" 사고 건수    : %d건  →  -%.1f점%n",
+            creditInfo.getAccidentCount(), report.getAccidentScore());
+        System.out.printf(" 운전 경력    : %d년  →  -%.1f점%n",
+            creditInfo.getDrivingExperienceYears(), report.getDrivingExpScore());
+        System.out.printf(" 신용등급     : %s → -%.1f점%n",
+            creditInfo.getCreditGrade(), report.getCreditGradeScore());
         System.out.printf(" 총점         : %.1f점%n", report.getRiskScore());
         System.out.println("------------------------------------------------------------");
         System.out.println(" [등급 판정 기준]");

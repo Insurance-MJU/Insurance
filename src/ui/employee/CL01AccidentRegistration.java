@@ -1,11 +1,11 @@
 package ui.employee;
 
 import domain.Accident;
+import domain.AccidentStatus;
 import domain.Claim;
+import domain.ClaimStatus;
+import domain.Employee;
 import infra.Context;
-import infra.repository.AccidentRepository;
-import infra.repository.ClaimRepository;
-import infra.repository.EmployeeRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,7 +42,7 @@ public class CL01AccidentRegistration {
         }
 
         // Step 4: 레포지토리에서 사고 목록 조회
-        List<Accident> accidents = AccidentRepository.findByDateAndStatus(period, status);
+        List<Accident> accidents = Accident.findByDateAndStatus(period, status);
 
         System.out.println("\n[ 미처리 사고 청구 목록 ]");
         System.out.println("------------------------------------------------------------");
@@ -53,7 +53,7 @@ public class CL01AccidentRegistration {
         } else {
             for (Accident a : accidents) {
                 System.out.printf("%-22s %-12s %-20s%n",
-                    a.getAccidentDate(), a.getReportedBy(), a.getDescription());
+                    a.getAccidentDateDisplay(), a.getReportedBy(), a.getDescription());
             }
         }
         System.out.println("------------------------------------------------------------");
@@ -79,13 +79,13 @@ public class CL01AccidentRegistration {
         }
 
         // Step 6: 레포지토리에서 사고 상세 정보 조회
-        Accident accident = AccidentRepository.findByCustomerName(customerName);
+        Accident accident = Accident.findByCustomerName(customerName);
 
         System.out.println("\n[ 사고 상세 정보 - " + customerName + " / " + phone + " ]");
         System.out.println("------------------------------------------------------------");
         if (accident != null) {
             System.out.println("[제출된 사고 경위서]");
-            System.out.println("  - 발생일시: " + accident.getAccidentDate());
+            System.out.println("  - 발생일시: " + accident.getAccidentDateDisplay());
             System.out.println("  - 사고 내용: " + accident.getAccidentDetail());
             System.out.println("[증빙 서류 뷰어]");
             for (String doc : accident.getDocuments().split(",")) {
@@ -93,7 +93,9 @@ public class CL01AccidentRegistration {
             }
             System.out.println("[계약 원장 정보]");
             System.out.println("  - 계약번호: " + accident.getContractId());
-            System.out.println("  - 담보: " + accident.getCoverageDescription() + " / 한도: " + accident.getCoverageLimit());
+            String limitDisplay = accident.getCoverageLimit() != null
+                ? accident.getCoverageLimit().getAmount() / 10_000 + "만원" : "-";
+            System.out.println("  - 담보: " + accident.getCoverageDescription() + " / 한도: " + limitDisplay);
         } else {
             System.out.println("  [해당 고객의 사고 접수 정보를 찾을 수 없습니다]");
         }
@@ -113,12 +115,12 @@ public class CL01AccidentRegistration {
         System.out.println("------------------------------------------------------------");
         System.out.printf("%-15s %-14s %-10s%n", "직원 번호", "직원명", "미결 건수");
         System.out.println("------------------------------------------------------------");
-        List<EmployeeRepository.FieldInvestigator> investigators =
-            EmployeeRepository.findBySpecialty(specialty);
+        List<Employee.FieldInvestigator> investigators =
+            Employee.findBySpecialty(specialty);
         if (investigators.isEmpty()) {
             System.out.println("  해당 조건에 맞는 현장조사역이 없습니다.");
         } else {
-            for (EmployeeRepository.FieldInvestigator emp : investigators) {
+            for (Employee.FieldInvestigator emp : investigators) {
                 System.out.printf("%-15s %-14s %-10s%n",
                     emp.getEmployeeId(), emp.getName(), emp.getOpenCaseCount() + "건");
             }
@@ -132,19 +134,20 @@ public class CL01AccidentRegistration {
         System.out.println("[배당 및 접수 확정]");
 
         // Step 10: 레포지토리에 Claim 저장 및 Accident 상태 업데이트
-        String claimId = ClaimRepository.nextId();
+        String claimId = Claim.nextId();
         String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
 
         if (accident != null) {
             Claim claim = new Claim(
-                claimId, accident.getAccidentId(),
+                claimId, accident,
                 customerName, now,
                 accident.getContractId(),
-                accident.getDescription(), "처리중"
+                accident.getDescription(), ClaimStatus.INVESTIGATING
             );
             claim.setAssignedEmployee(empNo);
-            ClaimRepository.save(claim);
-            AccidentRepository.updateStatus(accident.getAccidentId(), "처리중");
+            claim.save();
+            accident.setStatus(AccidentStatus.IN_PROGRESS);
+            accident.save();
         }
 
         System.out.println("\n담당자가 배당되었습니다.");

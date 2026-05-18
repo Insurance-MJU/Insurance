@@ -1,14 +1,14 @@
 package domain;
 
+import domain.common.Money;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class DamageInvestigation implements Serializable {
     private static final long serialVersionUID = 1L;
     private String accidentCause;
-    private String claimId;
+    private Claim claim;
     private String damageDetail;
     private Date investigationDate;
     private String investigationId;
@@ -19,14 +19,14 @@ public class DamageInvestigation implements Serializable {
     private String accidentId;
     private String opinion;
     private String damageCode;
-    private int injuryGrade;
+    private InjuryGrade injuryGrade;
     private int ourFault;
     private int otherFault;
     private String liability;
-    private String expectedRepairCost;
-    private String compensationLimit;
+    private Money expectedRepairCost;
+    private Money compensationLimit;
     private String finalOpinion;
-    private String savedAt;
+    private Date savedAt;
 
     public DamageInvestigation() {}
 
@@ -42,10 +42,11 @@ public class DamageInvestigation implements Serializable {
 
     /** 손해조사 결과를 한 번에 생성하는 팩토리 메서드 */
     public static DamageInvestigation create(String accidentId, String opinion, String damageCode,
-            int injuryGrade, int ourFault, int otherFault, String liability,
-            String expectedRepairCost, String compensationLimit, String finalOpinion) {
+            InjuryGrade injuryGrade, int ourFault, int otherFault, String liability,
+            Money expectedRepairCost, Money compensationLimit, String finalOpinion, Claim claim) {
         DamageInvestigation inv = new DamageInvestigation();
         inv.accidentId = accidentId;
+        inv.claim = claim;
         inv.opinion = opinion;
         inv.damageCode = damageCode;
         inv.injuryGrade = injuryGrade;
@@ -55,14 +56,15 @@ public class DamageInvestigation implements Serializable {
         inv.expectedRepairCost = expectedRepairCost;
         inv.compensationLimit = compensationLimit;
         inv.finalOpinion = finalOpinion;
-        inv.savedAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy.MM.dd.HH:mm:ss"));
+        inv.savedAt = new Date();
         return inv;
     }
 
-    public String getSavedAt() { return savedAt; }
+    public Date getSavedAt() { return savedAt; }
+    public String getSavedAtDisplay() { return savedAt != null ? new SimpleDateFormat("yyyy.MM.dd HH:mm:ss").format(savedAt) : ""; }
 
     public String getAccidentCause() { return accidentCause; }
-    public String getClaimId() { return claimId; }
+    public Claim getClaim() { return claim; }
     public String getDamageDetail() { return damageDetail; }
     public Date getInvestigationDate() { return investigationDate; }
     public String getInvestigationId() { return investigationId; }
@@ -71,16 +73,20 @@ public class DamageInvestigation implements Serializable {
     public String getAccidentId() { return accidentId; }
     public String getOpinion() { return opinion; }
     public String getDamageCode() { return damageCode; }
-    public int getInjuryGrade() { return injuryGrade; }
+    public InjuryGrade getInjuryGrade() { return injuryGrade; }
     public int getOurFault() { return ourFault; }
     public int getOtherFault() { return otherFault; }
     public String getLiability() { return liability; }
-    public String getExpectedRepairCost() { return expectedRepairCost; }
-    public String getCompensationLimit() { return compensationLimit; }
+    public Money getExpectedRepairCost() { return expectedRepairCost; }
+    public Money getCompensationLimit() { return compensationLimit; }
     public String getFinalOpinion() { return finalOpinion; }
 
+    // ── DAO 위임 ──────────────────────────────────────────────
+    public void save()                                                     { infra.dao.DamageInvestigationDao.getInstance().save(this); }
+    public static DamageInvestigation findByAccidentId(String accidentId)  { return infra.dao.DamageInvestigationDao.getInstance().findByAccidentId(accidentId); }
+
     public void setAccidentCause(String v) { this.accidentCause = v; }
-    public void setClaimId(String v) { this.claimId = v; }
+    public void setClaim(Claim v) { this.claim = v; }
     public void setDamageDetail(String v) { this.damageDetail = v; }
     public void setInvestigationId(String v) { this.investigationId = v; }
     public void setInvestigationResult(String v) { this.investigationResult = v; }
@@ -88,12 +94,12 @@ public class DamageInvestigation implements Serializable {
     public void setAccidentId(String v) { this.accidentId = v; }
     public void setOpinion(String v) { this.opinion = v; }
     public void setDamageCode(String v) { this.damageCode = v; }
-    public void setInjuryGrade(int v) { this.injuryGrade = v; }
+    public void setInjuryGrade(InjuryGrade v) { this.injuryGrade = v; }
     public void setOurFault(int v) { this.ourFault = v; }
     public void setOtherFault(int v) { this.otherFault = v; }
     public void setLiability(String v) { this.liability = v; }
-    public void setExpectedRepairCost(String v) { this.expectedRepairCost = v; }
-    public void setCompensationLimit(String v) { this.compensationLimit = v; }
+    public void setExpectedRepairCost(Money v) { this.expectedRepairCost = v; }
+    public void setCompensationLimit(Money v) { this.compensationLimit = v; }
     public void setFinalOpinion(String v) { this.finalOpinion = v; }
-    public void setSavedAt(String v) { this.savedAt = v; }
+    public void setSavedAt(Date v) { this.savedAt = v; }
 }
