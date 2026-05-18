@@ -25,10 +25,7 @@ public class Car extends Insured {
     }
 
     public String getPurposeLabel() {
-        if (purpose == CarPurpose.COMMUTE)    return "출퇴근/가정용";
-        if (purpose == CarPurpose.BUSINESS)   return "업무용";
-        if (purpose == CarPurpose.COMMERCIAL) return "영업용";
-        return "";
+        return purpose != null ? purpose.getLabel() : "";
     }
 
     // Setters

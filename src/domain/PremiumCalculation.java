@@ -61,9 +61,7 @@ public class PremiumCalculation implements Serializable {
     }
 
     private static double purposeMultiplier(CarPurpose purpose) {
-        if (purpose == CarPurpose.BUSINESS)   return 1.1;
-        if (purpose == CarPurpose.COMMERCIAL) return 1.3;
-        return 1.0;
+        return purpose != null ? purpose.getMultiplier() : 1.0;
     }
 
     // ── Getters ───────────────────────────────────────────────

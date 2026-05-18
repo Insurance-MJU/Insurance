@@ -5,7 +5,13 @@ public class DriverScope {
     private ScopeType scopeType;
     private String familyMemberInfo;
 
-    public enum ScopeType { SELF, FAMILY, ALL }
+    public enum ScopeType {
+        SELF("본인한정"), FAMILY("가족한정"), ALL("누구나");
+
+        private final String label;
+        ScopeType(String label) { this.label = label; }
+        public String getLabel() { return label; }
+    }
 
     // ── 비즈니스 메서드 ───────────────────────────────────────
     public void restrictToSelf() {
@@ -22,10 +28,7 @@ public class DriverScope {
     public boolean isRestricted()          { return scopeType != ScopeType.ALL; }
 
     public String getScopeLabel() {
-        if (scopeType == ScopeType.SELF)   return "본인한정";
-        if (scopeType == ScopeType.FAMILY) return "가족한정";
-        if (scopeType == ScopeType.ALL)    return "전가족";
-        return "";
+        return scopeType != null ? scopeType.getLabel() : "";
     }
 
     // Getters
