@@ -6,16 +6,16 @@ import domain.common.Money;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 
+import domain.AccidentList;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.List;
 
 public class AccidentDao {
-    private static final AccidentDao INSTANCE = new AccidentDao();
-    public static AccidentDao getInstance() { return INSTANCE; }
+    private final Database db;
 
-    private static final Database DB = Database.getInstance();
+    public AccidentDao(Database db) { this.db = db; }
 
     private static final ResultSetExtractor<Accident> EXTRACTOR = rs -> mapRow(rs);
 
@@ -42,23 +42,23 @@ public class AccidentDao {
         return a;
     }
 
-    public List<Accident> findByDateAndStatus(String date, String status) {
+    public AccidentList findByDateAndStatus(String date, String status) {
         if (status == null || status.isEmpty()) {
-            return DB.queryForList(
+            return new AccidentList(db.queryForList(
                 "SELECT * FROM accidents WHERE DATE(accident_date) LIKE ?",
-                EXTRACTOR, date + "%");
+                EXTRACTOR, date + "%"));
         }
         // status parameter is the label - find by enum name matching label
         // Try to match by enum name first
         String enumName = resolveStatusEnumName(status);
         if (enumName != null) {
-            return DB.queryForList(
+            return new AccidentList(db.queryForList(
                 "SELECT * FROM accidents WHERE DATE_FORMAT(accident_date,'%Y-%m-%d') LIKE ? AND status = ?",
-                EXTRACTOR, date + "%", enumName);
+                EXTRACTOR, date + "%", enumName));
         }
-        return DB.queryForList(
+        return new AccidentList(db.queryForList(
             "SELECT * FROM accidents WHERE DATE_FORMAT(accident_date,'%Y-%m-%d') LIKE ?",
-            EXTRACTOR, date + "%");
+            EXTRACTOR, date + "%"));
     }
 
     private String resolveStatusEnumName(String label) {
@@ -68,26 +68,26 @@ public class AccidentDao {
         return null;
     }
 
-    public List<Accident> findPendingAccidents() {
-        return DB.queryForList(
+    public AccidentList findPendingAccidents() {
+        return new AccidentList(db.queryForList(
             "SELECT * FROM accidents WHERE status = ?",
-            EXTRACTOR, AccidentStatus.PENDING.name());
+            EXTRACTOR, AccidentStatus.PENDING.name()));
     }
 
     public Accident findById(String accidentId) {
-        return DB.queryForObject(
+        return db.queryForObject(
             "SELECT * FROM accidents WHERE accident_id = ?",
             EXTRACTOR, accidentId);
     }
 
     public Accident findByCustomerName(String name) {
-        return DB.queryForObject(
+        return db.queryForObject(
             "SELECT * FROM accidents WHERE reported_by = ? LIMIT 1",
             EXTRACTOR, name);
     }
 
     public void save(Accident a) {
-        DB.execute(
+        db.execute(
             "INSERT INTO accidents (accident_id, accident_date, reported_by, phone, description," +
             " accident_location, accident_detail, documents, contract_id, coverage_description," +
             " coverage_limit, personal_injury_limit, vehicle_info, expected_repair_cost, region_code, status)" +
@@ -120,7 +120,7 @@ public class AccidentDao {
     }
 
     public String nextId() {
-        Integer count = DB.queryForObject(
+        Integer count = db.queryForObject(
             "SELECT COUNT(*) FROM accidents", rs -> rs.getInt(1));
         int next = (count != null ? count : 0) + 1;
         return String.format("ACC-2026-%03d", next);

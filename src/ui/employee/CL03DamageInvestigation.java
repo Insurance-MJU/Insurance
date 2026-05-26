@@ -1,9 +1,12 @@
 package ui.employee;
 
 import domain.Accident;
+import domain.AccidentList;
 import domain.AccidentStatus;
 import domain.Claim;
+import domain.ClaimList;
 import domain.DamageInvestigation;
+import domain.DamageInvestigationList;
 import domain.InjuryGrade;
 import domain.common.Money;
 import infra.Context;
@@ -12,6 +15,15 @@ import java.util.Scanner;
 
 public class CL03DamageInvestigation {
     private final Scanner sc = Context.getInstance().scanner();
+    private final AccidentList accidentList;
+    private final ClaimList claimList;
+    private final DamageInvestigationList damageInvList;
+
+    public CL03DamageInvestigation(AccidentList accidentList, ClaimList claimList, DamageInvestigationList damageInvList) {
+        this.accidentList = accidentList;
+        this.claimList = claimList;
+        this.damageInvList = damageInvList;
+    }
 
 
     /** 메인 메뉴에서 단독 실행 — 접수번호를 직접 입력받음 */
@@ -40,7 +52,7 @@ public class CL03DamageInvestigation {
 
     // ── 공통 조사 로직 ────────────────────────────────────────────────────
     private void doInvestigation(String accNo) {
-        Accident accident = Accident.findById(accNo);
+        Accident accident = accidentList.findById(accNo);
 
         while (true) {
             System.out.println("\n[ 현장 조사 폼 - " + accNo + " ]");
@@ -148,10 +160,10 @@ public class CL03DamageInvestigation {
                 ourFault, otherFault, liability,
                 expectedRepairCostMoney, compensationLimitMoney, finalOpinion
             );
-            Claim linkedClaim = Claim.findByAccidentId(accNo);
+            Claim linkedClaim = claimList.findByAccidentId(accNo);
             if (linkedClaim != null) inv.setClaimId(linkedClaim.getClaimId());
-            inv.save();
-            if (accident != null) { accident.setStatus(AccidentStatus.IN_PROGRESS); accident.save(); }
+            damageInvList.save(inv);
+            if (accident != null) { accident.setStatus(AccidentStatus.IN_PROGRESS); accidentList.save(accident); }
 
             System.out.println("\n┌──────────────────────────────────────────────────────────────┐");
             System.out.println("│  조사 내역이 저장되었습니다. 일시: " + inv.getSavedAtDisplay() + "       │");

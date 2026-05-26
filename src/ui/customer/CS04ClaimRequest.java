@@ -1,7 +1,10 @@
 package ui.customer;
 
 import domain.Accident;
+import domain.AccidentList;
 import domain.Contract;
+import domain.ContractList;
+import domain.SubscriptionList;
 import infra.Context;
 import infra.external.IdentityVerificationService;
 import java.text.ParseException;
@@ -12,6 +15,15 @@ import java.util.Scanner;
 public class CS04ClaimRequest {
     private final Scanner sc = Context.getInstance().scanner();
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    private final AccidentList accidentList;
+    private final ContractList contractList;
+    private final SubscriptionList subscriptionList;
+
+    public CS04ClaimRequest(AccidentList accidentList, ContractList contractList, SubscriptionList subscriptionList) {
+        this.accidentList = accidentList;
+        this.contractList = contractList;
+        this.subscriptionList = subscriptionList;
+    }
 
     public void run() {
         System.out.println("\n========================================");
@@ -34,7 +46,7 @@ public class CS04ClaimRequest {
 
         // <<include>> CS-05: CS-04 인증이 완료되었으므로 authName을 직접 전달(중복 인증 제거)
         // A1: 청구 대상 계약 미선택
-        Contract selectedContract = new CS05ContractInquiry().runAsInclude(authName);
+        Contract selectedContract = new CS05ContractInquiry(subscriptionList, contractList).runAsInclude(authName);
         if (selectedContract == null) {
             System.out.println("\n[경고] 대상 보험 계약은 필수 선택 사항입니다. 대상을 리스트에 추가해 주세요.");
             returnToMenu();
@@ -82,7 +94,7 @@ public class CS04ClaimRequest {
 
         // Step 12: 사고 접수 후 보상팀 이관
         Accident accident = Accident.report(
-            Accident.nextId(),
+            accidentList.nextId(),
             authName,
             authPhone,
             accidentDate,
@@ -92,7 +104,7 @@ public class CS04ClaimRequest {
             selectedContract
         );
         accident.transferToCompensation();
-        accident.save();
+        accidentList.save(accident);
 
         System.out.println("\n[보험금 청구 완료]");
         System.out.println("------------------------------------------------------------");

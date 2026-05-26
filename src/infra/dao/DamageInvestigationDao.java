@@ -11,10 +11,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 public class DamageInvestigationDao {
-    private static final DamageInvestigationDao INSTANCE = new DamageInvestigationDao();
-    public static DamageInvestigationDao getInstance() { return INSTANCE; }
+    private final Database db;
 
-    private static final Database DB = Database.getInstance();
+    public DamageInvestigationDao(Database db) { this.db = db; }
 
     private static final ResultSetExtractor<DamageInvestigation> EXTRACTOR = rs -> mapRow(rs);
 
@@ -51,7 +50,7 @@ public class DamageInvestigationDao {
         }
         String claimId = inv.getClaimId();
 
-        DB.execute(
+        db.execute(
             "INSERT INTO damage_investigations" +
             " (investigation_id, accident_id, claim_id, investigator_name, investigation_date," +
             " opinion, damage_code, injury_grade, our_fault, other_fault, liability," +
@@ -83,7 +82,7 @@ public class DamageInvestigationDao {
     }
 
     public DamageInvestigation findByAccidentId(String accidentId) {
-        return DB.queryForObject(
+        return db.queryForObject(
             "SELECT * FROM damage_investigations WHERE accident_id = ? LIMIT 1",
             EXTRACTOR, accidentId);
     }

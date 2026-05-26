@@ -1,17 +1,15 @@
 package infra.dao;
 
 import domain.Rider;
+import domain.RiderList;
 import domain.RiderType;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 
-import java.util.List;
-
 public class RiderDao {
-    private static final RiderDao INSTANCE = new RiderDao();
-    public static RiderDao getInstance() { return INSTANCE; }
+    private final Database db;
 
-    private static final Database DB = Database.getInstance();
+    public RiderDao(Database db) { this.db = db; }
 
     private static final ResultSetExtractor<Rider> EXTRACTOR = rs -> {
         Rider r = new Rider();
@@ -29,12 +27,12 @@ public class RiderDao {
     };
 
     public Rider findByCode(String riderCode) {
-        return DB.queryForObject(
+        return db.queryForObject(
             "SELECT * FROM riders WHERE rider_code = ?",
             EXTRACTOR, riderCode);
     }
 
-    public List<Rider> findAll() {
-        return DB.queryForList("SELECT * FROM riders", EXTRACTOR);
+    public RiderList findAll() {
+        return new RiderList(db.queryForList("SELECT * FROM riders", EXTRACTOR));
     }
 }

@@ -9,6 +9,15 @@ import java.util.Scanner;
 public class CS01ProductSubscription {
 
     private final Scanner sc = Context.getInstance().scanner();
+    private final ProductList productList;
+    private final SubscriptionList subscriptionList;
+    private final RiderList riderList;
+
+    public CS01ProductSubscription(ProductList productList, SubscriptionList subscriptionList, RiderList riderList) {
+        this.productList = productList;
+        this.subscriptionList = subscriptionList;
+        this.riderList = riderList;
+    }
 
     public void run() {
         System.out.println("\n========================================");
@@ -16,7 +25,7 @@ public class CS01ProductSubscription {
         System.out.println("========================================");
 
         // <<include>> CS-02: 상품 조회
-        Product selectedProduct = new CS02ProductInquiry().run();
+        Product selectedProduct = new CS02ProductInquiry(productList, riderList).run();
         if (selectedProduct == null) {
             returnToMenu();
             return;
@@ -148,7 +157,7 @@ public class CS01ProductSubscription {
         String today = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
 
         Subscription subscription = Subscription.register(
-            Subscription.nextSubscriptionNo(),
+            subscriptionList.nextSubscriptionNo(),
             name, ssn,
             "",                                  // 주소 (CS01에서 미수집)
             car.getCarNumber(), "",              // 차대번호 (CS01에서 미수집)
@@ -159,7 +168,7 @@ public class CS01ProductSubscription {
             driverAge < 0 ? 20 : driverAge,
             coveragesDesc
         );
-        Subscription.save(subscription);
+        subscriptionList.save(subscription);
 
         // ── Step 10: 완료 ────────────────────────────────────
         System.out.println("\n========================================");

@@ -78,13 +78,6 @@ public class Claim implements Serializable {
     public String getBankName() { ClaimPayment cp = getClaimPayment(); return cp != null ? cp.getBankName() : null; }
     public String getAccountNumber() { ClaimPayment cp = getClaimPayment(); return cp != null ? cp.getAccountNumber() : null; }
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static Claim findByAccidentId(String accidentId)  { return infra.dao.ClaimDao.getInstance().findByAccidentId(accidentId); }
-    public static Claim findById(String claimId)             { return infra.dao.ClaimDao.getInstance().findById(claimId); }
-    public static java.util.List<Claim> findAwaitingPayment(){ return infra.dao.ClaimDao.getInstance().findAwaitingPayment(); }
-    public static String nextId()                            { return infra.dao.ClaimDao.getInstance().nextId(); }
-    public void save()                                       { infra.dao.ClaimDao.getInstance().save(this); }
-
     // ── Setters ──────────────────────────────────────────────
     public void setClaimId(String v) { this.claimId = v; }
     public void setAccident(Accident v) { this.accident = v; }

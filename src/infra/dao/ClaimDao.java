@@ -5,16 +5,17 @@ import domain.common.Money;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 
+import domain.ClaimList;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 
 public class ClaimDao {
-    private static final ClaimDao INSTANCE = new ClaimDao();
-    public static ClaimDao getInstance() { return INSTANCE; }
+    private final Database db;
 
-    private static final Database DB = Database.getInstance();
+    public ClaimDao(Database db) { this.db = db; }
 
     private static final ResultSetExtractor<Claim> EXTRACTOR = rs -> mapRow(rs);
 
@@ -67,21 +68,21 @@ public class ClaimDao {
     }
 
     public Claim findByAccidentId(String accidentId) {
-        return DB.queryForObject(
+        return db.queryForObject(
             "SELECT * FROM claims WHERE accident_id = ? LIMIT 1",
             EXTRACTOR, accidentId);
     }
 
     public Claim findById(String claimId) {
-        return DB.queryForObject(
+        return db.queryForObject(
             "SELECT * FROM claims WHERE claim_id = ?",
             EXTRACTOR, claimId);
     }
 
-    public List<Claim> findAwaitingPayment() {
-        return DB.queryForList(
+    public ClaimList findAwaitingPayment() {
+        return new ClaimList(db.queryForList(
             "SELECT * FROM claims WHERE claim_status = ?",
-            EXTRACTOR, ClaimStatus.PAYMENT_PENDING.name());
+            EXTRACTOR, ClaimStatus.PAYMENT_PENDING.name()));
     }
 
     public void save(Claim c) {
@@ -98,7 +99,7 @@ public class ClaimDao {
         String bankName = c.getBankName();
         String accountNo = c.getAccountNumber();
 
-        DB.execute(
+        db.execute(
             "INSERT INTO claims (claim_id, accident_id, claimant_name, claim_date, contract_id," +
             " description, claim_status, assigned_employee," +
             " settlement_amount, deductible_amount, compensation_amount," +
@@ -129,7 +130,7 @@ public class ClaimDao {
     }
 
     public String nextId() {
-        Integer count = DB.queryForObject(
+        Integer count = db.queryForObject(
             "SELECT COUNT(*) FROM claims", rs -> rs.getInt(1));
         int next = (count != null ? count : 0) + 1;
         return String.format("CL-%05d", next);

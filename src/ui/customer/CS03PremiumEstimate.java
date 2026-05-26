@@ -8,13 +8,20 @@ import java.util.Scanner;
 
 public class CS03PremiumEstimate {
     private final Scanner sc = Context.getInstance().scanner();
+    private final ProductList productList;
+    private final RiderList riderList;
+
+    public CS03PremiumEstimate(ProductList productList, RiderList riderList) {
+        this.productList = productList;
+        this.riderList = riderList;
+    }
 
     public void run() {
         System.out.println("\n========================================");
         System.out.println(" CS-03: 예상보험료를 산출한다");
         System.out.println("========================================");
 
-        Product product = new CS02ProductInquiry().run();
+        Product product = new CS02ProductInquiry(productList, riderList).run();
         if (product == null) { returnToMenu(); return; }
 
         Car car = null;

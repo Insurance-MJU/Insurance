@@ -113,12 +113,6 @@ public class Product implements Serializable {
     public void setCoverages(List<ProductCoverage> v){ this.coverages = v; }
     public void setCreatedAt(Date v)                 { this.createdAt = v; }
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static java.util.List<Product> findAll()          { return infra.dao.ProductDao.getInstance().findAll(); }
-    public static Product findById(String productId)         { return infra.dao.ProductDao.getInstance().findById(productId); }
-    public static boolean existsByCode(String code)          { return infra.dao.ProductDao.getInstance().existsByCode(code); }
-    public void save()                                       { infra.dao.ProductDao.getInstance().save(this); }
-
     // Getters
     public List<ProductCoverage> getCoverages()  { return coverages; }
     public Date getCreatedAt()                   { return createdAt; }

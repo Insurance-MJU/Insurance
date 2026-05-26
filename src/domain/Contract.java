@@ -97,17 +97,6 @@ public class Contract implements Serializable {
     public String getRidersDescription()          { return ridersDescription; }
     public String getProductName()                { return productName; }
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static java.util.List<Contract> findAll()              { return infra.dao.ContractDao.getInstance().findAll(); }
-    public static Contract findByPolicyNo(String policyNo)        { return infra.dao.ContractDao.getInstance().findByPolicyNo(policyNo); }
-    public static Contract findByContractId(String contractId)    { return infra.dao.ContractDao.getInstance().findByContractId(contractId); }
-    public static java.util.List<Contract> findByCondition(String holderName, String periodChoice, String statusChoice) {
-        return infra.dao.ContractDao.getInstance().findByCondition(holderName, periodChoice, statusChoice);
-    }
-    public void save()                                       { infra.dao.ContractDao.getInstance().save(this); }
-    public static String nextPolicyNo()                      { return infra.dao.ContractDao.getInstance().nextPolicyNo(); }
-    public static String nextContractId()                    { return infra.dao.ContractDao.getInstance().nextContractId(); }
-
     public void setBeneficiaries(List<Party> v)           { this.beneficiaries = v; }
     public void setContractId(String v)                   { this.contractId = v; }
     public void setEndDate(Date v)                        { this.endDate = v; }

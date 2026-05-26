@@ -9,6 +9,15 @@ import java.util.stream.Collectors;
 public class CT01ProductDesign {
     private final Scanner sc = Context.getInstance().scanner();
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
+    private final RiderList riderList;
+    private final ProductList productList;
+    private final CoverageList coverageList;
+
+    public CT01ProductDesign(RiderList riderList, ProductList productList, CoverageList coverageList) {
+        this.riderList = riderList;
+        this.productList = productList;
+        this.coverageList = coverageList;
+    }
 
     public void run() {
         System.out.println("\n========================================");
@@ -26,7 +35,7 @@ public class CT01ProductDesign {
         while (true) {
             System.out.print(" 상품코드 (예: CAR-2026-MZ): ");
             productCode = sc.nextLine().trim();
-            if (Product.existsByCode(productCode)) {
+            if (productList.existsByCode(productCode)) {
                 System.out.println("[오류] 이미 사용 중인 상품코드입니다.");
             } else {
                 break;
@@ -61,7 +70,7 @@ public class CT01ProductDesign {
         sc.nextLine();
 
         // ── Step 4~5: 담보 선택 (CoverageRepository) ─────────────
-        List<Coverage> allCoverages = Coverage.findAll();
+        List<Coverage> allCoverages = coverageList.findAll().getAll();
         Map<Coverage, List<CoverageLimitOption>> selectedOptions;
 
         while (true) {
@@ -109,7 +118,7 @@ public class CT01ProductDesign {
         sc.nextLine();
 
         // ── Step 6~7: 특약 선택 (RiderRepository) ────────────────
-        List<Rider> allRiders = Rider.findAll();
+        RiderList allRiders = riderList.findAll();
         System.out.println("\n── 특약 목록 ──────────────────────────");
         for (int i = 0; i < allRiders.size(); i++) {
             Rider r = allRiders.get(i);
@@ -123,6 +132,7 @@ public class CT01ProductDesign {
                 ? Collections.emptyList()
                 : parseNumbers(riderInput, allRiders.size()).stream()
                         .map(allRiders::get).collect(Collectors.toList());
+
 
         System.out.print("\n[다음] (Enter): ");
         sc.nextLine();
@@ -152,7 +162,7 @@ public class CT01ProductDesign {
 
         List<String> selectedCoverageNames = selectedOptions.keySet().stream()
                 .map(Coverage::getCoverageName).collect(Collectors.toList());
-        long[] premiumResult = new CT02PremiumCalculation().runAsInclude(productName, selectedCoverageNames, saleEnd);
+        long[] premiumResult = new CT02PremiumCalculation(productList).runAsInclude(productName, selectedCoverageNames, saleEnd);
         if (premiumResult == null) { returnToMenu(); return; }
 
         long finalPremium = premiumResult[0];
@@ -169,7 +179,7 @@ public class CT01ProductDesign {
 
         Product product = Product.design(productCode, productName, description, target, saleStart, saleEnd);
         product.setRiders(buildProductRiders(selectedRiders));
-        product.save();
+        productList.save(product);
 
         // ── Step 12: 완료 팝업 ────────────────────────────────
         System.out.println("\n┌──────────────────────────────────────┐");

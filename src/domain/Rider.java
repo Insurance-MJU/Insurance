@@ -18,10 +18,6 @@ public class Rider {
     public void setMandatory(boolean v)    { this.mandatory = v; }
     public void setRiderType(RiderType v)  { this.riderType = v; }
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static Rider findByCode(String riderCode)     { return infra.dao.RiderDao.getInstance().findByCode(riderCode); }
-    public static java.util.List<Rider> findAll()        { return infra.dao.RiderDao.getInstance().findAll(); }
-
     // Getters
     public String getDescription()        { return description; }
     public Double getDiscountRate()       { return discountRate; }

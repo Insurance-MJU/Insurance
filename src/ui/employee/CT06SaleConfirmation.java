@@ -9,6 +9,11 @@ import java.util.*;
 public class CT06SaleConfirmation {
     private final Scanner sc = Context.getInstance().scanner();
     private final FssClient fssClient = new FssClient();
+    private final ProductList productList;
+
+    public CT06SaleConfirmation(ProductList productList) {
+        this.productList = productList;
+    }
 
     private static final String[] REQUIRED_DOCS = {"상품 신고서", "수익성 분석 보고서", "공시자료"};
     private static final ProductDocument.DocType[] DOC_TYPES = {
@@ -59,7 +64,7 @@ public class CT06SaleConfirmation {
     }
 
     private Product selectProduct() {
-        List<Product> products = new ArrayList<>(Product.findAll());
+        ProductList products = productList.findAll();
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);
@@ -94,7 +99,7 @@ public class CT06SaleConfirmation {
             }
         }
         product.addDocuments(docs);
-        product.save();
+        productList.save(product);
 
         // FSS 신고
         System.out.println("\n── 금융감독원 판매 신고 ─────────────────");
@@ -110,7 +115,7 @@ public class CT06SaleConfirmation {
 
         if (result == FssClient.ReviewResult.APPROVED) {
             product.applySalePermit();
-            product.save();
+            productList.save(product);
             System.out.println("\n[완료] 판매신청이 승인되었습니다. 상태: " + product.getStatusLabel());
             System.out.println("       [판매개시] 메뉴(CT-06)를 통해 판매를 개시할 수 있습니다.");
         } else {
@@ -127,7 +132,7 @@ public class CT06SaleConfirmation {
         }
 
         product.onsale();
-        product.save();
+        productList.save(product);
         System.out.println("\n[완료] 상품이 판매 개시되었습니다. 상태: " + product.getStatusLabel());
     }
 

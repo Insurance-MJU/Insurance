@@ -9,10 +9,9 @@ import infra.persistence.ResultSetExtractor;
 import java.util.List;
 
 public class CoverageDao {
-    private static final CoverageDao INSTANCE = new CoverageDao();
-    public static CoverageDao getInstance() { return INSTANCE; }
+    private final Database db;
 
-    private static final Database DB = Database.getInstance();
+    public CoverageDao(Database db) { this.db = db; }
 
     private static final ResultSetExtractor<CoverageLimitOption> OPT_EXTRACTOR = rs -> {
         CoverageLimitOption opt = new CoverageLimitOption();
@@ -33,7 +32,7 @@ public class CoverageDao {
     };
 
     private List<CoverageLimitOption> loadOptions(String coverageId) {
-        return DB.queryForList(
+        return db.queryForList(
             "SELECT * FROM coverage_limit_options WHERE coverage_master_id = ? ORDER BY seq",
             OPT_EXTRACTOR, coverageId);
     }
@@ -46,13 +45,13 @@ public class CoverageDao {
     }
 
     public List<Coverage> findAll() {
-        List<Coverage> list = DB.queryForList("SELECT * FROM coverages", EXTRACTOR);
+        List<Coverage> list = db.queryForList("SELECT * FROM coverages", EXTRACTOR);
         list.forEach(this::loadFull);
         return list;
     }
 
     public Coverage findById(String coverageId) {
-        Coverage cov = DB.queryForObject(
+        Coverage cov = db.queryForObject(
             "SELECT * FROM coverages WHERE coverage_id = ?", EXTRACTOR, coverageId);
         return loadFull(cov);
     }

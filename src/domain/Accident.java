@@ -123,14 +123,6 @@ public class Accident implements Serializable {
     public AccidentType getAccidentType() { return accidentType; }
     public SeverityLevel getSeverityLevel() { return severityLevel; }
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static java.util.List<Accident> findByDateAndStatus(String date, String status) { return infra.dao.AccidentDao.getInstance().findByDateAndStatus(date, status); }
-    public static java.util.List<Accident> findPendingAccidents()                          { return infra.dao.AccidentDao.getInstance().findPendingAccidents(); }
-    public static Accident findById(String accidentId)                                     { return infra.dao.AccidentDao.getInstance().findById(accidentId); }
-    public static Accident findByCustomerName(String name)                                 { return infra.dao.AccidentDao.getInstance().findByCustomerName(name); }
-    public static String nextId()                                                          { return infra.dao.AccidentDao.getInstance().nextId(); }
-    public void save()                                                                     { infra.dao.AccidentDao.getInstance().save(this); }
-
     public void setAccidentId(String v) { this.accidentId = v; }
     public void setAccidentDate(Date v) { this.accidentDate = v; }
     public void setAccidentDetail(String v) { this.accidentDetail = v; }

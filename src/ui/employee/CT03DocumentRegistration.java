@@ -7,6 +7,11 @@ import java.util.*;
 
 public class CT03DocumentRegistration {
     private final Scanner sc = Context.getInstance().scanner();
+    private final ProductList productList;
+
+    public CT03DocumentRegistration(ProductList productList) {
+        this.productList = productList;
+    }
 
     private static final String[] DOC_NAMES = {"사업방법서", "보험약관", "산출방법서"};
     private static final ProductDocument.DocType[] DOC_TYPES = {
@@ -64,7 +69,7 @@ public class CT03DocumentRegistration {
     }
 
     private Product selectProduct() {
-        List<Product> products = new ArrayList<>(Product.findAll());
+        ProductList products = productList.findAll();
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

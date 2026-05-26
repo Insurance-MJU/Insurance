@@ -2,10 +2,6 @@ package domain;
 
 public class Employee {
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static java.util.List<FieldInvestigator> findBySpecialty(String specialty) { return infra.dao.EmployeeDao.getInstance().findBySpecialty(specialty); }
-    public static FieldInvestigator findById(String employeeId)                       { return infra.dao.EmployeeDao.getInstance().findById(employeeId); }
-
     public static class FieldInvestigator {
         private final String employeeId;
         private final String name;

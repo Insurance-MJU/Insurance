@@ -82,10 +82,6 @@ public class DamageInvestigation implements Serializable {
     public Money getCompensationLimit() { return compensationLimit; }
     public String getFinalOpinion() { return finalOpinion; }
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public void save()                                                     { infra.dao.DamageInvestigationDao.getInstance().save(this); }
-    public static DamageInvestigation findByAccidentId(String accidentId)  { return infra.dao.DamageInvestigationDao.getInstance().findByAccidentId(accidentId); }
-
     public void setAccidentCause(String v) { this.accidentCause = v; }
     public void setDamageDetail(String v) { this.damageDetail = v; }
     public void setInvestigationId(String v) { this.investigationId = v; }

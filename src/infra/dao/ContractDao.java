@@ -5,6 +5,8 @@ import domain.common.Money;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 
+import domain.ContractList;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -13,10 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ContractDao {
-    private static final ContractDao INSTANCE = new ContractDao();
-    public static ContractDao getInstance() { return INSTANCE; }
+    private final Database db;
 
-    private static final Database DB = Database.getInstance();
+    public ContractDao(Database db) { this.db = db; }
 
     private static final ResultSetExtractor<Contract> EXTRACTOR = rs -> mapRow(rs);
 
@@ -65,7 +66,7 @@ public class ContractDao {
     };
 
     private List<SelectedCoverage> loadSelectedCoverages(String contractId) {
-        return DB.queryForList(
+        return db.queryForList(
             "SELECT * FROM contract_selected_coverages WHERE contract_id = ?",
             SC_EXTRACTOR, contractId);
     }
@@ -77,25 +78,25 @@ public class ContractDao {
         return c;
     }
 
-    public List<Contract> findAll() {
-        List<Contract> list = DB.queryForList("SELECT * FROM contracts", EXTRACTOR);
+    public ContractList findAll() {
+        List<Contract> list = db.queryForList("SELECT * FROM contracts", EXTRACTOR);
         list.forEach(this::loadFull);
-        return list;
+        return new ContractList(list);
     }
 
     public Contract findByPolicyNo(String policyNo) {
-        Contract c = DB.queryForObject(
+        Contract c = db.queryForObject(
             "SELECT * FROM contracts WHERE policy_no = ?", EXTRACTOR, policyNo);
         return loadFull(c);
     }
 
     public Contract findByContractId(String contractId) {
-        Contract c = DB.queryForObject(
+        Contract c = db.queryForObject(
             "SELECT * FROM contracts WHERE contract_id = ?", EXTRACTOR, contractId);
         return loadFull(c);
     }
 
-    public List<Contract> findByCondition(String holderName, String periodChoice, String statusChoice) {
+    public ContractList findByCondition(String holderName, String periodChoice, String statusChoice) {
         StringBuilder sql = new StringBuilder("SELECT * FROM contracts WHERE 1=1");
         List<Object> params = new ArrayList<>();
 
@@ -116,16 +117,16 @@ public class ContractDao {
             sql.append(" AND status = 'CANCELLED'");
         }
 
-        List<Contract> list = DB.queryForList(sql.toString(), EXTRACTOR, params.toArray());
+        List<Contract> list = db.queryForList(sql.toString(), EXTRACTOR, params.toArray());
         list.forEach(this::loadFull);
-        return list;
+        return new ContractList(list);
     }
 
     public void save(Contract c) {
         String holderName = (c.getPolicyholder() != null) ? c.getPolicyholder().getName() : null;
         String holderPartyId = (c.getPolicyholder() != null) ? c.getPolicyholder().getPartyId() : null;
 
-        DB.execute(
+        db.execute(
             "INSERT INTO contracts (contract_id, policy_no, product_name, subscription_no, premium," +
             " car_number, coverages_description, coverage_limit, riders_description," +
             " issue_date, start_date, end_date, status, holder_name, holder_party_id)" +
@@ -156,14 +157,14 @@ public class ContractDao {
 
         // Save selected coverages: delete then reinsert
         if (c.getSelectedCoverages() != null) {
-            DB.execute("DELETE FROM contract_selected_coverages WHERE contract_id = ?", c.getContractId());
+            db.execute("DELETE FROM contract_selected_coverages WHERE contract_id = ?", c.getContractId());
             for (SelectedCoverage sc : c.getSelectedCoverages()) {
                 String id = c.getContractId() + "-" + sc.getCoverageMasterId();
                 String dedType = sc.getDeductibleType() != null
                     ? sc.getDeductibleType().name() : "NONE";
                 long dedAmt = sc.getDeductibleAmount() != null
                     ? sc.getDeductibleAmount().getAmount() : 0L;
-                DB.execute(
+                db.execute(
                     "INSERT INTO contract_selected_coverages" +
                     " (id, contract_id, coverage_master_id, coverage_name, mandatory, deductible_type, deductible_amount)" +
                     " VALUES (?,?,?,?,?,?,?)" +
@@ -178,13 +179,13 @@ public class ContractDao {
     }
 
     public String nextPolicyNo() {
-        Integer count = DB.queryForObject("SELECT COUNT(*) FROM contracts", rs -> rs.getInt(1));
+        Integer count = db.queryForObject("SELECT COUNT(*) FROM contracts", rs -> rs.getInt(1));
         int next = (count != null ? count : 0) + 1;
         return String.format("IN-2026-%03d", next);
     }
 
     public String nextContractId() {
-        Integer count = DB.queryForObject("SELECT COUNT(*) FROM contracts", rs -> rs.getInt(1));
+        Integer count = db.queryForObject("SELECT COUNT(*) FROM contracts", rs -> rs.getInt(1));
         int next = (count != null ? count : 0) + 1;
         return String.format("CNT-%d-%03d", LocalDate.now().getYear(), next);
     }

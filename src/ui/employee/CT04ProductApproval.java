@@ -9,6 +9,11 @@ import java.util.*;
 public class CT04ProductApproval {
     private final Scanner sc = Context.getInstance().scanner();
     private final FssClient fssClient = new FssClient();
+    private final ProductList productList;
+
+    public CT04ProductApproval(ProductList productList) {
+        this.productList = productList;
+    }
 
     public void run() {
         System.out.println("\n========================================");
@@ -36,7 +41,7 @@ public class CT04ProductApproval {
         // ── Step 7: [요율 검증] → <<include>> CT-05 ──────────
         System.out.print("\n[요율 검증] (Enter): ");
         sc.nextLine();
-        boolean rateVerified = new CT05RateVerification().runAsInclude(product);
+        boolean rateVerified = new CT05RateVerification(productList).runAsInclude(product);
         if (!rateVerified) { returnToMenu(); return; }
 
         // ── Step 8: 인가신청서 등록 ──────────────────────────
@@ -71,7 +76,7 @@ public class CT04ProductApproval {
 
         // ── Step 10: 신청 완료 ────────────────────────────────
         product.applyForApproval();
-        product.save();
+        productList.save(product);
         System.out.println("\n[안내] 인가 신청이 완료되었습니다. 15일 이내에 확인 결과가 통보됩니다.");
 
         // ── Step 11: [인가 완료] 클릭 ────────────────────────
@@ -82,7 +87,7 @@ public class CT04ProductApproval {
         // A1/A2: 심사 결과 (mock - 승인)
         System.out.println("\n[금융감독원 심사 결과: 승인]");
         product.completeApproval();
-        product.save();
+        productList.save(product);
 
         // ── Step 12: 인가 완료 팝업 ──────────────────────────
         System.out.println("\n┌────────────────────────────────────────┐");
@@ -92,7 +97,7 @@ public class CT04ProductApproval {
     }
 
     private Product selectProduct() {
-        List<Product> products = new ArrayList<>(Product.findAll());
+        ProductList products = productList.findAll();
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

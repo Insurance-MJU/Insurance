@@ -11,6 +11,11 @@ public class CT02PremiumCalculation {
     private final Scanner sc = Context.getInstance().scanner();
     private final KidiClient kidiClient = new KidiClient();
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
+    private final ProductList productList;
+
+    public CT02PremiumCalculation(ProductList productList) {
+        this.productList = productList;
+    }
 
     /** 표준 시장 기준 기본 보험료 (담보 구성 기반 계산 전까지 사용하는 가정치) */
     private static final long   STANDARD_BASE_PREMIUM = 1_150_000L;
@@ -22,7 +27,7 @@ public class CT02PremiumCalculation {
         System.out.println(" CT-02: 보험료를 산출한다");
         System.out.println("========================================");
 
-        List<Product> products = new ArrayList<>(Product.findAll());
+        ProductList products = productList.findAll();
         System.out.println("\n[상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

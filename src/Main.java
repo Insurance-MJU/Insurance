@@ -1,13 +1,13 @@
+import infra.AppContext;
 import infra.Context;
-import ui.LoginController;
-import ui.MainMenuController;
 
 public class Main {
     public static void main(String[] args) {
-        new LoginController().run();
+        AppContext appContext = AppContext.initialize();
+        appContext.getLoginController().run();
 
         if (Context.getInstance().isLoggedIn()) {
-            new MainMenuController().run();
+            appContext.getMainMenuController().run();
         }
     }
 }

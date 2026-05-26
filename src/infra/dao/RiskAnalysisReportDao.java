@@ -10,10 +10,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 
 public class RiskAnalysisReportDao {
-    private static final RiskAnalysisReportDao INSTANCE = new RiskAnalysisReportDao();
-    public static RiskAnalysisReportDao getInstance() { return INSTANCE; }
+    private final Database db;
 
-    private static final Database DB = Database.getInstance();
+    public RiskAnalysisReportDao(Database db) { this.db = db; }
 
     private static final ResultSetExtractor<RiskAnalysisReport> EXTRACTOR = rs -> mapRow(rs);
 
@@ -40,7 +39,7 @@ public class RiskAnalysisReportDao {
         // For full fidelity (all numeric fields), we store and restore all values.
         // The domain class DOES expose getters for all fields but no setters.
         // We use defaultForNewApplicant to get an instance, which gives us a mutable object,
-        // but its fields won't match DB. The only correct approach is to subclass or use reflection.
+        // but its fields won't match db. The only correct approach is to subclass or use reflection.
         // For simplicity and compatibility, we reconstruct using the stored values with
         // a workaround: call defaultForNewApplicant with the stored basePremium (sets totalPremium etc.),
         // then confirm() to set reviewerName and reviewOpinion.
@@ -49,7 +48,7 @@ public class RiskAnalysisReportDao {
         // Actually on re-reading: the domain class RiskAnalysisReport fields ARE accessible
         // through the static factories. Once created, the object's fields are set.
         // The confirm() method sets reviewerName, reviewOpinion, reviewDate.
-        // For loading from DB, we must accept that re-derived fields (scores, etc.) come from DB.
+        // For loading from DB, we must accept that re-derived fields (scores, etc.) come from db.
         // Without reflection or setters, we cannot directly set private fields.
         // The practical workaround: use defaultForNewApplicant with basePremium from DB,
         // which sets surchargeRate=0.05 and computes totalPremium, then call confirm().
@@ -74,13 +73,13 @@ public class RiskAnalysisReportDao {
     }
 
     public RiskAnalysisReport findBySubscriptionNo(String subscriptionNo) {
-        return DB.queryForObject(
+        return db.queryForObject(
             "SELECT * FROM risk_analysis_reports WHERE subscription_no = ?",
             EXTRACTOR, subscriptionNo);
     }
 
     public void save(RiskAnalysisReport report) {
-        DB.execute(
+        db.execute(
             "INSERT INTO risk_analysis_reports" +
             " (subscription_no, risk_score, risk_grade, accident_score, driving_exp_score," +
             " credit_grade_score, traffic_violation_score, surcharge_rate," +

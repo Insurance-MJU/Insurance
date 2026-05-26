@@ -4,6 +4,8 @@ import domain.*;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 
+import domain.ProductList;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -11,10 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductDao {
-    private static final ProductDao INSTANCE = new ProductDao();
-    public static ProductDao getInstance() { return INSTANCE; }
+    private final Database db;
 
-    private static final Database DB = Database.getInstance();
+    public ProductDao(Database db) { this.db = db; }
 
     private static final ResultSetExtractor<Product> EXTRACTOR = rs -> mapRow(rs);
 
@@ -79,36 +80,36 @@ public class ProductDao {
 
     private Product loadFull(Product p) {
         if (p == null) return null;
-        p.setCoverages(DB.queryForList(
+        p.setCoverages(db.queryForList(
             "SELECT * FROM product_coverages WHERE product_id = ?", COV_EXTRACTOR, p.getProductId()));
-        p.setRiders(DB.queryForList(
+        p.setRiders(db.queryForList(
             "SELECT * FROM product_riders WHERE product_id = ?", RIDER_EXTRACTOR, p.getProductId()));
-        p.setDocuments(DB.queryForList(
+        p.setDocuments(db.queryForList(
             "SELECT * FROM product_documents WHERE product_id = ?", DOC_EXTRACTOR, p.getProductId()));
         return p;
     }
 
-    public List<Product> findAll() {
-        List<Product> list = DB.queryForList("SELECT * FROM products", EXTRACTOR);
+    public ProductList findAll() {
+        List<Product> list = db.queryForList("SELECT * FROM products", EXTRACTOR);
         list.forEach(this::loadFull);
-        return list;
+        return new ProductList(list);
     }
 
     public Product findById(String productId) {
-        Product p = DB.queryForObject(
+        Product p = db.queryForObject(
             "SELECT * FROM products WHERE product_id = ?", EXTRACTOR, productId);
         return loadFull(p);
     }
 
     public boolean existsByCode(String code) {
-        Integer count = DB.queryForObject(
+        Integer count = db.queryForObject(
             "SELECT COUNT(*) FROM products WHERE product_code = ?",
             rs -> rs.getInt(1), code);
         return count != null && count > 0;
     }
 
     public void save(Product p) {
-        DB.execute(
+        db.execute(
             "INSERT INTO products (product_id, product_code, product_name, description," +
             " line_of_business, sale_start_date, sale_end_date, status, target, created_at)" +
             " VALUES (?,?,?,?,?,?,?,?,?,?)" +
@@ -131,11 +132,11 @@ public class ProductDao {
 
         // Save sub-tables: delete + reinsert
         if (p.getCoverages() != null) {
-            DB.execute("DELETE FROM product_coverages WHERE product_id = ?", p.getProductId());
+            db.execute("DELETE FROM product_coverages WHERE product_id = ?", p.getProductId());
             for (ProductCoverage pc : p.getCoverages()) {
                 String pcId = pc.getProductCoverageId() != null ? pc.getProductCoverageId()
                     : "PC-" + p.getProductId() + "-" + pc.getCoverageMasterId();
-                DB.execute(
+                db.execute(
                     "INSERT INTO product_coverages (product_coverage_id, product_id, coverage_master_id," +
                     " coverage_name, coverage_type, mandatory, limit_amount) VALUES (?,?,?,?,?,?,?)" +
                     " ON DUPLICATE KEY UPDATE coverage_name=VALUES(coverage_name)," +
@@ -149,11 +150,11 @@ public class ProductDao {
         }
 
         if (p.getRiders() != null) {
-            DB.execute("DELETE FROM product_riders WHERE product_id = ?", p.getProductId());
+            db.execute("DELETE FROM product_riders WHERE product_id = ?", p.getProductId());
             for (ProductRider pr : p.getRiders()) {
                 String prId = pr.getProductRiderId() != null ? pr.getProductRiderId()
                     : "PR-" + p.getProductId() + "-" + pr.getRiderId();
-                DB.execute(
+                db.execute(
                     "INSERT INTO product_riders (product_rider_id, product_id, rider_id, rider_code, rider_name, discount_rate)" +
                     " VALUES (?,?,?,?,?,?)" +
                     " ON DUPLICATE KEY UPDATE rider_name=VALUES(rider_name), discount_rate=VALUES(discount_rate)",
@@ -164,11 +165,11 @@ public class ProductDao {
         }
 
         if (p.getDocuments() != null) {
-            DB.execute("DELETE FROM product_documents WHERE product_id = ?", p.getProductId());
+            db.execute("DELETE FROM product_documents WHERE product_id = ?", p.getProductId());
             for (ProductDocument doc : p.getDocuments()) {
                 String docId = doc.getProductDocumentId() != null ? doc.getProductDocumentId()
                     : "DOC-" + System.nanoTime();
-                DB.execute(
+                db.execute(
                     "INSERT INTO product_documents (product_document_id, product_id, doc_type, title, note," +
                     " created_at, submitted_at, received_at) VALUES (?,?,?,?,?,?,?,?)" +
                     " ON DUPLICATE KEY UPDATE title=VALUES(title), note=VALUES(note)," +

@@ -1,24 +1,32 @@
 package ui.employee;
 
 import domain.Accident;
+import domain.AccidentList;
 import domain.AccidentStatus;
 import domain.Claim;
+import domain.ClaimList;
 import domain.ClaimPayment;
 import domain.common.Money;
 import infra.Context;
 
-import java.util.List;
 import java.util.Scanner;
 
 public class CL04InsurancePayment {
     private final Scanner sc = Context.getInstance().scanner();
+    private final ClaimList claimList;
+    private final AccidentList accidentList;
+
+    public CL04InsurancePayment(ClaimList claimList, AccidentList accidentList) {
+        this.claimList = claimList;
+        this.accidentList = accidentList;
+    }
 
     public void run() {
         System.out.println("\n[CL-04] 보험금을 지급한다");
         System.out.println("========================================");
 
         // Step 1: 지급 대기 목록 조회
-        List<Claim> waitingList = Claim.findAwaitingPayment();
+        ClaimList waitingList = claimList.findAwaitingPayment();
 
         System.out.println("\n[ 지급 대기 중인 접수 목록 ]");
         System.out.println("------------------------------------------------------------");
@@ -27,7 +35,7 @@ public class CL04InsurancePayment {
         if (waitingList.isEmpty()) {
             System.out.println("  지급 대기 중인 건이 없습니다.");
         } else {
-            for (Claim c : waitingList) {
+            for (Claim c : waitingList.getAll()) {
                 Money compMoney = c.getCompensationAmount();
                 String compStr = compMoney != null ? compMoney.getAmount() / 10_000 + "만원" : "0만원";
                 System.out.printf("%-15s %-12s %-10s%n",
@@ -41,7 +49,7 @@ public class CL04InsurancePayment {
         String accNo = sc.nextLine().trim();
         System.out.println("[지급 정보 확인]");
 
-        Claim claim = Claim.findByAccidentId(accNo);
+        Claim claim = claimList.findByAccidentId(accNo);
 
         // Steps 3~11: E1(계좌 검증 실패) 발생 시 Step 3부터 재시작
         while (true) {
@@ -139,9 +147,9 @@ public class CL04InsurancePayment {
             // Step 11: 지급 완료 상태 저장
             if (claim != null) {
                 claim.completePayment(bank, accountNo);
-                claim.save();
-                Accident accident = Accident.findById(accNo);
-                if (accident != null) { accident.complete(); accident.save(); }
+                claimList.save(claim);
+                Accident accident = accidentList.findById(accNo);
+                if (accident != null) { accident.complete(); accidentList.save(accident); }
             }
 
             System.out.println("\n[ 사고 건 지급 종결 내역 ]");

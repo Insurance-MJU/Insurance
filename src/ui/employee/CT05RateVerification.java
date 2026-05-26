@@ -9,6 +9,11 @@ import java.util.*;
 public class CT05RateVerification {
     private final Scanner sc = Context.getInstance().scanner();
     private final KidiClient kidiClient = new KidiClient();
+    private final ProductList productList;
+
+    public CT05RateVerification(ProductList productList) {
+        this.productList = productList;
+    }
 
     private static final String[] REQUIRED_DOCS = {"요율 산출 근거서", "담보별 기준 순보험료 산출표"};
 
@@ -95,7 +100,7 @@ public class CT05RateVerification {
     }
 
     private Product selectProduct() {
-        List<Product> products = new ArrayList<>(Product.findAll());
+        ProductList products = productList.findAll();
         System.out.println("\n[등록된 상품 목록]");
         for (int i = 0; i < products.size(); i++) {
             Product p = products.get(i);

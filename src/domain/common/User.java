@@ -17,9 +17,4 @@ public class User {
     public String getPassword() { return password; }
     public String getName() { return name; }
     public UserRole getRole() { return role; }
-
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static User findByCredentials(String userId, String password) {
-        return infra.dao.UserDao.getInstance().findByCredentials(userId, password);
-    }
 }

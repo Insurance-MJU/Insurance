@@ -1,9 +1,13 @@
 package ui.employee;
 
 import domain.Accident;
+import domain.AccidentList;
 import domain.Claim;
+import domain.ClaimList;
 import domain.Contract;
+import domain.ContractList;
 import domain.DamageInvestigation;
+import domain.DamageInvestigationList;
 import domain.SelectedCoverage;
 import domain.common.Money;
 import infra.Context;
@@ -12,6 +16,17 @@ import java.util.Scanner;
 
 public class CL02DamageAssessment {
     private final Scanner sc = Context.getInstance().scanner();
+    private final ClaimList claimList;
+    private final AccidentList accidentList;
+    private final ContractList contractList;
+    private final DamageInvestigationList damageInvList;
+
+    public CL02DamageAssessment(ClaimList claimList, AccidentList accidentList, ContractList contractList, DamageInvestigationList damageInvList) {
+        this.claimList = claimList;
+        this.accidentList = accidentList;
+        this.contractList = contractList;
+        this.damageInvList = damageInvList;
+    }
 
     public void run() {
         System.out.println("\n[CL-02] 손해액을 산정한다");
@@ -27,10 +42,10 @@ public class CL02DamageAssessment {
             System.out.println("[산정 대상 조회]");
 
             // Step 4: 레포지토리에서 사고 초기 접수 내역 + 계약 담보 조회
-            Accident accident = Accident.findById(accNo);
-            Claim claim = Claim.findByAccidentId(accNo);
+            Accident accident = accidentList.findById(accNo);
+            Claim claim = claimList.findByAccidentId(accNo);
             Contract contract = (claim != null)
-                ? Contract.findByContractId(claim.getContractId()) : null;
+                ? contractList.findByContractId(claim.getContractId()) : null;
 
             System.out.println("\n[ 손해액 산정 폼 - 사고 초기 접수 내역 ]");
             System.out.println("------------------------------------------------------------");
@@ -58,7 +73,7 @@ public class CL02DamageAssessment {
             }
 
             // <<include>> CL-03 — 이미 확보한 accNo를 전달하여 이중 입력 방지
-            new CL03DamageInvestigation().runAsInclude(accNo);
+            new CL03DamageInvestigation(accidentList, claimList, damageInvList).runAsInclude(accNo);
 
             // Step 6: 보상 한도액 + 담보별 자기부담금 출력
             String personalLimitDisplay;
@@ -145,12 +160,12 @@ public class CL02DamageAssessment {
                 Money settlementMoney = new Money(settlement * 10_000L, "KRW");
                 Money deductibleMoney = new Money(deductible * 10_000L, "KRW");
                 claim.assess(settlementMoney, deductibleMoney);
-                DamageInvestigation inv = DamageInvestigation.findByAccidentId(accNo);
+                DamageInvestigation inv = damageInvList.findByAccidentId(accNo);
                 if (inv != null) {
                     inv.setAssessment(claim.getDamageAssessment());
                     claim.setDamageInvestigation(inv);
                 }
-                claim.save();
+                claimList.save(claim);
             }
 
             System.out.println("\n[ 산정 내역 승인 완료 ]");
@@ -164,7 +179,7 @@ public class CL02DamageAssessment {
             System.out.print("\n[보험금 지급 실행] 버튼을 누르려면 Enter를 입력하세요...");
             sc.nextLine();
 
-            new CL04InsurancePayment().run();
+            new CL04InsurancePayment(claimList, accidentList).run();
 
             // Step 12: 지급 완료 팝업 (CL-04 완료 후 진입)
             System.out.println("\n┌──────────────────────────────────────────────────┐");

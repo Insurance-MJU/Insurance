@@ -16,10 +16,6 @@ public class Coverage {
     private List<StandardProvisions> provisions;
     private List<Coverage> requiredCoverages;
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static List<Coverage> findAll()          { return infra.dao.CoverageDao.getInstance().findAll(); }
-    public static Coverage findById(String coverageId)        { return infra.dao.CoverageDao.getInstance().findById(coverageId); }
-
     public boolean hasDeductible() { return deductible != null; }
     public boolean isMandatory()   { return mandatory; }
     public boolean isUnlimited()   { return limitAmount == null && limitType == null; }

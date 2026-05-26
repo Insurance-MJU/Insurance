@@ -3,14 +3,19 @@ package ui.customer;
 import domain.*;
 import infra.Context;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 public class CS02ProductInquiry {
 
     private final Scanner sc = Context.getInstance().scanner();
     private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    private final ProductList productList;
+    private final RiderList riderList;
+
+    public CS02ProductInquiry(ProductList productList, RiderList riderList) {
+        this.productList = productList;
+        this.riderList = riderList;
+    }
 
     /**
      * 상품 조회 및 선택.
@@ -18,7 +23,7 @@ public class CS02ProductInquiry {
      * CS-01에서 include 시 선택된 Product를 반환하며, 취소하면 null 반환.
      */
     public Product run() {
-        List<Product> products = new ArrayList<>(Product.findAll());
+        ProductList products = productList.findAll();
 
         while (true) {
             // Step 1: 판매 중인 상품 목록 출력
@@ -128,7 +133,7 @@ public class CS02ProductInquiry {
 
     // Step 4-5: 특약 상세
     private void showRiderDetail(ProductRider pr) {
-        Rider master = Rider.findByCode(pr.getRiderCode());
+        Rider master = riderList.findByCode(pr.getRiderCode());
         System.out.println("\n[특약 상세 정보]");
         System.out.printf(" 제목 : %s%n", pr.getRiderName());
         if (master != null) {

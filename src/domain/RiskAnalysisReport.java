@@ -120,10 +120,6 @@ public class RiskAnalysisReport implements Serializable {
         return 0.0;
     }
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static RiskAnalysisReport findBySubscriptionNo(String subscriptionNo) { return infra.dao.RiskAnalysisReportDao.getInstance().findBySubscriptionNo(subscriptionNo); }
-    public static void save(RiskAnalysisReport report)                           { infra.dao.RiskAnalysisReportDao.getInstance().save(report); }
-
     // ── Getters ───────────────────────────────────────────────
     public String getSubscriptionNo()        { return subscriptionNo; }
     public double getRiskScore()             { return riskScore; }

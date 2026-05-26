@@ -1,15 +1,22 @@
 package ui.customer;
 
 import domain.Contract;
+import domain.ContractList;
 import domain.Subscription;
-import domain.SubscriptionStatus;
+import domain.SubscriptionList;
 import infra.Context;
 import infra.external.IdentityVerificationService;
-import java.util.List;
 import java.util.Scanner;
 
 public class CS05ContractInquiry {
     private final Scanner sc = Context.getInstance().scanner();
+    private final SubscriptionList subscriptionList;
+    private final ContractList contractList;
+
+    public CS05ContractInquiry(SubscriptionList subscriptionList, ContractList contractList) {
+        this.subscriptionList = subscriptionList;
+        this.contractList = contractList;
+    }
 
     public void run() {
         System.out.println("\n========================================");
@@ -43,9 +50,7 @@ public class CS05ContractInquiry {
         System.out.println("[조회]");
 
         // ── 청약 현황 (승인 전) ──────────────────────────────
-        List<Subscription> subscriptions = Subscription.findByApplicantName(holderName).stream()
-            .filter(s -> s.getStatus() != SubscriptionStatus.APPROVED)
-            .collect(java.util.stream.Collectors.toList());
+        SubscriptionList subscriptions = subscriptionList.findByApplicantName(holderName).excludeApproved();
 
         if (!subscriptions.isEmpty()) {
             System.out.println("\n[청약 현황]");
@@ -53,7 +58,7 @@ public class CS05ContractInquiry {
             System.out.printf(" %-20s %-25s %-14s %-12s %-10s%n",
                 "청약번호", "상품명", "보험료(예정)", "청약일자", "상태");
             System.out.println("------------------------------------------------------------");
-            for (Subscription s : subscriptions) {
+            for (Subscription s : subscriptions.getAll()) {
                 System.out.printf(" %-20s %-25s %,10d원  %-12s %-10s%n",
                     s.getSubscriptionNo(), s.getProductName(),
                     s.getPremium().getAmount(),
@@ -63,7 +68,7 @@ public class CS05ContractInquiry {
         }
 
         // ── 확정 계약 목록 ────────────────────────────────────
-        List<Contract> contracts = Contract.findByCondition(holderName, periodChoice, statusChoice);
+        ContractList contracts = contractList.findByCondition(holderName, periodChoice, statusChoice);
 
         System.out.println("\n[보험 계약 목록]");
         System.out.println("------------------------------------------------------------");
@@ -72,7 +77,7 @@ public class CS05ContractInquiry {
         if (contracts.isEmpty()) {
             System.out.println("  조회된 계약이 없습니다.");
         } else {
-            for (Contract c : contracts) {
+            for (Contract c : contracts.getAll()) {
                 System.out.printf(" %-15s %-35s %-8s%n",
                     c.getPolicyNo(), c.getProductName(), c.getStatusLabel());
             }
@@ -83,9 +88,7 @@ public class CS05ContractInquiry {
         String policyNo = sc.nextLine().trim();
         if ("0".equals(policyNo)) return null;
 
-        Contract selected = contracts.stream()
-            .filter(c -> c.getPolicyNo().equals(policyNo))
-            .findFirst().orElse(null);
+        Contract selected = contracts.findByPolicyNo(policyNo);
 
         if (selected == null) {
             System.out.println("[오류] 해당 증권번호를 찾을 수 없습니다.");

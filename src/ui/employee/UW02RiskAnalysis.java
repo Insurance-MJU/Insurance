@@ -2,6 +2,7 @@ package ui.employee;
 
 import domain.CreditInfo;
 import domain.RiskAnalysisReport;
+import domain.RiskAnalysisReportList;
 import domain.Subscription;
 import domain.common.Money;
 import infra.Context;
@@ -13,6 +14,11 @@ import java.util.Scanner;
 public class UW02RiskAnalysis {
     private final Scanner sc = Context.getInstance().scanner();
     private static final NumberFormat NF = NumberFormat.getInstance(Locale.KOREA);
+    private final RiskAnalysisReportList riskReportList;
+
+    public UW02RiskAnalysis(RiskAnalysisReportList riskReportList) {
+        this.riskReportList = riskReportList;
+    }
 
     public void run() {
         System.out.println("\n[UW-02] 위험성을 분석한다");
@@ -69,7 +75,7 @@ public class UW02RiskAnalysis {
             System.out.println("\n[안내] 신용정보원에 해당 청약자의 조회 이력이 없습니다. 기본 위험등급(3등급)이 적용됩니다.");
             RiskAnalysisReport defaultReport =
                 RiskAnalysisReport.defaultForNewApplicant(sub.getSubscriptionNo(), sub.getBasePremium());
-            RiskAnalysisReport.save(defaultReport);
+            riskReportList.save(defaultReport);
             printSummary(defaultReport);
             confirmResult();
             return;
@@ -99,7 +105,7 @@ public class UW02RiskAnalysis {
         // 도메인이 직접 분석 수행
         RiskAnalysisReport report =
             RiskAnalysisReport.analyze(sub.getSubscriptionNo(), sub.getBasePremium(), creditInfo);
-        RiskAnalysisReport.save(report);
+        riskReportList.save(report);
 
         // Step 5: 위험 분석 결과 요약
         printSummary(report);

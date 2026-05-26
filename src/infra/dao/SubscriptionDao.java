@@ -1,6 +1,7 @@
 package infra.dao;
 
 import domain.Subscription;
+import domain.SubscriptionList;
 import domain.SubscriptionStatus;
 import domain.common.Money;
 import infra.persistence.Database;
@@ -14,10 +15,9 @@ import java.util.Date;
 import java.util.List;
 
 public class SubscriptionDao {
-    private static final SubscriptionDao INSTANCE = new SubscriptionDao();
-    public static SubscriptionDao getInstance() { return INSTANCE; }
+    private final Database db;
 
-    private static final Database DB = Database.getInstance();
+    public SubscriptionDao(Database db) { this.db = db; }
 
     private static final ResultSetExtractor<Subscription> EXTRACTOR = rs -> mapRow(rs);
 
@@ -85,31 +85,31 @@ public class SubscriptionDao {
         return sub;
     }
 
-    public List<Subscription> findAll() {
-        return DB.queryForList("SELECT * FROM subscriptions", EXTRACTOR);
+    public SubscriptionList findAll() {
+        return new SubscriptionList(db.queryForList("SELECT * FROM subscriptions", EXTRACTOR));
     }
 
-    public List<Subscription> findPendingReview() {
-        return DB.queryForList(
+    public SubscriptionList findPendingReview() {
+        return new SubscriptionList(db.queryForList(
             "SELECT * FROM subscriptions WHERE status = ?",
-            EXTRACTOR, SubscriptionStatus.PENDING_REVIEW.name());
+            EXTRACTOR, SubscriptionStatus.PENDING_REVIEW.name()));
     }
 
-    public List<Subscription> findByApplicantName(String applicantName) {
-        return DB.queryForList(
+    public SubscriptionList findByApplicantName(String applicantName) {
+        return new SubscriptionList(db.queryForList(
             "SELECT * FROM subscriptions WHERE applicant_name = ? ORDER BY subscription_date DESC",
-            EXTRACTOR, applicantName);
+            EXTRACTOR, applicantName));
     }
 
     public Subscription findByNo(String subscriptionNo) {
-        return DB.queryForObject(
+        return db.queryForObject(
             "SELECT * FROM subscriptions WHERE subscription_no = ?",
             EXTRACTOR, subscriptionNo);
     }
 
     public String nextSubscriptionNo() {
         String today = new SimpleDateFormat("yyyyMMdd").format(new Date());
-        Integer count = DB.queryForObject(
+        Integer count = db.queryForObject(
             "SELECT COUNT(*) FROM subscriptions WHERE subscription_no LIKE ?",
             rs -> rs.getInt(1), today + "-%");
         int next = (count != null ? count : 0) + 1;
@@ -117,7 +117,7 @@ public class SubscriptionDao {
     }
 
     public void save(Subscription s) {
-        DB.execute(
+        db.execute(
             "INSERT INTO subscriptions (subscription_no, applicant_name, ssn, address, car_number," +
             " chassis_number, product_name, premium, base_premium, subscription_date, status," +
             " occupation, age, coverages_description, reject_reason, supplement_documents)" +

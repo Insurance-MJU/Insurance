@@ -2,10 +2,16 @@ package ui;
 
 import domain.common.User;
 import infra.Context;
+import infra.dao.UserDao;
 import java.util.Scanner;
 
 public class LoginController {
     private final Scanner sc = Context.getInstance().scanner();
+    private final UserDao userDao;
+
+    public LoginController(UserDao userDao) {
+        this.userDao = userDao;
+    }
 
     public void run() {
         System.out.println("========================================");
@@ -18,7 +24,7 @@ public class LoginController {
             System.out.print("비밀번호: ");
             String password = sc.nextLine().trim();
 
-            User user = User.findByCredentials(userId, password);
+            User user = userDao.findByCredentials(userId, password);
             if (user != null) {
                 Context.getInstance().login(user);
                 System.out.println("\n안녕하세요, " + user.getName() + "님!\n");
