@@ -1,7 +1,10 @@
 package domain;
 
 import domain.common.Money;
+import domain.exception.InvalidStatusTransitionException;
+import domain.exception.ValidationException;
 import java.io.Serializable;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -25,18 +28,23 @@ public class Claim implements Serializable {
         this.claimId = claimId;
         this.accident = accident;
         this.claimantName = claimantName;
-        try { this.claimDate = new SimpleDateFormat("yyyy-MM-dd").parse(claimDate); } catch (Exception e) { this.claimDate = new Date(); }
+        try {
+            this.claimDate = new SimpleDateFormat("yyyy-MM-dd").parse(claimDate);
+        } catch (ParseException e) {
+            throw new ValidationException("청구일자 형식이 올바르지 않습니다 (yyyy-MM-dd)");
+        }
         this.contractId = contractId;
         this.description = description;
         this.claimStatus = claimStatus;
     }
 
     public String createClaim() { return claimId; }
-    public String getClaimInfo() { return null; }
-    public boolean updateStatus(ClaimStatus s) { this.claimStatus = s; return true; }
 
     /** 손해액 산정 완료: 합의금·자기부담금으로 보상금 계산 후 지급대기 상태로 전환 */
     public void assess(Money settlement, Money deductibleAmount) {
+        if (claimStatus != ClaimStatus.INVESTIGATING && claimStatus != ClaimStatus.ASSESSING)
+            throw new InvalidStatusTransitionException(
+                claimStatus != null ? claimStatus.name() : "null", ClaimStatus.PAYMENT_PENDING.name());
         long dedAmt = (deductibleAmount != null) ? deductibleAmount.getAmount() : 0L;
         Money compensation = new Money(settlement.getAmount() - dedAmt, "KRW");
         if (this.damageInvestigation == null) this.damageInvestigation = new DamageInvestigation();
@@ -46,6 +54,9 @@ public class Claim implements Serializable {
 
     /** 보험금 지급 완료: DamageAssessment에 지급 정보 저장 후 지급완료 상태로 전환 */
     public void completePayment(String bank, String accountNo) {
+        if (claimStatus != ClaimStatus.PAYMENT_PENDING)
+            throw new InvalidStatusTransitionException(
+                claimStatus != null ? claimStatus.name() : "null", ClaimStatus.CLOSED.name());
         if (this.damageInvestigation == null) this.damageInvestigation = new DamageInvestigation();
         DamageAssessment da = this.damageInvestigation.getAssessment();
         if (da == null) { da = new DamageAssessment(); this.damageInvestigation.setAssessment(da); }

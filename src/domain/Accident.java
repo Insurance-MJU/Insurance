@@ -1,8 +1,10 @@
 package domain;
 
 import domain.common.Money;
+import domain.exception.InvalidStatusTransitionException;
 import domain.exception.ValidationException;
 import java.io.Serializable;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -34,7 +36,11 @@ public class Accident implements Serializable {
                     String documents, String contractId, String coverageDescription,
                     Money coverageLimit, String vehicleInfo, AccidentStatus status) {
         this.accidentId = accidentId;
-        try { this.accidentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(accidentDate); } catch (Exception e) { this.accidentDate = null; }
+        try {
+            this.accidentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(accidentDate);
+        } catch (ParseException e) {
+            throw new ValidationException("사고일시 형식이 올바르지 않습니다 (yyyy-MM-dd HH:mm)");
+        }
         this.reportedBy = reportedBy;
         this.phone = phone;
         this.description = description;
@@ -59,6 +65,11 @@ public class Accident implements Serializable {
         if (accidentDate == null || accidentDate.isBlank())     errors.add("사고일시는 필수입니다");
         if (accidentLocation == null || accidentLocation.isBlank()) errors.add("사고장소는 필수입니다");
         if (contract == null)                                   errors.add("계약 정보는 필수입니다");
+        try {
+            new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(accidentDate);
+        } catch (ParseException e) {
+            errors.add("사고일시 형식이 올바르지 않습니다 (yyyy-MM-dd HH:mm)");
+        }
         if (!errors.isEmpty()) throw new ValidationException(errors);
 
         Accident a = new Accident();
@@ -66,7 +77,7 @@ public class Accident implements Serializable {
         a.reportedBy          = reportedBy;
         a.phone               = phone;
         a.description         = "보험금 청구";
-        try { a.accidentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(accidentDate); } catch (Exception e) { a.accidentDate = null; }
+        try { a.accidentDate  = new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(accidentDate); } catch (ParseException ignored) {}
         a.accidentLocation    = accidentLocation;
         a.accidentDetail      = accidentDetail;
         a.documents           = documents;
@@ -87,14 +98,33 @@ public class Accident implements Serializable {
     }
 
     // ── 비즈니스 메서드: 상태 전이 ────────────────────────────
-    public void transferToCompensation() { this.status = AccidentStatus.TRANSFERRED; }
-    public void startProcessing()        { this.status = AccidentStatus.IN_PROGRESS; }
-    public void complete()               { this.status = AccidentStatus.CLOSED; }
-    public boolean isPending()           { return status == AccidentStatus.PENDING; }
+    public void transferToCompensation() {
+        if (status != AccidentStatus.PENDING)
+            throw new InvalidStatusTransitionException(status.getLabel(), AccidentStatus.TRANSFERRED.getLabel());
+        this.status = AccidentStatus.TRANSFERRED;
+    }
 
-    public boolean updateAccidentDetail(String detail) { this.accidentDetail = detail; return true; }
-    public boolean validateAccident() {
-        return accidentDate != null && accidentLocation != null && !accidentLocation.isEmpty();
+    public void startProcessing() {
+        if (status != AccidentStatus.TRANSFERRED)
+            throw new InvalidStatusTransitionException(status.getLabel(), AccidentStatus.IN_PROGRESS.getLabel());
+        this.status = AccidentStatus.IN_PROGRESS;
+    }
+
+    public void complete() {
+        if (status != AccidentStatus.IN_PROGRESS)
+            throw new InvalidStatusTransitionException(status.getLabel(), AccidentStatus.CLOSED.getLabel());
+        this.status = AccidentStatus.CLOSED;
+    }
+
+    public boolean isPending() { return status == AccidentStatus.PENDING; }
+
+    public void updateAccidentDetail(String detail) { this.accidentDetail = detail; }
+
+    public void validateAccident() {
+        java.util.List<String> errors = new java.util.ArrayList<>();
+        if (accidentDate == null)                                  errors.add("사고일시는 필수입니다");
+        if (accidentLocation == null || accidentLocation.isBlank()) errors.add("사고장소는 필수입니다");
+        if (!errors.isEmpty()) throw new ValidationException(errors);
     }
 
     public int getCoverageLimitManwon() {

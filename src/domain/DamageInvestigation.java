@@ -1,6 +1,7 @@
 package domain;
 
 import domain.common.Money;
+import domain.exception.ValidationException;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,13 +33,19 @@ public class DamageInvestigation implements Serializable {
     public DamageInvestigation() {}
 
     public String getInvestigationResult() { return investigationResult; }
-    public boolean investigateDamage() { return false; }
-    public boolean updateLiabilityRatio(double ratio) { this.liabilityRatio = ratio; return true; }
-    public boolean updateAccidentDetail(String detail) { this.damageDetail = detail; return true; }
+
+    public void updateLiabilityRatio(double ratio) {
+        if (ratio < 0.0 || ratio > 1.0)
+            throw new ValidationException("과실 비율은 0.0 ~ 1.0 사이여야 합니다");
+        this.liabilityRatio = ratio;
+    }
+
+    public void updateAccidentDetail(String detail) { this.damageDetail = detail; }
 
     /** 당사+타사 과실 비율 합계가 100%인지 검증 */
-    public static boolean validateFaultRatio(int ourFault, int otherFault) {
-        return ourFault + otherFault == 100;
+    public static void validateFaultRatio(int ourFault, int otherFault) {
+        if (ourFault + otherFault != 100)
+            throw new ValidationException("당사 과실(" + ourFault + ") + 타사 과실(" + otherFault + ") 합계가 100이어야 합니다");
     }
 
     /** 손해조사 결과를 한 번에 생성하는 팩토리 메서드 */

@@ -3,6 +3,7 @@ package domain;
 import domain.common.Money;
 import domain.exception.ValidationException;
 import java.io.Serializable;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -52,7 +53,11 @@ public class Subscription implements Serializable {
         s.productName          = productName;
         s.premium              = premium;
         s.basePremium          = basePremium;
-        try { s.subscriptionDate = new SimpleDateFormat("yyyy-MM-dd").parse(subscriptionDate); } catch (Exception e) { s.subscriptionDate = new Date(); }
+        try {
+            s.subscriptionDate = new SimpleDateFormat("yyyy-MM-dd").parse(subscriptionDate);
+        } catch (ParseException e) {
+            throw new ValidationException("청약일자 형식이 올바르지 않습니다 (yyyy-MM-dd)");
+        }
         s.status               = SubscriptionStatus.PENDING_REVIEW;
         s.occupation           = occupation;
         s.age                  = age;

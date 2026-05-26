@@ -123,8 +123,11 @@ public class CL03DamageInvestigation {
             // Step 6: 과실 비율 검증
             System.out.println("\n[ 과실 비율 검증 결과 ]");
             System.out.println("------------------------------------------------------------");
-            if (!DamageInvestigation.validateFaultRatio(ourFault, otherFault)) {
-                System.out.println("  합계: " + (ourFault + otherFault) + "% → 합계가 100%가 되어야 합니다.\n");
+            try {
+                DamageInvestigation.validateFaultRatio(ourFault, otherFault);
+            } catch (domain.exception.ValidationException e) {
+                e.getErrors().forEach(err -> System.out.println("  [오류] " + err));
+                System.out.println();
                 continue;
             }
             System.out.println("  합계: 100% → 100% 일치 확인");
