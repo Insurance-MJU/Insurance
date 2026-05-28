@@ -1,8 +1,8 @@
 package domain;
 
 import domain.common.Money;
-import domain.exception.InvalidStatusTransitionException;
-import domain.exception.ValidationException;
+import common.exception.domain.InvalidStatusTransitionException;
+import common.exception.domain.ValidationException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

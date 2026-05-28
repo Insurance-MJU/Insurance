@@ -1,13 +1,18 @@
 import infra.AppContext;
-import infra.Context;
+import infra.config.AppConfig;
+import infra.config.PropertiesConfigLoader;
 
 public class Main {
     public static void main(String[] args) {
-        AppContext appContext = AppContext.initialize();
-        appContext.getLoginController().run();
+        String mode = args.length > 0 ? args[0] : "web";
 
-        if (Context.getInstance().isLoggedIn()) {
-            appContext.getMainMenuController().run();
+        AppConfig config = new AppConfig(new PropertiesConfigLoader("application.properties"));
+        AppContext context = AppContext.initialize(config);
+
+        if ("cli".equals(mode)) {
+            context.startCli();
+        } else {
+            context.startWeb();
         }
     }
 }

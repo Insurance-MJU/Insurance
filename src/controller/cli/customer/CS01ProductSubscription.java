@@ -1,0 +1,194 @@
+package controller.cli.customer;
+
+import domain.*;
+import domain.common.Money;
+import infra.Context;
+import infra.external.IdentityVerificationService;
+import java.util.Scanner;
+
+public class CS01ProductSubscription {
+
+    private final Scanner sc = Context.getInstance().scanner();
+    private final ProductList productList;
+    private final SubscriptionList subscriptionList;
+    private final RiderList riderList;
+
+    public CS01ProductSubscription(ProductList productList, SubscriptionList subscriptionList, RiderList riderList) {
+        this.productList = productList;
+        this.subscriptionList = subscriptionList;
+        this.riderList = riderList;
+    }
+
+    public void run() {
+        System.out.println("\n========================================");
+        System.out.println(" CS-01: 상품가입을 요청한다");
+        System.out.println("========================================");
+
+        // <<include>> CS-02: 상품 조회
+        Product selectedProduct = new CS02ProductInquiry(productList, riderList).run();
+        if (selectedProduct == null) {
+            returnToMenu();
+            return;
+        }
+
+        // ── Step 1: 본인 인증 (외부 시스템) ─────────────────
+        IdentityVerificationService.AuthResult auth =
+            new IdentityVerificationService(sc).verify();
+        String name  = auth.name;
+        String ssn   = auth.ssn;
+        String phone = auth.phone;
+
+        // E1: 나이 조건 검사 (PERSONAL → 만 20~39세)
+        if (selectedProduct.getTarget() == Target.PERSONAL) {
+            int age = Party.calcAge(ssn);
+            if (age != -1 && (age < 20 || age > 39)) {
+                System.out.println("\n[오류] 해당 상품의 가입 대상 연령 조건에 해당하지 않아 가입이 제한됩니다.");
+                returnToMenu();
+                return;
+            }
+        }
+
+        System.out.println("\n[개인정보 처리 동의]");
+        System.out.println(" (필수) 개인정보 수집·이용 동의");
+        System.out.println(" (선택) 마케팅 정보 수신 동의");
+        System.out.print(" 필수 항목에 동의하십니까? (Y/N): ");
+        if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
+            System.out.println("[안내] 필수 동의 항목에 동의하셔야 진행이 가능합니다.");
+            returnToMenu();
+            return;
+        }
+
+        // ── Step 3-5: 차량 조회 ──────────────────────────────
+        System.out.println("\n[차량 정보 조회]");
+        Car car = null;
+        while (car == null) {
+            System.out.print(" 차량번호를 입력하세요: ");
+            String carNo = sc.nextLine().trim();
+            car = Car.findByCarNumber(carNo);
+
+            if (car == null) {
+                // A1: 차량 정보 없음
+                System.out.println("[경고] 입력하신 차량번호로 차량 정보를 조회할 수 없습니다. 차량번호를 확인해 주세요.");
+                System.out.print(" 다시 입력하시겠습니까? (Y/N): ");
+                if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
+                    returnToMenu();
+                    return;
+                }
+            }
+        }
+
+        Model model = car.getModel();
+        String safetyDevices = Car.getSafetyDevices(car.getCarNumber());
+        long stdValue = Car.getStandardValue(car.getCarNumber());
+
+        System.out.println("\n[조회된 차량 정보]");
+        System.out.printf(" 차량번호    : %s%n",      car.getCarNumber());
+        System.out.printf(" 제조사      : %s%n",      model.getManufacturer());
+        System.out.printf(" 모델명      : %s%n",      model.getModelName());
+        System.out.printf(" 차종        : %s%n",      model.getTypeLabel());
+        System.out.printf(" 연료        : %s%n",      model.getFuelLabel());
+        System.out.printf(" 배기량      : %,dcc%n",   model.getEngineCC());
+        System.out.printf(" 연식        : %tY%n",     model.getModelYear());
+        System.out.printf(" 차량기준가액 : %,d원%n",  stdValue);
+        System.out.printf(" 안전장치    : %s%n",      safetyDevices);
+
+        System.out.print("\n차량 정보를 확인했습니다. 계속 진행하시겠습니까? (Y/N): ");
+        if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
+            returnToMenu();
+            return;
+        }
+
+        // ── Step 7: 운행 용도 & 운전자 범위 ──────────────────
+        System.out.println("\n[운행 정보 입력]");
+        System.out.println(" 운행 용도:");
+        System.out.println("  1. 출퇴근/가정용");
+        System.out.println("  2. 영업용");
+        System.out.println("  3. 업무용");
+        System.out.print(" 선택: ");
+        String purposeStr = sc.nextLine().trim();
+
+        CarPurpose purpose;
+        if ("2".equals(purposeStr))      purpose = CarPurpose.COMMERCIAL;
+        else if ("3".equals(purposeStr)) purpose = CarPurpose.BUSINESS;
+        else                             purpose = CarPurpose.COMMUTE;
+        car.changePurpose(purpose);
+
+        System.out.println("\n 운전자 범위:");
+        System.out.println("  1. 본인한정");
+        System.out.println("  2. 가족한정");
+        System.out.print(" 선택: ");
+        String scopeStr = sc.nextLine().trim();
+
+        DriverScope driverScope = car.getDriverScope();
+        if ("2".equals(scopeStr)) {
+            // A2: 가족한정 → 가족 정보 입력
+            System.out.println("\n[가족 정보 입력]");
+            System.out.print(" 이름: ");
+            String familyName = sc.nextLine().trim();
+            System.out.print(" 관계 (예: 동생, 배우자): ");
+            String relation = sc.nextLine().trim();
+            System.out.print(" 생년월일 (예: 070101): ");
+            String birthDate = sc.nextLine().trim();
+            driverScope.restrictToFamily(familyName + " / " + relation + " / " + birthDate);
+            System.out.println(" → 가족 정보 등록: " + driverScope.getFamilyMemberInfo());
+        } else {
+            driverScope.restrictToSelf();
+        }
+
+        // ── Step 8: <<include>> CS-03 예상보험료 산출 ─────────
+        long confirmedPremium = new CS03PremiumEstimate().runAsInclude(selectedProduct, stdValue, purpose);
+        if (confirmedPremium < 0) {
+            returnToMenu();
+            return;
+        }
+
+        // E2: 자동심사 (영업용 거절, 연령 제한 위반 거절)
+        // calcAge가 -1을 반환하면 SSN 파싱 실패이므로 연령 제한은 통과(E1에서 이미 검사)
+        int driverAge = Party.calcAge(ssn);
+        boolean ageAllowed = (driverAge == -1) || car.isDriverAllowed(driverAge);
+        if (!ageAllowed || purpose == CarPurpose.COMMERCIAL) {
+            System.out.println("\n[거절] 가입이 거절되었습니다. 자세한 사항은 고객 센터로 연락주세요.(1588-1000)");
+            returnToMenu();
+            return;
+        }
+
+        // ── Step 9: Subscription 생성 및 저장 ────────────────
+        String coveragesDesc = selectedProduct.getDefaultCoverageDescription();
+        String today = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+
+        Subscription subscription = Subscription.register(
+            subscriptionList.nextSubscriptionNo(),
+            name, ssn,
+            "",                                  // 주소 (CS01에서 미수집)
+            car.getCarNumber(), "",              // 차대번호 (CS01에서 미수집)
+            selectedProduct.getProductName(),
+            new Money(confirmedPremium, "KRW"),
+            new Money(confirmedPremium, "KRW"),
+            today, "",                           // 직업 (CS01에서 미수집)
+            driverAge < 0 ? 20 : driverAge,
+            coveragesDesc
+        );
+        subscriptionList.save(subscription);
+
+        // ── Step 10: 완료 ────────────────────────────────────
+        System.out.println("\n========================================");
+        System.out.println(" 청약이 완료되었습니다.");
+        System.out.println(" 심사 후 계약이 확정됩니다.");
+        System.out.println("========================================");
+        System.out.printf(" 청약번호    : %s%n", subscription.getSubscriptionNo());
+        System.out.printf(" 상품명      : %s%n", selectedProduct.getProductName());
+        System.out.printf(" 가입자      : %s%n", name);
+        System.out.printf(" 전화번호    : %s%n", phone);
+        System.out.printf(" 차량번호    : %s%n", car.getCarNumber());
+        System.out.printf(" 운행용도    : %s%n", car.getPurposeLabel());
+        System.out.printf(" 운전자범위  : %s%n", driverScope.getScopeLabel());
+        System.out.printf(" 보험료(예정): %,d원/년%n", confirmedPremium);
+        returnToMenu();
+    }
+
+    private void returnToMenu() {
+        System.out.print("\nEnter를 누르면 메인 메뉴로 돌아갑니다...");
+        sc.nextLine();
+        System.out.println();
+    }
+}
