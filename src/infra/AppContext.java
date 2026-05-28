@@ -94,10 +94,12 @@ public class AppContext {
         new AuthController(userList, jwtUtil).registerRoutes(router);
         new VehicleController(vehicleService).registerRoutes(router);
         new VerificationController(verificationService).registerRoutes(router);
-        new ProductController(productList, riderList).registerRoutes(router);
-        new SubscriptionController(subscriptionList, productList, verificationService).registerRoutes(router);
+        new ProductController(productList, riderList, coverageList).registerRoutes(router);
+        new SubscriptionController(subscriptionList, productList, contractList, verificationService).registerRoutes(router);
         new AccidentController(accidentList, claimList, contractList, fieldInvestigatorList).registerRoutes(router);
         new ClaimController(claimList).registerRoutes(router);
+        new RiskAnalysisController(subscriptionList, riskReportList, creditService).registerRoutes(router);
+        new DamageInvestigationController(accidentList, claimList, damageInvList).registerRoutes(router);
 
         DispatcherServlet dispatcher = new DispatcherServlet(router, jwtFilter);
         Server server = new Server(config.getServerConfig());

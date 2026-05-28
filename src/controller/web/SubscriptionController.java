@@ -5,6 +5,7 @@ import controller.web.dto.SubscriptionCreateRequest;
 import controller.web.dto.SubscriptionResponse;
 import common.util.DateUtil;
 import domain.*;
+import domain.Contract;
 import domain.common.Money;
 import infra.external.verification.VerificationService;
 import infra.external.verification.dto.VerifiedIdentity;
@@ -18,12 +19,14 @@ public class SubscriptionController {
 
     private final SubscriptionList subscriptionList;
     private final ProductList productList;
+    private final ContractList contractList;
     private final VerificationService verificationService;
 
     public SubscriptionController(SubscriptionList subscriptionList, ProductList productList,
-                                  VerificationService verificationService) {
+                                  ContractList contractList, VerificationService verificationService) {
         this.subscriptionList = subscriptionList;
         this.productList = productList;
+        this.contractList = contractList;
         this.verificationService = verificationService;
     }
 
@@ -39,7 +42,12 @@ public class SubscriptionController {
 
     private List<SubscriptionResponse> getAll() {
         return subscriptionList.findAll().getAll().stream()
-                .map(SubscriptionResponse::from)
+                .map(s -> {
+                    Contract contract = contractList.findBySubscriptionNo(s.getSubscriptionNo());
+                    return contract != null
+                            ? SubscriptionResponse.from(s, contract.getContractId())
+                            : SubscriptionResponse.from(s);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -76,7 +84,22 @@ public class SubscriptionController {
         Subscription s = subscriptionList.getByNo(no);
         s.approve();
         subscriptionList.save(s);
-        return SubscriptionResponse.from(s);
+
+        Party holder = new Party();
+        holder.setPartyId("PARTY-" + s.getSubscriptionNo());
+        holder.setName(s.getApplicantName());
+
+        String policyNo    = contractList.nextPolicyNo();
+        String contractId  = contractList.nextContractId();
+        Contract contract  = Contract.issue(
+                policyNo, contractId, s.getProductName(),
+                holder, s.getPremium(), s.getCarNumber(),
+                s.getCoveragesDescription(), "", ""
+        );
+        contract.setSubscriptionNo(s.getSubscriptionNo());
+        contractList.save(contract);
+
+        return SubscriptionResponse.from(s, contractId);
     }
 
     private SubscriptionResponse reject(String no, String reason) {

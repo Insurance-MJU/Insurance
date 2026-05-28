@@ -96,6 +96,11 @@ public class ContractDao {
         return loadFull(c);
     }
 
+    public Contract findBySubscriptionNo(String subscriptionNo) {
+        return db.queryForObject(
+            "SELECT * FROM contracts WHERE subscription_no = ?", EXTRACTOR, subscriptionNo);
+    }
+
     public ContractList findByCondition(String holderName, String periodChoice, String statusChoice) {
         StringBuilder sql = new StringBuilder("SELECT * FROM contracts WHERE 1=1");
         List<Object> params = new ArrayList<>();

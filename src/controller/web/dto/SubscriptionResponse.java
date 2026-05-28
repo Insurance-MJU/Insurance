@@ -8,7 +8,8 @@ public record SubscriptionResponse(
         String productName,
         long premium,
         String status,
-        String subscriptionDate
+        String subscriptionDate,
+        String contractId
 ) {
     public static SubscriptionResponse from(Subscription s) {
         return new SubscriptionResponse(
@@ -17,7 +18,20 @@ public record SubscriptionResponse(
                 s.getProductName(),
                 s.getPremium() != null ? s.getPremium().getAmount() : 0,
                 s.getStatus() != null ? s.getStatus().name() : null,
-                s.getSubscriptionDateDisplay()
+                s.getSubscriptionDateDisplay(),
+                null
+        );
+    }
+
+    public static SubscriptionResponse from(Subscription s, String contractId) {
+        return new SubscriptionResponse(
+                s.getSubscriptionNo(),
+                s.getApplicantName(),
+                s.getProductName(),
+                s.getPremium() != null ? s.getPremium().getAmount() : 0,
+                s.getStatus() != null ? s.getStatus().name() : null,
+                s.getSubscriptionDateDisplay(),
+                contractId
         );
     }
 }

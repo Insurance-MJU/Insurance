@@ -44,6 +44,10 @@ public class ContractList {
         return dao.findByContractId(contractId);
     }
 
+    public Contract findBySubscriptionNo(String subscriptionNo) {
+        return dao.findBySubscriptionNo(subscriptionNo);
+    }
+
     public Contract getByContractId(String contractId) {
         Contract c = findByContractId(contractId);
         if (c == null) throw new NotFoundException("계약을 찾을 수 없습니다: " + contractId);
