@@ -1,8 +1,7 @@
 package domain;
 
-import domain.exception.ValidationException;
+import common.exception.domain.ValidationException;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -83,6 +82,10 @@ public class Product implements Serializable {
         boolean afterStart = saleStartDate == null || !now.before(saleStartDate);
         boolean beforeEnd  = saleEndDate   == null || !now.after(saleEndDate);
         return afterStart && beforeEnd;
+    }
+
+    public void validateOnSale() {
+        if (!isOnSale()) throw new ValidationException("현재 판매 중인 상품이 아닙니다.");
     }
 
     public String getStatusLabel() {

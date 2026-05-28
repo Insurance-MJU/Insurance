@@ -1,13 +1,11 @@
 import infra.AppContext;
-import infra.Context;
+import infra.config.AppConfig;
+import infra.config.PropertiesConfigLoader;
 
 public class Main {
     public static void main(String[] args) {
-        AppContext appContext = AppContext.initialize();
-        appContext.getLoginController().run();
-
-        if (Context.getInstance().isLoggedIn()) {
-            appContext.getMainMenuController().run();
-        }
+        AppConfig config = new AppConfig(new PropertiesConfigLoader("application.properties"));
+        AppContext context = AppContext.initialize(config);
+        context.startWeb();
     }
 }

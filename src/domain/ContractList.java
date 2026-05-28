@@ -1,5 +1,6 @@
 package domain;
 
+import common.exception.domain.NotFoundException;
 import infra.dao.ContractDao;
 
 import java.util.Collections;
@@ -41,6 +42,12 @@ public class ContractList {
 
     public Contract findByContractId(String contractId) {
         return dao.findByContractId(contractId);
+    }
+
+    public Contract getByContractId(String contractId) {
+        Contract c = findByContractId(contractId);
+        if (c == null) throw new NotFoundException("계약을 찾을 수 없습니다: " + contractId);
+        return c;
     }
 
     public void save(Contract contract) {
