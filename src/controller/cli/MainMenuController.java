@@ -14,6 +14,12 @@ import domain.common.UserRole;
 import common.exception.domain.ValidationException;
 import controller.cli.customer.*;
 import controller.cli.employee.*;
+import infra.external.bank.BankService;
+import infra.external.credit.CreditInquiryService;
+import infra.external.fss.FssService;
+import infra.external.kidi.KidiService;
+import infra.external.vehicle.VehicleInquiryService;
+import infra.external.verification.VerificationService;
 import java.util.Scanner;
 
 public class MainMenuController {
@@ -29,6 +35,12 @@ public class MainMenuController {
     private final RiskAnalysisReportList riskReportList;
     private final DamageInvestigationList damageInvestigationList;
     private final CoverageList coverageList;
+    private final VehicleInquiryService vehicleService;
+    private final VerificationService verificationService;
+    private final BankService bankService;
+    private final CreditInquiryService creditService;
+    private final FssService fssService;
+    private final KidiService kidiService;
 
     public MainMenuController(
         ProductList productList,
@@ -40,7 +52,13 @@ public class MainMenuController {
         RiderList riderList,
         RiskAnalysisReportList riskReportList,
         DamageInvestigationList damageInvestigationList,
-        CoverageList coverageList
+        CoverageList coverageList,
+        VehicleInquiryService vehicleService,
+        VerificationService verificationService,
+        BankService bankService,
+        CreditInquiryService creditService,
+        FssService fssService,
+        KidiService kidiService
     ) {
         this.productList = productList;
         this.subscriptionList = subscriptionList;
@@ -52,6 +70,12 @@ public class MainMenuController {
         this.riskReportList = riskReportList;
         this.damageInvestigationList = damageInvestigationList;
         this.coverageList = coverageList;
+        this.vehicleService = vehicleService;
+        this.verificationService = verificationService;
+        this.bankService = bankService;
+        this.creditService = creditService;
+        this.fssService = fssService;
+        this.kidiService = kidiService;
     }
 
     public void run() {
@@ -116,27 +140,27 @@ public class MainMenuController {
 
         if (role == UserRole.CUSTOMER) {
             switch (input) {
-                case "1": new CS01ProductSubscription(productList, subscriptionList, riderList).run();             break;
+                case "1": new CS01ProductSubscription(productList, subscriptionList, riderList, vehicleService, verificationService).run(); break;
                 case "2": new CS02ProductInquiry(productList, riderList).run();                                    break;
-                case "3": new CS03PremiumEstimate(productList, riderList).run();                                   break;
-                case "4": new CS04ClaimRequest(accidentList, contractList, subscriptionList).run();                break;
-                case "5": new CS05ContractInquiry(subscriptionList, contractList).run();                           break;
+                case "3": new CS03PremiumEstimate(productList, riderList, vehicleService).run();                   break;
+                case "4": new CS04ClaimRequest(accidentList, contractList, subscriptionList, verificationService).run(); break;
+                case "5": new CS05ContractInquiry(subscriptionList, contractList, verificationService).run();            break;
                 default:  invalid(); break;
             }
         } else {
             switch (input) {
-                case "1":  new CT01ProductDesign(riderList, productList, coverageList).run();                      break;
-                case "2":  new CT02PremiumCalculation(productList).run();                                          break;
+                case "1":  new CT01ProductDesign(riderList, productList, coverageList, kidiService).run();          break;
+                case "2":  new CT02PremiumCalculation(productList, kidiService).run();                             break;
                 case "3":  new CT03DocumentRegistration(productList).run();                                        break;
-                case "4":  new CT04ProductApproval(productList).run();                                             break;
-                case "5":  new CT05RateVerification(productList).run();                                            break;
-                case "6":  new CT06SaleConfirmation(productList).run();                                            break;
-                case "7":  new UW01ContractReview(subscriptionList, contractList, riskReportList).run();           break;
-                case "8":  new UW02RiskAnalysis(riskReportList).run();                                             break;
+                case "4":  new CT04ProductApproval(productList, fssService, kidiService).run();                    break;
+                case "5":  new CT05RateVerification(productList, kidiService).run();                               break;
+                case "6":  new CT06SaleConfirmation(productList, fssService).run();                                break;
+                case "7":  new UW01ContractReview(subscriptionList, contractList, riskReportList, creditService).run(); break;
+                case "8":  new UW02RiskAnalysis(riskReportList, creditService).run();                              break;
                 case "9":  new CL01AccidentRegistration(accidentList, claimList, fieldInvestigatorList).run();     break;
-                case "10": new CL02DamageAssessment(claimList, accidentList, contractList, damageInvestigationList).run(); break;
+                case "10": new CL02DamageAssessment(claimList, accidentList, contractList, damageInvestigationList, bankService).run(); break;
                 case "11": new CL03DamageInvestigation(accidentList, claimList, damageInvestigationList).run();    break;
-                case "12": new CL04InsurancePayment(claimList, accidentList).run();                                break;
+                case "12": new CL04InsurancePayment(claimList, accidentList, bankService).run();                   break;
                 default:   invalid(); break;
             }
         }

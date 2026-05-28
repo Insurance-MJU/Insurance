@@ -71,8 +71,4 @@ public class CreditInfo implements Serializable {
     public void setCreditGrade(String v)                { this.creditGrade = v; }
     public void setFraudHistory(String v)               { this.fraudHistory = v; }
 
-    // ── 외부 시스템 위임 ──────────────────────────────────────
-    public static CreditInfo findByApplicant(String ssn, String carNumber) {
-        return infra.external.CreditBureauClient.getInstance().findByApplicant(ssn, carNumber);
-    }
 }

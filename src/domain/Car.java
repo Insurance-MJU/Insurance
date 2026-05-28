@@ -9,11 +9,6 @@ public class Car extends Insured {
     private String owner;
     private CarPurpose purpose;
 
-    // ── DAO 위임 ──────────────────────────────────────────────
-    public static Car findByCarNumber(String carNumber)      { return infra.dao.CarDao.getInstance().findByCarNumber(carNumber); }
-    public static String getSafetyDevices(String carNumber)  { return infra.dao.CarDao.getInstance().getSafetyDevices(carNumber); }
-    public static long getStandardValue(String carNumber)    { return infra.dao.CarDao.getInstance().getStandardValue(carNumber); }
-
     // ── 비즈니스 메서드 ───────────────────────────────────────
     public void changePurpose(CarPurpose purpose) {
         this.purpose = purpose;

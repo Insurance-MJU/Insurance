@@ -23,18 +23,6 @@ public class ClaimPayment implements Serializable {
         }
     }
 
-    /** 예금주 실명 확인 (외부 은행 API 위임) */
-    public static AccountVerification verifyAccount(String bank, String accountNo) {
-        infra.external.BankClient.VerificationResult r =
-            infra.external.BankClient.getInstance().verifyAccount(bank, accountNo);
-        return new AccountVerification(r.verified, r.accountHolder);
-    }
-
-    /** 실시간 계좌 이체 (외부 은행 API 위임) */
-    public static boolean transfer(String bank, String accountNo, long amount) {
-        return infra.external.BankClient.getInstance().transfer(bank, accountNo, amount);
-    }
-
     public String getBankName()      { return bankName; }
     public String getAccountNumber() { return accountNumber; }
 

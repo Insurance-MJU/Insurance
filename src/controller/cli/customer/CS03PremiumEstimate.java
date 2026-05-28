@@ -2,6 +2,9 @@ package controller.cli.customer;
 
 import domain.*;
 import controller.cli.Context;
+import infra.external.vehicle.VehicleInquiryService;
+import infra.external.vehicle.dto.VehicleInquiryRequest;
+import infra.external.vehicle.dto.VehicleInquiryResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -10,10 +13,12 @@ public class CS03PremiumEstimate {
     private final Scanner sc = Context.getInstance().scanner();
     private final ProductList productList;
     private final RiderList riderList;
+    private final VehicleInquiryService vehicleService;
 
-    public CS03PremiumEstimate(ProductList productList, RiderList riderList) {
+    public CS03PremiumEstimate(ProductList productList, RiderList riderList, VehicleInquiryService vehicleService) {
         this.productList = productList;
         this.riderList = riderList;
+        this.vehicleService = vehicleService;
     }
 
     public void run() {
@@ -24,19 +29,16 @@ public class CS03PremiumEstimate {
         Product product = new CS02ProductInquiry(productList, riderList).run();
         if (product == null) { returnToMenu(); return; }
 
-        Car car = null;
-        long stdValue = 0;
-        while (car == null) {
+        VehicleInquiryResponse vehicleInfo = null;
+        while (vehicleInfo == null || !vehicleInfo.isSuccess()) {
             System.out.println("\n[차량 정보 조회]");
             System.out.print(" 차량번호를 입력하세요: ");
             String carNo = sc.nextLine().trim();
-            car = Car.findByCarNumber(carNo);
-            if (car == null) {
+            vehicleInfo = vehicleService.inquire(new VehicleInquiryRequest(carNo));
+            if (!vehicleInfo.isSuccess()) {
                 System.out.println("[경고] 입력하신 차량번호로 차량 정보를 조회할 수 없습니다.");
                 System.out.print(" 다시 입력하시겠습니까? (Y/N): ");
                 if (!sc.nextLine().trim().equalsIgnoreCase("Y")) { returnToMenu(); return; }
-            } else {
-                stdValue = Car.getStandardValue(car.getCarNumber());
             }
         }
 
@@ -48,7 +50,7 @@ public class CS03PremiumEstimate {
                             : "3".equals(p) ? CarPurpose.BUSINESS
                             : CarPurpose.COMMUTE;
 
-        runAsInclude(product, stdValue, purpose);
+        runAsInclude(product, vehicleInfo.standardValue(), purpose);
         returnToMenu();
     }
 

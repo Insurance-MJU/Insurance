@@ -2,19 +2,20 @@ package controller.cli.employee;
 
 import domain.*;
 import controller.cli.Context;
-import infra.external.KidiClient;
+import infra.external.kidi.KidiService;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class CT02PremiumCalculation {
     private final Scanner sc = Context.getInstance().scanner();
-    private final KidiClient kidiClient = new KidiClient();
+    private final KidiService kidiService;
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
     private final ProductList productList;
 
-    public CT02PremiumCalculation(ProductList productList) {
+    public CT02PremiumCalculation(ProductList productList, KidiService kidiService) {
         this.productList = productList;
+        this.kidiService = kidiService;
     }
 
     /** 표준 시장 기준 기본 보험료 (담보 구성 기반 계산 전까지 사용하는 가정치) */
@@ -120,11 +121,6 @@ public class CT02PremiumCalculation {
         catch (NumberFormatException e) { adminExpense = 10.0; }
 
         // ── Step 5: 보험료 산출 ──────────────────────────────────
-        // E1: 시뮬레이션 가용 여부 확인
-        if (!kidiClient.isAvailable()) {
-            System.out.println("[오류] 현재 수익성 시뮬레이션을 이용할 수 없습니다.");
-            return null;
-        }
 
         long finalPremium   = STANDARD_BASE_PREMIUM;
         long netPremium     = Math.round(finalPremium * lossRatio / 100.0);

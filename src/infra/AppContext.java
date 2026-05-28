@@ -8,6 +8,12 @@ import domain.*;
 import infra.config.AppConfig;
 import infra.config.JwtConfig;
 import infra.dao.*;
+import infra.external.bank.mock.MockBankService;
+import infra.external.credit.mock.MockCreditInquiryService;
+import infra.external.fss.mock.MockFssService;
+import infra.external.kidi.mock.MockKidiService;
+import infra.external.vehicle.mock.MockVehicleInquiryService;
+import infra.external.verification.mock.MockVerificationService;
 import infra.persistence.Database;
 import infra.web.DispatcherServlet;
 import infra.web.Router;
@@ -33,6 +39,14 @@ public class AppContext {
     public static AppContext initialize(AppConfig config) {
         // ── 1. 인프라 ────────────────────────────────────────────
         Database db = new Database(config.getDbConfig());
+
+        // ── 외부 서비스 (Mock) ───────────────────────────────────
+        MockVehicleInquiryService vehicleService     = new MockVehicleInquiryService();
+        MockVerificationService   verificationService = new MockVerificationService();
+        MockBankService           bankService         = new MockBankService();
+        MockCreditInquiryService  creditService       = new MockCreditInquiryService();
+        MockFssService            fssService          = new MockFssService();
+        MockKidiService           kidiService         = new MockKidiService();
 
         // ── 2. DAO ──────────────────────────────────────────────
         UserDao                userDao           = new UserDao(db);
@@ -65,7 +79,9 @@ public class AppContext {
         MainMenuController mainMenuController = new MainMenuController(
                 productList, subscriptionList, contractList, claimList,
                 accidentList, fieldInvestigatorList, riderList,
-                riskReportList, damageInvList, coverageList
+                riskReportList, damageInvList, coverageList,
+                vehicleService, verificationService,
+                bankService, creditService, fssService, kidiService
         );
 
         // ── 5. JWT / Web 인프라 ──────────────────────────────────
@@ -76,8 +92,10 @@ public class AppContext {
         // ── 6. Web 컨트롤러 + 라우팅 ────────────────────────────
         Router router = new Router();
         new AuthController(userList, jwtUtil).registerRoutes(router);
+        new VehicleController(vehicleService).registerRoutes(router);
+        new VerificationController(verificationService).registerRoutes(router);
         new ProductController(productList, riderList).registerRoutes(router);
-        new SubscriptionController(subscriptionList, productList).registerRoutes(router);
+        new SubscriptionController(subscriptionList, productList, verificationService).registerRoutes(router);
         new AccidentController(accidentList, claimList, contractList, fieldInvestigatorList).registerRoutes(router);
         new ClaimController(claimList).registerRoutes(router);
 

@@ -6,6 +6,8 @@ import controller.web.dto.SubscriptionResponse;
 import common.util.DateUtil;
 import domain.*;
 import domain.common.Money;
+import infra.external.verification.VerificationService;
+import infra.external.verification.dto.VerifiedIdentity;
 import infra.web.Router;
 
 import java.util.Date;
@@ -16,10 +18,13 @@ public class SubscriptionController {
 
     private final SubscriptionList subscriptionList;
     private final ProductList productList;
+    private final VerificationService verificationService;
 
-    public SubscriptionController(SubscriptionList subscriptionList, ProductList productList) {
+    public SubscriptionController(SubscriptionList subscriptionList, ProductList productList,
+                                  VerificationService verificationService) {
         this.subscriptionList = subscriptionList;
         this.productList = productList;
+        this.verificationService = verificationService;
     }
 
     public void registerRoutes(Router router) {
@@ -45,18 +50,22 @@ public class SubscriptionController {
     }
 
     private SubscriptionResponse create(SubscriptionCreateRequest req) {
+        VerifiedIdentity identity = verificationService.resolveIdentity(req.verificationToken());
+
         Product product = productList.getById(req.productId());
         product.validateOnSale();
 
-        String today = DateUtil.format(new Date());
+        int age = Party.calcAge(identity.ssn());
+
         Subscription subscription = Subscription.register(
                 subscriptionList.nextSubscriptionNo(),
-                req.applicantName(), req.ssn(), req.address(),
+                identity.name(), identity.ssn(), req.address(),
                 req.carNumber(), req.chassisNumber(),
                 product.getProductName(),
                 new Money(req.premium(), "KRW"),
                 new Money(req.premium(), "KRW"),
-                today, req.occupation(), req.age(),
+                DateUtil.format(new Date()),
+                req.occupation(), age,
                 product.getDefaultCoverageDescription()
         );
         subscriptionList.save(subscription);
@@ -83,5 +92,4 @@ public class SubscriptionController {
         subscriptionList.save(s);
         return SubscriptionResponse.from(s);
     }
-
 }

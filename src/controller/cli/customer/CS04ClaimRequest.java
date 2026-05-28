@@ -6,7 +6,11 @@ import domain.Contract;
 import domain.ContractList;
 import domain.SubscriptionList;
 import controller.cli.Context;
-import infra.external.IdentityVerificationService;
+import infra.external.verification.VerificationService;
+import infra.external.verification.dto.OtpSendRequest;
+import infra.external.verification.dto.OtpVerifyRequest;
+import infra.external.verification.dto.OtpVerifyResponse;
+import infra.external.verification.dto.VerifiedIdentity;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -18,11 +22,14 @@ public class CS04ClaimRequest {
     private final AccidentList accidentList;
     private final ContractList contractList;
     private final SubscriptionList subscriptionList;
+    private final VerificationService verificationService;
 
-    public CS04ClaimRequest(AccidentList accidentList, ContractList contractList, SubscriptionList subscriptionList) {
+    public CS04ClaimRequest(AccidentList accidentList, ContractList contractList,
+                            SubscriptionList subscriptionList, VerificationService verificationService) {
         this.accidentList = accidentList;
         this.contractList = contractList;
         this.subscriptionList = subscriptionList;
+        this.verificationService = verificationService;
     }
 
     public void run() {
@@ -31,10 +38,20 @@ public class CS04ClaimRequest {
         System.out.println("========================================");
 
         // Step 2~4: 본인 인증 (외부 시스템)
-        IdentityVerificationService.AuthResult auth =
-            new IdentityVerificationService(sc).verify();
-        String authName  = auth.name;
-        String authPhone = auth.phone;
+        System.out.println("\n[본인 인증]");
+        System.out.print(" 이름: ");           String name  = sc.nextLine().trim();
+        System.out.print(" 주민번호: ");        String ssn   = sc.nextLine().trim();
+        System.out.print(" 휴대전화번호: ");    String phone = sc.nextLine().trim();
+        var sendResp = verificationService.sendOtp(new OtpSendRequest(name, ssn, phone, "1"));
+        System.out.print(" 인증번호: ");
+        OtpVerifyResponse verifyResp = verificationService.verifyOtp(new OtpVerifyRequest(sendResp.sessionId(), sc.nextLine().trim()));
+        if (!verifyResp.success()) {
+            System.out.println("[오류] 본인 인증 실패: " + verifyResp.errorMessage());
+            returnToMenu(); return;
+        }
+        VerifiedIdentity identity = verificationService.resolveIdentity(verifyResp.verificationToken());
+        String authName  = identity.name();
+        String authPhone = identity.phone();
 
         // Step 5: 계약 조회 동의
         System.out.print("\n계약 조회에 동의하십니까? (Y/N): ");
@@ -46,7 +63,7 @@ public class CS04ClaimRequest {
 
         // <<include>> CS-05: CS-04 인증이 완료되었으므로 authName을 직접 전달(중복 인증 제거)
         // A1: 청구 대상 계약 미선택
-        Contract selectedContract = new CS05ContractInquiry(subscriptionList, contractList).runAsInclude(authName);
+        Contract selectedContract = new CS05ContractInquiry(subscriptionList, contractList, verificationService).runAsInclude(authName);
         if (selectedContract == null) {
             System.out.println("\n[경고] 대상 보험 계약은 필수 선택 사항입니다. 대상을 리스트에 추가해 주세요.");
             returnToMenu();

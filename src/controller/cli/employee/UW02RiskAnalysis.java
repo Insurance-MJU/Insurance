@@ -1,6 +1,9 @@
 package controller.cli.employee;
 
 import domain.CreditInfo;
+import infra.external.credit.CreditInquiryService;
+import infra.external.credit.dto.CreditInquiryRequest;
+import infra.external.credit.dto.CreditInquiryResponse;
 import domain.RiskAnalysisReport;
 import domain.RiskAnalysisReportList;
 import domain.Subscription;
@@ -15,9 +18,11 @@ public class UW02RiskAnalysis {
     private final Scanner sc = Context.getInstance().scanner();
     private static final NumberFormat NF = NumberFormat.getInstance(Locale.KOREA);
     private final RiskAnalysisReportList riskReportList;
+    private final CreditInquiryService creditService;
 
-    public UW02RiskAnalysis(RiskAnalysisReportList riskReportList) {
+    public UW02RiskAnalysis(RiskAnalysisReportList riskReportList, CreditInquiryService creditService) {
         this.riskReportList = riskReportList;
+        this.creditService = creditService;
     }
 
     public void run() {
@@ -68,7 +73,8 @@ public class UW02RiskAnalysis {
         System.out.println("[조회]");
 
         // Step 3: 신용정보원 조회 결과
-        CreditInfo creditInfo = CreditInfo.findByApplicant(sub.getSsn(), sub.getCarNumber());
+        CreditInquiryResponse resp = creditService.inquire(new CreditInquiryRequest(sub.getSsn(), sub.getCarNumber()));
+        CreditInfo creditInfo = toCreditInfo(resp);
 
         // A1: 신규 가입자 데이터 없음
         if (creditInfo == null) {
@@ -141,6 +147,24 @@ public class UW02RiskAnalysis {
         System.out.println(" 위험 등급       : " + report.getRiskGradeLabel());
         System.out.printf(" 보험료 할증율   : +%.0f%%%n", report.getSurchargeRate() * 100);
         System.out.println("------------------------------------------------------------");
+    }
+
+    /** CreditInquiryResponse(infra DTO) → CreditInfo(domain 객체) 변환 */
+    private CreditInfo toCreditInfo(CreditInquiryResponse r) {
+        if (r == null) return null;
+        CreditInfo info = new CreditInfo();
+        info.setApplicantName(r.applicantName());
+        info.setCreditGrade(r.creditGrade());
+        info.setDrivingExperienceYears(r.drivingExperienceYears());
+        info.setFraudHistory(r.fraudHistory());
+        if (r.accidentHistory() != null) {
+            info.setAccidentHistory(r.accidentHistory().stream()
+                .map(a -> new CreditInfo.AccidentRecord(
+                    a.date(), a.description(),
+                    new domain.common.Money(a.amountKrw(), "KRW")))
+                .collect(java.util.stream.Collectors.toList()));
+        }
+        return info;
     }
 
     private void confirmResult() {

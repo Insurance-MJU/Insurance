@@ -2,17 +2,21 @@ package controller.cli.employee;
 
 import domain.*;
 import controller.cli.Context;
-import infra.external.FssClient;
+import infra.external.fss.FssService;
+import infra.external.kidi.KidiService;
 import common.util.DocumentUploadHelper;
 import java.util.*;
 
 public class CT04ProductApproval {
     private final Scanner sc = Context.getInstance().scanner();
-    private final FssClient fssClient = new FssClient();
+    private final FssService fssService;
+    private final KidiService kidiService;
     private final ProductList productList;
 
-    public CT04ProductApproval(ProductList productList) {
+    public CT04ProductApproval(ProductList productList, FssService fssService, KidiService kidiService) {
         this.productList = productList;
+        this.fssService = fssService;
+        this.kidiService = kidiService;
     }
 
     public void run() {
@@ -41,7 +45,7 @@ public class CT04ProductApproval {
         // ── Step 7: [요율 검증] → <<include>> CT-05 ──────────
         System.out.print("\n[요율 검증] (Enter): ");
         sc.nextLine();
-        boolean rateVerified = new CT05RateVerification(productList).runAsInclude(product);
+        boolean rateVerified = new CT05RateVerification(productList, kidiService).runAsInclude(product);
         if (!rateVerified) { returnToMenu(); return; }
 
         // ── Step 8: 인가신청서 등록 ──────────────────────────
@@ -69,7 +73,7 @@ public class CT04ProductApproval {
         }
 
         // E2: 금융감독원 서류 제출
-        if (!fssClient.submitApprovalApplication(product.getProductId())) {
+        if (!fssService.submitApprovalApplication(product.getProductId())) {
             System.out.println("[오류] 금융감독원으로 서류 제출을 실패했습니다. 다시 시도해주세요.");
             returnToMenu(); return;
         }
