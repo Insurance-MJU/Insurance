@@ -2,7 +2,7 @@ package controller.cli.customer;
 
 import domain.*;
 import domain.common.Money;
-import infra.Context;
+import controller.cli.Context;
 import infra.external.IdentityVerificationService;
 import java.util.Scanner;
 
@@ -136,7 +136,7 @@ public class CS01ProductSubscription {
         }
 
         // ── Step 8: <<include>> CS-03 예상보험료 산출 ─────────
-        long confirmedPremium = new CS03PremiumEstimate().runAsInclude(selectedProduct, stdValue, purpose);
+        long confirmedPremium = new CS03PremiumEstimate(productList, riderList).runAsInclude(selectedProduct, stdValue, purpose);
         if (confirmedPremium < 0) {
             returnToMenu();
             return;

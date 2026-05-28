@@ -1,7 +1,7 @@
 package controller.web.dto;
 
+import common.util.DateUtil;
 import domain.Product;
-import java.text.SimpleDateFormat;
 
 public record ProductResponse(
         String productId,
@@ -13,8 +13,6 @@ public record ProductResponse(
         String saleEndDate,
         String description
 ) {
-    private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
-
     public static ProductResponse from(Product p) {
         return new ProductResponse(
                 p.getProductId(),
@@ -22,8 +20,8 @@ public record ProductResponse(
                 p.getProductName(),
                 p.getStatusLabel(),
                 p.getTargetDescription(),
-                p.getSaleStartDate() != null ? SDF.format(p.getSaleStartDate()) : null,
-                p.getSaleEndDate()   != null ? SDF.format(p.getSaleEndDate())   : null,
+                DateUtil.format(p.getSaleStartDate()),
+                DateUtil.format(p.getSaleEndDate()),
                 p.getDescription()
         );
     }

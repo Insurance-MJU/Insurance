@@ -1,11 +1,11 @@
 package infra;
 
+import controller.cli.Context;
 import controller.cli.LoginController;
 import controller.cli.MainMenuController;
 import controller.web.*;
 import domain.*;
 import infra.config.AppConfig;
-import infra.config.DBConfig;
 import infra.config.JwtConfig;
 import infra.dao.*;
 import infra.persistence.Database;
@@ -48,6 +48,7 @@ public class AppContext {
         CoverageDao            coverageDao       = new CoverageDao(db);
 
         // ── 3. 도메인 컬렉션 ─────────────────────────────────────
+        UserList                userList              = new UserList(userDao);
         AccidentList            accidentList          = new AccidentList(accidentDao);
         ClaimList               claimList             = new ClaimList(claimDao);
         ContractList            contractList          = new ContractList(contractDao);
@@ -74,7 +75,7 @@ public class AppContext {
 
         // ── 6. Web 컨트롤러 + 라우팅 ────────────────────────────
         Router router = new Router();
-        new AuthController(userDao, jwtUtil).registerRoutes(router);
+        new AuthController(userList, jwtUtil).registerRoutes(router);
         new ProductController(productList, riderList).registerRoutes(router);
         new SubscriptionController(subscriptionList, productList).registerRoutes(router);
         new AccidentController(accidentList, claimList, contractList, fieldInvestigatorList).registerRoutes(router);
@@ -98,7 +99,4 @@ public class AppContext {
     public void startWeb() {
         server.start(dispatcherServlet);
     }
-
-    public LoginController getLoginController()       { return loginController; }
-    public MainMenuController getMainMenuController() { return mainMenuController; }
 }

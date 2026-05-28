@@ -1,5 +1,6 @@
 package domain;
 
+import common.exception.domain.NotFoundException;
 import infra.dao.SubscriptionDao;
 
 import java.util.Collections;
@@ -50,6 +51,12 @@ public class SubscriptionList {
         return (int) subscriptions.stream()
             .filter(s -> s.getStatus() == SubscriptionStatus.PENDING_REVIEW)
             .count();
+    }
+
+    public Subscription getByNo(String subscriptionNo) {
+        Subscription s = findByNo(subscriptionNo);
+        if (s == null) throw new NotFoundException("청약을 찾을 수 없습니다: " + subscriptionNo);
+        return s;
     }
 
     public Subscription findByNo(String subscriptionNo) {

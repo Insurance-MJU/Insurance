@@ -84,6 +84,10 @@ public class Product implements Serializable {
         return afterStart && beforeEnd;
     }
 
+    public void validateOnSale() {
+        if (!isOnSale()) throw new ValidationException("현재 판매 중인 상품이 아닙니다.");
+    }
+
     public String getStatusLabel() {
         if (status == ProductStatus.ON_SALE && !isOnSale()) {
             this.status = ProductStatus.SALE_EXPIRED;

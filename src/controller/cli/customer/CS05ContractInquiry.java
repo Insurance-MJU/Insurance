@@ -4,7 +4,7 @@ import domain.Contract;
 import domain.ContractList;
 import domain.Subscription;
 import domain.SubscriptionList;
-import infra.Context;
+import controller.cli.Context;
 import infra.external.IdentityVerificationService;
 import java.util.Scanner;
 

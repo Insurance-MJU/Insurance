@@ -3,6 +3,7 @@ package infra.web.dto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
+import common.exception.infra.BadRequestException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -55,11 +56,11 @@ public class HttpRequest {
 
     public <T> T body(Class<T> type) throws IOException {
         byte[] bytes = exchange.getRequestBody().readAllBytes();
-        if (bytes.length == 0) throw new ValidationException("No Request Body");
+        if (bytes.length == 0) throw new BadRequestException("No Request Body");
         try {
             return MAPPER.readValue(bytes, type);
         } catch (JsonProcessingException e) {
-            throw new ValidationException("Invalid Request Body");
+            throw new BadRequestException("Invalid Request Body");
         }
     }
 }

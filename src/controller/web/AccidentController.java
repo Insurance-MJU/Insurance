@@ -28,67 +28,45 @@ public class AccidentController {
     }
 
     public void registerRoutes(Router router) {
-        // CL-01: 사고 목록 조회 (date, status 쿼리 파라미터)
-        router.get("/accidents", (req, res) -> {
-            String date   = req.queryParam("date");
-            String status = req.queryParam("status");
-            AccidentList results = accidentList.findByDateAndStatus(
-                    date   != null ? date   : "",
-                    status != null ? status : ""
-            );
-            List<AccidentResponse> body = results.getAll().stream()
-                    .map(AccidentResponse::from)
-                    .collect(Collectors.toList());
-            res.ok(body);
-        });
+        router.get("/accidents",             (req, res) -> res.ok(search(req.queryParam("date"), req.queryParam("status"))));
+        router.get("/accidents/{id}",        (req, res) -> res.ok(AccidentResponse.from(accidentList.getById(req.pathVariable("id")))));
+        router.post("/accidents",            (req, res) -> res.created(report(req.body(AccidentReportRequest.class))));
+        router.put("/accidents/{id}/assign", (req, res) -> res.created(assign(req.pathVariable("id"), req.body(ClaimAssignRequest.class))));
+    }
 
-        // CL-01: 사고 상세 조회
-        router.get("/accidents/{id}", (req, res) -> {
-            Accident a = accidentList.findById(req.pathVariable("id"));
-            if (a == null) { res.error(404, "사고를 찾을 수 없습니다."); return; }
-            res.ok(AccidentResponse.from(a));
-        });
+    private List<AccidentResponse> search(String date, String status) {
+        return accidentList.findByDateAndStatus(
+                date   != null ? date   : "",
+                status != null ? status : ""
+        ).getAll().stream().map(AccidentResponse::from).collect(Collectors.toList());
+    }
 
-        // CS-04: 고객 사고 접수 (보험금 청구)
-        router.post("/accidents", (req, res) -> {
-            AccidentReportRequest body = req.body(AccidentReportRequest.class);
-            Contract contract = contractList.findById(body.contractId());
-            if (contract == null) { res.error(404, "계약을 찾을 수 없습니다."); return; }
+    private AccidentResponse report(AccidentReportRequest req) {
+        Contract contract = contractList.getByContractId(req.contractId());
+        Accident accident = Accident.report(
+                accidentList.nextId(),
+                req.reportedBy(), req.phone(),
+                req.accidentDate(), req.accidentLocation(),
+                req.accidentDetail(), req.documents(),
+                contract
+        );
+        accidentList.save(accident);
+        return AccidentResponse.from(accident);
+    }
 
-            String accidentId = accidentList.nextId();
-            Accident accident = Accident.report(
-                    accidentId,
-                    body.reportedBy(), body.phone(),
-                    body.accidentDate(), body.accidentLocation(),
-                    body.accidentDetail(), body.documents(),
-                    contract
-            );
-            accidentList.save(accident);
-            res.created(AccidentResponse.from(accident));
-        });
-
-        // CL-01: 담당자 배당 및 클레임 생성
-        router.put("/accidents/{id}/assign", (req, res) -> {
-            Accident accident = accidentList.findById(req.pathVariable("id"));
-            if (accident == null) { res.error(404, "사고를 찾을 수 없습니다."); return; }
-
-            ClaimAssignRequest body = req.body(ClaimAssignRequest.class);
-            String claimId = claimList.nextId();
-            String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-
-            Claim claim = new Claim(
-                    claimId, accident,
-                    accident.getReportedBy(), now,
-                    accident.getContractId(),
-                    accident.getDescription(), ClaimStatus.INVESTIGATING
-            );
-            claim.setAssignedEmployee(body.employeeId());
-            claimList.save(claim);
-
-            accident.setStatus(AccidentStatus.IN_PROGRESS);
-            accidentList.save(accident);
-
-            res.created(ClaimResponse.from(claim));
-        });
+    private ClaimResponse assign(String accidentId, ClaimAssignRequest req) {
+        Accident accident = accidentList.getById(accidentId);
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        Claim claim = new Claim(
+                claimList.nextId(), accident,
+                accident.getReportedBy(), now,
+                accident.getContractId(),
+                accident.getDescription(), ClaimStatus.INVESTIGATING
+        );
+        claim.setAssignedEmployee(req.employeeId());
+        claimList.save(claim);
+        accident.setStatus(AccidentStatus.IN_PROGRESS);
+        accidentList.save(accident);
+        return ClaimResponse.from(claim);
     }
 }

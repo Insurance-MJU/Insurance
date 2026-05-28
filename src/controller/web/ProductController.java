@@ -1,12 +1,12 @@
 package controller.web;
 
-import common.exception.infra.ForbiddenException;
 import controller.web.dto.*;
 import domain.*;
 import infra.web.Router;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,93 +22,69 @@ public class ProductController {
     }
 
     public void registerRoutes(Router router) {
-        // CS-02: 상품 목록 조회
-        router.get("/products", (req, res) -> {
-            String onSale = req.queryParam("onSale");
-            ProductList all = productList.findAll();
-            List<ProductResponse> result = ("true".equals(onSale) ? all.onSaleOnly() : all)
-                    .getAll().stream()
-                    .map(ProductResponse::from)
-                    .collect(Collectors.toList());
-            res.ok(result);
-        });
-
-        // CS-02: 상품 상세 조회
-        router.get("/products/{id}", (req, res) -> {
-            Product p = productList.findById(req.pathVariable("id"));
-            if (p == null) { res.error(404, "상품을 찾을 수 없습니다."); return; }
-            res.ok(ProductResponse.from(p));
-        });
-
-        // CT-01: 상품 설계
-        router.post("/products", (req, res) -> {
-            ProductCreateRequest body = req.body(ProductCreateRequest.class);
-            Date start = parseDate(body.saleStartDate());
-            Date end   = parseDate(body.saleEndDate());
-            Target target = Target.valueOf(body.target());
-
-            Product product = Product.design(
-                    body.productCode(), body.productName(),
-                    body.description(), target, start, end
-            );
-            if (body.riderCodes() != null) {
-                List<ProductRider> riders = body.riderCodes().stream()
-                        .map(code -> {
-                            Rider r = riderList.findByCode(code);
-                            return r != null ? ProductRider.from(r) : null;
-                        })
-                        .filter(r -> r != null)
-                        .collect(Collectors.toList());
-                product.setRiders(riders);
-            }
-            productList.save(product);
-            res.created(ProductResponse.from(product));
-        });
-
-        // CT-04: 상품인가 신청
-        router.put("/products/{id}/approval", (req, res) -> {
-            Product p = requireProduct(req.pathVariable("id"));
-            p.applyForApproval();
-            productList.save(p);
-            res.ok(ProductResponse.from(p));
-        });
-
-        // CT-05: 요율검증 요청 (FSS 제출 → 상태 SALE_PENDING)
-        router.put("/products/{id}/rate-verification", (req, res) -> {
-            Product p = requireProduct(req.pathVariable("id"));
-            p.applySalePermit();
-            productList.save(p);
-            res.ok(ProductResponse.from(p));
-        });
-
-        // CT-06: 상품판매 확정
-        router.put("/products/{id}/sale", (req, res) -> {
-            Product p = requireProduct(req.pathVariable("id"));
-            p.onsale();
-            productList.save(p);
-            res.ok(ProductResponse.from(p));
-        });
-
-        // CS-03: 예상보험료 산출
-        router.post("/products/{id}/estimate", (req, res) -> {
-            requireProduct(req.pathVariable("id"));
-            PremiumEstimateRequest body = req.body(PremiumEstimateRequest.class);
-            CarPurpose purpose = CarPurpose.valueOf(body.carPurpose());
-            PremiumCalculation calc = PremiumCalculation.calculate(
-                    body.carStandardValue(), purpose, java.util.Collections.emptyList()
-            );
-            res.ok(new PremiumEstimateResponse(
-                    calc.getSubtotal(),
-                    calc.getFinalPremium(),
-                    "KRW"
-            ));
-        });
+        router.get("/products",                      (req, res) -> res.ok(getAll(req.queryParam("onSale"))));
+        router.get("/products/{id}",                 (req, res) -> res.ok(ProductResponse.from(productList.getById(req.pathVariable("id")))));
+        router.post("/products",                     (req, res) -> res.created(create(req.body(ProductCreateRequest.class))));
+        router.post("/products/{id}/estimate",       (req, res) -> res.ok(estimate(req.pathVariable("id"), req.body(PremiumEstimateRequest.class))));
+        router.put("/products/{id}/approval",        (req, res) -> res.ok(applyForApproval(req.pathVariable("id"))));
+        router.put("/products/{id}/rate-verification",(req, res) -> res.ok(applyRateVerification(req.pathVariable("id"))));
+        router.put("/products/{id}/sale",            (req, res) -> res.ok(confirmSale(req.pathVariable("id"))));
     }
 
-    private Product requireProduct(String id) {
-        Product p = productList.findById(id);
-        if (p == null) throw new common.exception.infra.ForbiddenException("상품을 찾을 수 없습니다.");
-        return p;
+    private List<ProductResponse> getAll(String onSale) {
+        ProductList all = productList.findAll();
+        return ("true".equals(onSale) ? all.onSaleOnly() : all)
+                .getAll().stream()
+                .map(ProductResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    private ProductResponse create(ProductCreateRequest req) {
+        Product product = Product.design(
+                req.productCode(), req.productName(),
+                req.description(), Target.valueOf(req.target()),
+                parseDate(req.saleStartDate()), parseDate(req.saleEndDate())
+        );
+        if (req.riderCodes() != null) {
+            List<ProductRider> riders = req.riderCodes().stream()
+                    .map(riderList::findByCode)
+                    .filter(r -> r != null)
+                    .map(ProductRider::from)
+                    .collect(Collectors.toList());
+            product.setRiders(riders);
+        }
+        productList.save(product);
+        return ProductResponse.from(product);
+    }
+
+    private PremiumEstimateResponse estimate(String id, PremiumEstimateRequest req) {
+        productList.validateExists(id);
+        CarPurpose purpose = CarPurpose.valueOf(req.carPurpose());
+        PremiumCalculation calc = PremiumCalculation.calculate(
+                req.carStandardValue(), purpose, Collections.emptyList()
+        );
+        return new PremiumEstimateResponse(calc.getSubtotal(), calc.getFinalPremium(), "KRW");
+    }
+
+    private ProductResponse applyForApproval(String id) {
+        Product p = productList.getById(id);
+        p.applyForApproval();
+        productList.save(p);
+        return ProductResponse.from(p);
+    }
+
+    private ProductResponse applyRateVerification(String id) {
+        Product p = productList.getById(id);
+        p.applySalePermit();
+        productList.save(p);
+        return ProductResponse.from(p);
+    }
+
+    private ProductResponse confirmSale(String id) {
+        Product p = productList.getById(id);
+        p.onsale();
+        productList.save(p);
+        return ProductResponse.from(p);
     }
 
     private static Date parseDate(String s) {

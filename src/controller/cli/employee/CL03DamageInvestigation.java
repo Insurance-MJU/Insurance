@@ -10,7 +10,7 @@ import domain.DamageInvestigation;
 import domain.DamageInvestigationList;
 import domain.InjuryGrade;
 import domain.common.Money;
-import infra.Context;
+import controller.cli.Context;
 
 import java.util.Scanner;
 

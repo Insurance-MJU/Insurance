@@ -1,4 +1,4 @@
-package infra;
+package controller.cli;
 
 import domain.common.User;
 import java.util.Scanner;

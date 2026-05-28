@@ -1,5 +1,7 @@
 package infra.web.dto;
 
+import common.exception.infra.BadRequestException;
+
 public record PageRequest(int page, int limit) {
 
     private static final int MAX_LIMIT = 50;
@@ -7,9 +9,9 @@ public record PageRequest(int page, int limit) {
     public static PageRequest from(HttpRequest req) {
         int page  = parseOrDefault(req.queryParam("page"),  1);
         int limit = parseOrDefault(req.queryParam("limit"), 10);
-        if (page < 1)          throw new ValidationException("page는 1 이상이어야 합니다.");
-        if (limit < 1)         throw new ValidationException("limit는 1 이상이어야 합니다.");
-        if (limit > MAX_LIMIT) throw new ValidationException("limit는 최대 " + MAX_LIMIT + "까지 허용됩니다.");
+        if (page < 1)          throw new BadRequestException("page는 1 이상이어야 합니다.");
+        if (limit < 1)         throw new BadRequestException("limit는 1 이상이어야 합니다.");
+        if (limit > MAX_LIMIT) throw new BadRequestException("limit는 최대 " + MAX_LIMIT + "까지 허용됩니다.");
         return new PageRequest(page, limit);
     }
 

@@ -7,7 +7,7 @@ import domain.Claim;
 import domain.ClaimList;
 import domain.ClaimPayment;
 import domain.common.Money;
-import infra.Context;
+import controller.cli.Context;
 
 import java.util.Scanner;
 

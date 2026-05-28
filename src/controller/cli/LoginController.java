@@ -1,7 +1,6 @@
 package controller.cli;
 
 import domain.common.User;
-import infra.Context;
 import infra.dao.UserDao;
 import java.util.Scanner;
 

@@ -1,6 +1,5 @@
 package controller.cli;
 
-import infra.Context;
 import java.util.Scanner;
 
 public class StubUseCase {

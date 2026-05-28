@@ -1,12 +1,13 @@
 package controller.web;
 
+import controller.web.dto.RejectRequest;
 import controller.web.dto.SubscriptionCreateRequest;
 import controller.web.dto.SubscriptionResponse;
+import common.util.DateUtil;
 import domain.*;
 import domain.common.Money;
 import infra.web.Router;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,73 +23,65 @@ public class SubscriptionController {
     }
 
     public void registerRoutes(Router router) {
-        // CS-05: 청약 목록 조회
-        router.get("/subscriptions", (req, res) -> {
-            List<SubscriptionResponse> result = subscriptionList.findAll().getAll().stream()
-                    .map(SubscriptionResponse::from)
-                    .collect(Collectors.toList());
-            res.ok(result);
-        });
-
-        // CS-05: 청약 상세 조회
-        router.get("/subscriptions/{no}", (req, res) -> {
-            Subscription s = subscriptionList.findByNo(req.pathVariable("no"));
-            if (s == null) { res.error(404, "청약을 찾을 수 없습니다."); return; }
-            res.ok(SubscriptionResponse.from(s));
-        });
-
-        // CS-01: 상품가입 요청
-        router.post("/subscriptions", (req, res) -> {
-            SubscriptionCreateRequest body = req.body(SubscriptionCreateRequest.class);
-
-            Product product = productList.findById(body.productId());
-            if (product == null) { res.error(404, "상품을 찾을 수 없습니다."); return; }
-            if (!product.isOnSale()) { res.error(400, "현재 판매 중인 상품이 아닙니다."); return; }
-
-            String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-            Subscription subscription = Subscription.register(
-                    subscriptionList.nextSubscriptionNo(),
-                    body.applicantName(),
-                    body.ssn(),
-                    body.address(),
-                    body.carNumber(),
-                    body.chassisNumber(),
-                    product.getProductName(),
-                    new Money(body.premium(), "KRW"),
-                    new Money(body.premium(), "KRW"),
-                    today,
-                    body.occupation(),
-                    body.age(),
-                    product.getDefaultCoverageDescription()
-            );
-            subscriptionList.save(subscription);
-            res.created(SubscriptionResponse.from(subscription));
-        });
-
-        // UW-01: 계약인수 심사 대상 청약 목록
-        router.get("/subscriptions/pending", (req, res) -> {
-            List<SubscriptionResponse> result = subscriptionList.findPendingReview().getAll().stream()
-                    .map(SubscriptionResponse::from)
-                    .collect(Collectors.toList());
-            res.ok(result);
-        });
-
-        // UW-01: 청약 심사 결정 (approve/reject/supplement)
-        router.put("/subscriptions/{no}/review", (req, res) -> {
-            Subscription s = subscriptionList.findByNo(req.pathVariable("no"));
-            if (s == null) { res.error(404, "청약을 찾을 수 없습니다."); return; }
-
-            var body = req.body(ReviewRequest.class);
-            switch (body.decision().toUpperCase()) {
-                case "APPROVE"    -> s.approve();
-                case "REJECT"     -> s.reject(body.reason());
-                case "SUPPLEMENT" -> s.requestSupplement(body.reason());
-                default           -> { res.error(400, "decision은 APPROVE/REJECT/SUPPLEMENT 중 하나여야 합니다."); return; }
-            }
-            subscriptionList.save(s);
-            res.ok(SubscriptionResponse.from(s));
-        });
+        router.get("/subscriptions",                 (req, res) -> res.ok(getAll()));
+        router.get("/subscriptions/pending",         (req, res) -> res.ok(getPending()));
+        router.get("/subscriptions/{no}",            (req, res) -> res.ok(SubscriptionResponse.from(subscriptionList.getByNo(req.pathVariable("no")))));
+        router.post("/subscriptions",                (req, res) -> res.created(create(req.body(SubscriptionCreateRequest.class))));
+        router.put("/subscriptions/{no}/approve",    (req, res) -> res.ok(approve(req.pathVariable("no"))));
+        router.put("/subscriptions/{no}/reject",     (req, res) -> res.ok(reject(req.pathVariable("no"), req.body(RejectRequest.class).reason())));
+        router.put("/subscriptions/{no}/supplement", (req, res) -> res.ok(supplement(req.pathVariable("no"), req.body(RejectRequest.class).reason())));
     }
 
-    private record ReviewRequest(String decision, String reason) {}
+    private List<SubscriptionResponse> getAll() {
+        return subscriptionList.findAll().getAll().stream()
+                .map(SubscriptionResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    private List<SubscriptionResponse> getPending() {
+        return subscriptionList.findPendingReview().getAll().stream()
+                .map(SubscriptionResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    private SubscriptionResponse create(SubscriptionCreateRequest req) {
+        Product product = productList.getById(req.productId());
+        product.validateOnSale();
+
+        String today = DateUtil.format(new Date());
+        Subscription subscription = Subscription.register(
+                subscriptionList.nextSubscriptionNo(),
+                req.applicantName(), req.ssn(), req.address(),
+                req.carNumber(), req.chassisNumber(),
+                product.getProductName(),
+                new Money(req.premium(), "KRW"),
+                new Money(req.premium(), "KRW"),
+                today, req.occupation(), req.age(),
+                product.getDefaultCoverageDescription()
+        );
+        subscriptionList.save(subscription);
+        return SubscriptionResponse.from(subscription);
+    }
+
+    private SubscriptionResponse approve(String no) {
+        Subscription s = subscriptionList.getByNo(no);
+        s.approve();
+        subscriptionList.save(s);
+        return SubscriptionResponse.from(s);
+    }
+
+    private SubscriptionResponse reject(String no, String reason) {
+        Subscription s = subscriptionList.getByNo(no);
+        s.reject(reason);
+        subscriptionList.save(s);
+        return SubscriptionResponse.from(s);
+    }
+
+    private SubscriptionResponse supplement(String no, String reason) {
+        Subscription s = subscriptionList.getByNo(no);
+        s.requestSupplement(reason);
+        subscriptionList.save(s);
+        return SubscriptionResponse.from(s);
+    }
+
 }

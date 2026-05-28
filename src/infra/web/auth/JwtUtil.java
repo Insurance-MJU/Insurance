@@ -2,6 +2,7 @@ package infra.web.auth;
 
 import common.exception.infra.UnauthorizedException;
 import infra.config.JwtConfig;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -21,34 +22,34 @@ public class JwtUtil {
         this.signingKey = Keys.hmacShaKeyFor(config.secret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(int userId, String email) {
+    public String generateAccessToken(String userId, String role) {
         return Jwts.builder()
-                .subject(String.valueOf(userId))
-                .claim("email", email)
+                .setSubject(userId)
+                .claim("role", role)
                 .claim("type", "access")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + config.accessExpirySeconds() * 1000L))
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + config.accessExpirySeconds() * 1000L))
                 .signWith(signingKey)
                 .compact();
     }
 
-    public String generateRefreshToken(int userId) {
+    public String generateRefreshToken(String userId) {
         return Jwts.builder()
-                .subject(String.valueOf(userId))
+                .setSubject(userId)
                 .claim("type", "refresh")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + config.refreshExpirySeconds() * 1000L))
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + config.refreshExpirySeconds() * 1000L))
                 .signWith(signingKey)
                 .compact();
     }
 
     public void verify(String token) {
         try {
-            Jwts.parser()
-                    .verifyWith(signingKey)
+            Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
                     .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+                    .parseClaimsJws(token)
+                    .getBody();
         } catch (ExpiredJwtException e) {
             throw new UnauthorizedException("Token is expired.");
         } catch (JwtException e) {

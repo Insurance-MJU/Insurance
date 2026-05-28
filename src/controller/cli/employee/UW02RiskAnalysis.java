@@ -5,7 +5,7 @@ import domain.RiskAnalysisReport;
 import domain.RiskAnalysisReportList;
 import domain.Subscription;
 import domain.common.Money;
-import infra.Context;
+import controller.cli.Context;
 
 import java.text.NumberFormat;
 import java.util.Locale;

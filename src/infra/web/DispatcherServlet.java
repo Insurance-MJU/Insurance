@@ -49,7 +49,7 @@ public class DispatcherServlet implements HttpHandler {
             match.handler.handle(request, response);
         } catch (DomainException e) {
             System.err.println("[DOMAIN] " + e.getMessage());
-            response.error(400, e.getMessage());
+            response.error(e.getStatus(), e.getMessage());
         } catch (DataAccessException e) {
             System.err.println("[DAO] " + e.getMessage());
             response.error(e.getStatus(), e.getMessage());

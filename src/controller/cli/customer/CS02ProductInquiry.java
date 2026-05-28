@@ -1,8 +1,9 @@
 package controller.cli.customer;
 
 import domain.*;
-import infra.Context;
+import controller.cli.Context;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Scanner;
 
 public class CS02ProductInquiry {

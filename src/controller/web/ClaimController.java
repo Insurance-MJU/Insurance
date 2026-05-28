@@ -1,6 +1,8 @@
 package controller.web;
 
+import controller.web.dto.AssessRequest;
 import controller.web.dto.ClaimResponse;
+import controller.web.dto.PayRequest;
 import domain.*;
 import domain.common.Money;
 import infra.web.Router;
@@ -17,51 +19,30 @@ public class ClaimController {
     }
 
     public void registerRoutes(Router router) {
-        // CL-02: 지급 대기 목록
-        router.get("/claims", (req, res) -> {
-            List<ClaimResponse> result = claimList.findAwaitingPayment().getAll().stream()
-                    .map(ClaimResponse::from)
-                    .collect(Collectors.toList());
-            res.ok(result);
-        });
-
-        // 클레임 상세
-        router.get("/claims/{id}", (req, res) -> {
-            Claim c = claimList.findById(req.pathVariable("id"));
-            if (c == null) { res.error(404, "클레임을 찾을 수 없습니다."); return; }
-            res.ok(ClaimResponse.from(c));
-        });
-
-        // CL-02: 손해액 산정
-        router.put("/claims/{id}/assess", (req, res) -> {
-            Claim c = claimList.findById(req.pathVariable("id"));
-            if (c == null) { res.error(404, "클레임을 찾을 수 없습니다."); return; }
-
-            AssessRequest body = req.body(AssessRequest.class);
-            c.assess(
-                    new Money(body.settlement(), "KRW"),
-                    new Money(body.deductible(), "KRW")
-            );
-            claimList.save(c);
-            res.ok(ClaimResponse.from(c));
-        });
-
-        // CL-04: 보험금 지급
-        router.put("/claims/{id}/pay", (req, res) -> {
-            Claim c = claimList.findById(req.pathVariable("id"));
-            if (c == null) { res.error(404, "클레임을 찾을 수 없습니다."); return; }
-
-            PayRequest body = req.body(PayRequest.class);
-            if (!Claim.isValidAccountNumber(body.accountNo())) {
-                res.error(400, "계좌번호는 14자리 이하여야 합니다.");
-                return;
-            }
-            c.completePayment(body.bank(), body.accountNo());
-            claimList.save(c);
-            res.ok(ClaimResponse.from(c));
-        });
+        router.get("/claims",            (req, res) -> res.ok(getAll()));
+        router.get("/claims/{id}",       (req, res) -> res.ok(ClaimResponse.from(claimList.getById(req.pathVariable("id")))));
+        router.put("/claims/{id}/assess",(req, res) -> res.ok(assess(req.pathVariable("id"), req.body(AssessRequest.class))));
+        router.put("/claims/{id}/pay",   (req, res) -> res.ok(pay(req.pathVariable("id"), req.body(PayRequest.class))));
     }
 
-    private record AssessRequest(long settlement, long deductible) {}
-    private record PayRequest(String bank, String accountNo) {}
+    private List<ClaimResponse> getAll() {
+        return claimList.findAwaitingPayment().getAll().stream()
+                .map(ClaimResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    private ClaimResponse assess(String id, AssessRequest req) {
+        Claim c = claimList.getById(id);
+        c.assess(new Money(req.settlement(), "KRW"), new Money(req.deductible(), "KRW"));
+        claimList.save(c);
+        return ClaimResponse.from(c);
+    }
+
+    private ClaimResponse pay(String id, PayRequest req) {
+        Claim c = claimList.getById(id);
+        c.completePayment(req.bank(), req.accountNo());
+        claimList.save(c);
+        return ClaimResponse.from(c);
+    }
+
 }
