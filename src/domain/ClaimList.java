@@ -1,5 +1,6 @@
 package domain;
 
+import common.exception.domain.NotFoundException;
 import domain.common.Money;
 import infra.dao.ClaimDao;
 
@@ -37,6 +38,12 @@ public class ClaimList {
 
     public Claim findById(String claimId) {
         return dao.findById(claimId);
+    }
+
+    public Claim getById(String claimId) {
+        Claim c = findById(claimId);
+        if (c == null) throw new NotFoundException("클레임을 찾을 수 없습니다: " + claimId);
+        return c;
     }
 
     public String nextId() {

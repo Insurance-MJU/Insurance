@@ -1,5 +1,6 @@
 package domain;
 
+import common.exception.domain.NotFoundException;
 import infra.dao.AccidentDao;
 
 import java.util.Collections;
@@ -31,6 +32,12 @@ public class AccidentList {
 
     public Accident findById(String accidentId) {
         return dao.findById(accidentId);
+    }
+
+    public Accident getById(String accidentId) {
+        Accident a = findById(accidentId);
+        if (a == null) throw new NotFoundException("사고를 찾을 수 없습니다: " + accidentId);
+        return a;
     }
 
     public Accident findByCustomerName(String name) {

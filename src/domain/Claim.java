@@ -1,8 +1,8 @@
 package domain;
 
 import domain.common.Money;
-import domain.exception.InvalidStatusTransitionException;
-import domain.exception.ValidationException;
+import common.exception.domain.InvalidStatusTransitionException;
+import common.exception.domain.ValidationException;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -54,6 +54,8 @@ public class Claim implements Serializable {
 
     /** 보험금 지급 완료: DamageAssessment에 지급 정보 저장 후 지급완료 상태로 전환 */
     public void completePayment(String bank, String accountNo) {
+        if (!isValidAccountNumber(accountNo))
+            throw new ValidationException("계좌번호는 14자리 이하여야 합니다.");
         if (claimStatus != ClaimStatus.PAYMENT_PENDING)
             throw new InvalidStatusTransitionException(
                 claimStatus != null ? claimStatus.name() : "null", ClaimStatus.CLOSED.name());

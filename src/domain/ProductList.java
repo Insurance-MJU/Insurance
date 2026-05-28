@@ -1,5 +1,6 @@
 package domain;
 
+import common.exception.domain.NotFoundException;
 import infra.dao.ProductDao;
 
 import java.util.Collections;
@@ -49,8 +50,22 @@ public class ProductList {
         return dao.findById(productId);
     }
 
+    public Product getById(String productId) {
+        Product p = findById(productId);
+        if (p == null) throw new NotFoundException("상품을 찾을 수 없습니다: " + productId);
+        return p;
+    }
+
     public boolean existsByCode(String code) {
         return dao.existsByCode(code);
+    }
+
+    public boolean existsById(String productId) {
+        return findById(productId) != null;
+    }
+
+    public void validateExists(String productId) {
+        if (!existsById(productId)) throw new NotFoundException("상품을 찾을 수 없습니다: " + productId);
     }
 
     public void save(Product product) {
