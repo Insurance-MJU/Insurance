@@ -1,8 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAccidents, assignAccident, investigateDamage } from '@/queries/claims';
-import type { Accident } from '@/types';
+import { getAccidents, getInvestigators, assignAccident, investigateDamage } from '@/queries/claims';
+import type { Accident, Investigator } from '@/types';
 
 const STATUS_COLOR: Record<string, string> = {
     '접수':     'bg-blue-50 text-blue-700',
@@ -12,6 +12,13 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function AccidentsPage() {
     const qc = useQueryClient();
+
+    // 조사관 배정 패널 상태
+    const [assigningId, setAssigningId] = useState<string | null>(null);
+    const [specialty, setSpecialty] = useState('');
+    const [searchedSpecialty, setSearchedSpecialty] = useState<string | undefined>(undefined);
+
+    // 손해 조사 패널 상태
     const [investigatingId, setInvestigatingId] = useState<string | null>(null);
     const [form, setForm] = useState({ opinion: '', damageCode: '', injuryGrade: 12, ourFault: 80, otherFault: 20, liability: '부책', finalOpinion: '' });
 
@@ -20,19 +27,33 @@ export default function AccidentsPage() {
         queryFn: () => getAccidents(),
     });
 
+    const { data: investigators, isFetching: investigatorsFetching } = useQuery<Investigator[]>({
+        queryKey: ['investigators', searchedSpecialty],
+        queryFn: () => getInvestigators(searchedSpecialty),
+        enabled: assigningId !== null,
+    });
+
     const assign = useMutation({
         mutationFn: ({ id, employeeId }: { id: string; employeeId: string }) => assignAccident(id, employeeId),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['accidents'] }),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['accidents'] });
+            setAssigningId(null);
+            setSpecialty('');
+            setSearchedSpecialty(undefined);
+        },
     });
+
     const investigate = useMutation({
         mutationFn: ({ id, data }: { id: string; data: typeof form }) => investigateDamage(id, data),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['accidents'] }); setInvestigatingId(null); },
         onError: (e: any) => alert(e.message),
     });
 
-    const handleAssign = (id: string) => {
-        const employeeId = prompt('배정할 직원 ID를 입력하세요');
-        if (employeeId) assign.mutate({ id, employeeId });
+    const openAssignPanel = (id: string) => {
+        setAssigningId(id);
+        setSpecialty('');
+        setSearchedSpecialty(undefined);
+        setInvestigatingId(null);
     };
 
     return (
@@ -59,7 +80,8 @@ export default function AccidentsPage() {
                             </div>
                             <div className="flex gap-2">
                                 {a.status === '접수' && (
-                                    <button onClick={() => handleAssign(a.accidentId)} disabled={assign.isPending}
+                                    <button
+                                        onClick={() => assigningId === a.accidentId ? setAssigningId(null) : openAssignPanel(a.accidentId)}
                                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition">
                                         조사관 배정
                                     </button>
@@ -71,6 +93,61 @@ export default function AccidentsPage() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* CL-01 조사관 배정 패널 */}
+                        {assigningId === a.accidentId && (
+                            <div className="bg-blue-50 rounded-xl p-5 border border-blue-200 flex flex-col gap-4">
+                                <p className="font-semibold text-blue-800">배당 담당자 검색 (CL-01)</p>
+
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={specialty}
+                                        onChange={e => setSpecialty(e.target.value)}
+                                        placeholder="전문 분야 (예: 자동차 대물)"
+                                        className="flex-1 border border-blue-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <button
+                                        onClick={() => setSearchedSpecialty(specialty || undefined)}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition">
+                                        검색
+                                    </button>
+                                </div>
+
+                                {investigatorsFetching && (
+                                    <p className="text-sm text-blue-500">검색 중...</p>
+                                )}
+
+                                {!investigatorsFetching && investigators && investigators.length === 0 && (
+                                    <p className="text-sm text-slate-400">해당 조건의 현장조사역이 없습니다.</p>
+                                )}
+
+                                {!investigatorsFetching && investigators && investigators.length > 0 && (
+                                    <div className="flex flex-col gap-2">
+                                        <p className="text-xs font-medium text-slate-600">현장조사역 후보 목록 (출동 가능 직원명 / 미결 건수)</p>
+                                        {investigators.map(inv => (
+                                            <div key={inv.employeeId} className="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-blue-100">
+                                                <div>
+                                                    <span className="font-semibold text-slate-800">{inv.name}</span>
+                                                    <span className="ml-2 text-xs text-slate-500">{inv.specialty}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-sm text-slate-500">미결 <strong>{inv.openCaseCount}</strong>건</span>
+                                                    <button
+                                                        onClick={() => assign.mutate({ id: a.accidentId, employeeId: inv.employeeId })}
+                                                        disabled={assign.isPending}
+                                                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white text-xs font-bold rounded-lg transition">
+                                                        배정
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <button onClick={() => setAssigningId(null)} className="text-sm text-slate-400 hover:text-slate-600 self-start">취소</button>
+                            </div>
+                        )}
 
                         {/* CL-03 손해 조사 폼 */}
                         {investigatingId === a.accidentId && (

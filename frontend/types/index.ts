@@ -49,6 +49,13 @@ export interface Accident {
     contractId: string;
 }
 
+export interface Investigator {
+    employeeId: string;
+    name: string;
+    specialty: string;
+    openCaseCount: number;
+}
+
 export interface Claim {
     claimId: string;
     accidentId: string;  // CL-03 선행 확인에 사용

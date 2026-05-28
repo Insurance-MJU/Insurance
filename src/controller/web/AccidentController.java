@@ -4,6 +4,7 @@ import controller.web.dto.AccidentReportRequest;
 import controller.web.dto.AccidentResponse;
 import controller.web.dto.ClaimAssignRequest;
 import controller.web.dto.ClaimResponse;
+import controller.web.dto.InvestigatorResponse;
 import domain.*;
 import infra.web.Router;
 
@@ -32,6 +33,14 @@ public class AccidentController {
         router.get("/accidents/{id}",        (req, res) -> res.ok(AccidentResponse.from(accidentList.getById(req.pathVariable("id")))));
         router.post("/accidents",            (req, res) -> res.created(report(req.body(AccidentReportRequest.class))));
         router.put("/accidents/{id}/assign", (req, res) -> res.created(assign(req.pathVariable("id"), req.body(ClaimAssignRequest.class))));
+        router.get("/investigators",         (req, res) -> res.ok(searchInvestigators(req.queryParam("specialty"))));
+    }
+
+    private List<InvestigatorResponse> searchInvestigators(String specialty) {
+        return fieldInvestigatorList.findBySpecialty(specialty != null ? specialty : "")
+                .getAll().stream()
+                .map(InvestigatorResponse::from)
+                .collect(Collectors.toList());
     }
 
     private List<AccidentResponse> search(String date, String status) {

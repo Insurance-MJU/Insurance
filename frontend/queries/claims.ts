@@ -1,5 +1,5 @@
 import { fetchApi } from './api';
-import type { Claim, Accident } from '@/types';
+import type { Claim, Accident, Investigator } from '@/types';
 
 export async function getAccidents(date?: string, status?: string): Promise<Accident[]> {
     const params = new URLSearchParams();
@@ -41,6 +41,11 @@ export async function investigateDamage(accidentId: string, data: {
         method: 'POST',
         body: JSON.stringify(data),
     });
+}
+
+export async function getInvestigators(specialty?: string): Promise<Investigator[]> {
+    const query = specialty ? `?specialty=${encodeURIComponent(specialty)}` : '';
+    return fetchApi(`/investigators${query}`);
 }
 
 export async function assignAccident(accidentId: string, employeeId: string) {
