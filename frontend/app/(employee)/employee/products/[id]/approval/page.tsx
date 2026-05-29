@@ -78,7 +78,7 @@ export default function ProductApprovalPage() {
         } catch { setError("상품 정보 로드 실패"); }
     };
 
-    useEffect(() => { if (id && !isNaN(id)) load(); }, [id]);
+    useEffect(() => { if (id) load(); }, [id]);
 
     const resetForm = () => {
         setDocType("BUSINESS_METHOD");
