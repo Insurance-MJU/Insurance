@@ -7,7 +7,7 @@ import type { ProductRider } from '@/types/product';
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const id = Number(params.id);
+  const id = params.id as string;
   const { data: product, isLoading, error } = useOnSaleProduct(id);
 
   if (isLoading) {
@@ -36,7 +36,7 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <main className="max-w-xl mx-auto p-4 pb-28">
+    <main className="max-w-xl mx-auto p-4">
       {/* 헤더 */}
       <button onClick={() => router.back()} className="text-sm text-gray-500 mb-4">← 목록으로</button>
       <div className="flex items-start justify-between mb-1">
@@ -61,7 +61,7 @@ export default function ProductDetailPage() {
       )}
 
       {/* 특약 */}
-      {product.riders.length > 0 && (
+      {(product.riders ?? []).length > 0 && (
         <Section title="특약">
           <div className="divide-y">
             {product.riders.map((r) => (
@@ -71,8 +71,8 @@ export default function ProductDetailPage() {
         </Section>
       )}
 
-      {/* 하단 고정 버튼 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 max-w-xl mx-auto">
+      {/* 가입하기 버튼 */}
+      <div className="mt-8 mb-4">
         <Link
           href={`/insurance/apply?prodId=${product.id}`}
           className="block w-full bg-blue-500 hover:bg-blue-600 text-white text-center py-3 rounded-xl font-semibold transition-colors"

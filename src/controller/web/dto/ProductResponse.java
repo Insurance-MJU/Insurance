@@ -17,10 +17,13 @@ public record ProductResponse(
         String saleStartDate,
         String saleEndDate,
         String description,
-        List<DocInfo> documents
+        List<DocInfo> documents,
+        List<RiderInfo> riders
 ) {
     public record DocInfo(String id, String docType, String title, String note, String filename,
                           String submittedAt, String receivedAt) {}
+
+    public record RiderInfo(String id, String riderCode, String riderName, Double discountRate) {}
 
     public static ProductResponse from(Product p) {
         List<DocInfo> docs = p.getDocuments() == null ? List.of() :
@@ -33,6 +36,13 @@ public record ProductResponse(
                 DateUtil.format(d.getSubmittedAt()),
                 DateUtil.format(d.getReceivedAt())
             )).collect(Collectors.toList());
+        List<RiderInfo> riders = p.getRiders() == null ? List.of() :
+            p.getRiders().stream().map(r -> new RiderInfo(
+                r.getProductRiderId(),
+                r.getRiderCode(),
+                r.getRiderName(),
+                r.getDiscountRate()
+            )).collect(Collectors.toList());
         return new ProductResponse(
                 p.getProductId(),
                 p.getProductId(),
@@ -44,7 +54,8 @@ public record ProductResponse(
                 DateUtil.format(p.getSaleStartDate()),
                 DateUtil.format(p.getSaleEndDate()),
                 p.getDescription(),
-                docs
+                docs,
+                riders
         );
     }
 }

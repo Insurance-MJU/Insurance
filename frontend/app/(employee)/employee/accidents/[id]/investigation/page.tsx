@@ -155,11 +155,11 @@ export default function InvestigationPage() {
                     </div>
                     <div className="flex gap-3 pt-2">
                         <Link href={`/employee/accidents/${id}`}
-                            className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 whitespace-nowrap">
                             취소
                         </Link>
                         <button type="submit" disabled={loading}
-                            className="px-6 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 disabled:opacity-40">
+                            className="flex-1 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 disabled:opacity-40 whitespace-nowrap">
                             {loading ? "저장 중..." : "조사 완료 및 저장"}
                         </button>
                     </div>

@@ -6,7 +6,7 @@ import { clearSession } from '@/queries/auth';
 
 export default function Header() {
   const pathname = usePathname();
-  const { isLoggedIn, role, _hydrated, logout } = useAuthStore();
+  const { isLoggedIn, role, userId, _hydrated, logout } = useAuthStore();
 
   // 직원/관리자 경로에서는 헤더 불필요
   if (pathname.startsWith('/employee')) return null;
@@ -41,9 +41,12 @@ export default function Header() {
         </nav>
         <div className="flex items-center gap-4">
           {isLoggedIn ? (
-            <button onClick={handleLogout} className="text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl transition-colors">
-              로그아웃
-            </button>
+            <div className="flex items-center gap-3">
+              {userId && <span className="text-sm font-medium text-slate-600">{userId}</span>}
+              <button onClick={handleLogout} className="text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl transition-colors">
+                로그아웃
+              </button>
+            </div>
           ) : (
             <>
               <Link href="/auth/login" className="text-sm font-bold text-slate-600 hover:text-blue-600 px-2 py-2">로그인</Link>

@@ -27,13 +27,15 @@ export async function updateProduct(id: number, data: any) {
 
 // Insurance 백엔드 status → 엔드포인트 매핑
 export async function changeProductStatus(id: number | string, status: string) {
-  const APPROVAL  = ["APPROVAL_PENDING", "KIDI_SUBMITTED", "PENDING_APPROVAL"];
-  const RATE_VER  = ["DESIGN_COMPLETE", "APPROVED", "KIDI_CONFIRMED", "FSS_APPROVED", "RATE_VERIFIED"];
-  const SALE      = ["ON_SALE", "SALE_PENDING", "FILED", "FILING"];
+  const APPROVAL = ["KIDI_SUBMITTED", "DESIGNING"];           // /approval (토글)
+  const RATE_VER = ["KIDI_CONFIRMED", "FSS_APPLIED", "FSS_APPROVED"]; // /rate-verification (순환)
+  const SALE     = ["FILING", "FILED", "ON_SALE"];            // /sale (순환)
+  const DISCON   = ["DISCONTINUED"];
 
-  if (APPROVAL.includes(status))  return fetchApi(`/products/${id}/approval`,          { method: "PUT" });
-  if (RATE_VER.includes(status))  return fetchApi(`/products/${id}/rate-verification`, { method: "PUT" });
-  if (SALE.includes(status))      return fetchApi(`/products/${id}/sale`,              { method: "PUT" });
+  if (APPROVAL.includes(status)) return fetchApi(`/products/${id}/approval`,          { method: "PUT" });
+  if (RATE_VER.includes(status)) return fetchApi(`/products/${id}/rate-verification`, { method: "PUT" });
+  if (SALE.includes(status))     return fetchApi(`/products/${id}/sale`,              { method: "PUT" });
+  if (DISCON.includes(status))   return fetchApi(`/products/${id}/sale`,              { method: "PUT" });
   return fetchApi(`/products/${id}/approval`, { method: "PUT" });
 }
 
@@ -78,12 +80,18 @@ export async function addProductDocument(productId: number | string, formData: F
   let fileContent = "";
 
   if (file && file.size > 0) {
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error("파일 크기는 10MB 이하여야 합니다.");
+    }
     filename = file.name;
     const buffer = await file.arrayBuffer();
     const bytes  = new Uint8Array(buffer);
     let binary   = "";
-    bytes.forEach(b => (binary += String.fromCharCode(b)));
-    fileContent  = btoa(binary);
+    const CHUNK  = 8192;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      binary += String.fromCharCode(...(bytes.subarray(i, i + CHUNK) as any));
+    }
+    fileContent = btoa(binary);
   }
 
   return fetchApi(`/products/${productId}/documents`, {
@@ -118,7 +126,7 @@ async function fetchOnSaleProducts(): Promise<ProductCatalogItem[]> {
   return json.data ?? json;
 }
 
-async function fetchOnSaleProduct(id: number): Promise<ProductCatalogDetail> {
+async function fetchOnSaleProduct(id: string): Promise<ProductCatalogDetail> {
   const res = await fetch(`${BASE_URL}/public/products/${id}`);
   if (!res.ok) throw new Error('상품 정보를 불러오지 못했습니다.');
   const json = await res.json();
@@ -133,11 +141,11 @@ export function useOnSaleProducts() {
   });
 }
 
-export function useOnSaleProduct(id: number) {
+export function useOnSaleProduct(id: string) {
   return useQuery<ProductCatalogDetail>({
     queryKey: ['products', 'catalog', id],
     queryFn: () => fetchOnSaleProduct(id),
-    enabled: id > 0,
+    enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
 }

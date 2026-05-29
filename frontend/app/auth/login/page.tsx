@@ -15,7 +15,7 @@ export default function LoginPage() {
 
     const saveSessionAndRedirect = (res: any) => {
         saveSession(res);
-        storeLogin(res.role);
+        storeLogin(res.role, res.name, res.userId);
         if (res.role === "ADMIN" || res.role === "EMPLOYEE") {
             router.push("/employee/dashboard");
         } else {

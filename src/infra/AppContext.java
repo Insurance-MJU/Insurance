@@ -94,13 +94,13 @@ public class AppContext {
 
         // ── 6. Web 컨트롤러 + 라우팅 ────────────────────────────
         Router router = new Router();
-        new AuthController(userList, jwtUtil).registerRoutes(router);
+        new AuthController(userList, jwtUtil, verificationService).registerRoutes(router);
         new VehicleController(vehicleService).registerRoutes(router);
         new VerificationController(verificationService).registerRoutes(router);
         new ProductController(productList, riderList, coverageList).registerRoutes(router);
-        new SubscriptionController(subscriptionList, productList, contractList, verificationService).registerRoutes(router);
-        new AccidentController(accidentList, claimList, contractList, fieldInvestigatorList).registerRoutes(router);
-        new ClaimController(claimList).registerRoutes(router);
+        new SubscriptionController(subscriptionList, productList, contractList, verificationService, jwtUtil).registerRoutes(router);
+        new AccidentController(accidentList, claimList, contractList, fieldInvestigatorList, jwtUtil).registerRoutes(router);
+        new ClaimController(claimList, accidentList).registerRoutes(router);
         new RiskAnalysisController(subscriptionList, riskReportList, creditService).registerRoutes(router);
         new DamageInvestigationController(accidentList, claimList, damageInvList).registerRoutes(router);
         new MasterController(baseRateDao, exclusionDao, provisionDao, riderDao, coverageDao).registerRoutes(router);

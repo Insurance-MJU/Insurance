@@ -34,6 +34,10 @@ public class SubscriptionList {
         return dao.findByApplicantName(name);
     }
 
+    public SubscriptionList findByUserId(String userId) {
+        return dao.findByUserId(userId);
+    }
+
     // ── 도메인 로직 ────────────────────────────────────────────
     public List<Subscription> getAll() { return subscriptions; }
     public boolean isEmpty() { return subscriptions.isEmpty(); }

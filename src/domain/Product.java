@@ -64,12 +64,26 @@ public class Product implements Serializable {
     }
 
     public void discontinue()      { this.status = ProductStatus.DISCONTINUED; }
-    public void ondesign()         { this.status = ProductStatus.DESIGN; }
-    public void onsale()           { this.status = ProductStatus.ON_SALE; }
-    public void completeDesign()   { this.status = ProductStatus.DESIGN_COMPLETE; }
-    public void applyForApproval() { this.status = ProductStatus.APPROVAL_PENDING; }
-    public void completeApproval() { this.status = ProductStatus.APPROVED; }
-    public void applySalePermit()  { this.status = ProductStatus.SALE_PENDING; }
+    public void ondesign()         { this.status = ProductStatus.DESIGNING; }
+    public void completeDesign()   { this.status = ProductStatus.DESIGNING; }
+    // DESIGNING ↔ KIDI_SUBMITTED 토글 (재설계 반려 지원)
+    public void applyForApproval() {
+        if (this.status == ProductStatus.KIDI_SUBMITTED) this.status = ProductStatus.DESIGNING;
+        else this.status = ProductStatus.KIDI_SUBMITTED;
+    }
+    public void completeApproval() { this.status = ProductStatus.FSS_APPROVED; }
+    // KIDI_SUBMITTED→KIDI_CONFIRMED→FSS_APPLIED→FSS_APPROVED 순환
+    public void applySalePermit()  {
+        if      (this.status == ProductStatus.KIDI_SUBMITTED) this.status = ProductStatus.KIDI_CONFIRMED;
+        else if (this.status == ProductStatus.KIDI_CONFIRMED)  this.status = ProductStatus.FSS_APPLIED;
+        else                                                    this.status = ProductStatus.FSS_APPROVED;
+    }
+    // FSS_APPROVED→FILING→FILED→ON_SALE 순환
+    public void onsale() {
+        if      (this.status == ProductStatus.FSS_APPROVED) this.status = ProductStatus.FILING;
+        else if (this.status == ProductStatus.FILING)        this.status = ProductStatus.FILED;
+        else                                                  this.status = ProductStatus.ON_SALE;
+    }
 
     /** 자동차보험 표준 담보 목록 문자열 — 의무 담보(대인I) 포함 전 담보 */
     public String getDefaultCoverageDescription() {
@@ -77,7 +91,7 @@ public class Product implements Serializable {
     }
 
     public boolean isOnSale() {
-        if (status != ProductStatus.ON_SALE) return false;
+        if (status != ProductStatus.ON_SALE && status != ProductStatus.FILED) return false;
         Date now = new Date();
         boolean afterStart = saleStartDate == null || !now.before(saleStartDate);
         boolean beforeEnd  = saleEndDate   == null || !now.after(saleEndDate);

@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductFormInfo, LOB_OPTIONS, STATUS_OPTIONS } from "@/types/product";
+import { ProductFormInfo, LOB_OPTIONS } from "@/types/product";
 
 const I = "w-full border border-gray-200 rounded-md px-2.5 py-[7px] text-sm outline-none focus:border-blue-500 bg-white";
 const L = "block text-xs font-medium text-gray-500 mb-1";
@@ -81,15 +81,9 @@ export function Step0BasicInfo({ info, setInfo }: Props) {
 
       <div>
         <label className={L}>상태</label>
-        <select
-          className={I}
-          value={info.status}
-          onChange={e => update("status", e.target.value)}
-        >
-          {STATUS_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        <div className={`${I} bg-gray-50 text-gray-400 cursor-not-allowed`}>
+          설계 중 (등록 후 인가 관리에서 진행)
+        </div>
       </div>
 
       <div className="col-span-2">

@@ -46,13 +46,13 @@ public class CT06SaleConfirmation {
 
         ProductStatus status = product.getStatus();
 
-        // 인가 완료(APPROVED) 상태만 판매신청 가능
-        if (status == ProductStatus.APPROVED) {
+        // 인가 완료(FSS_APPROVED) 상태만 판매신청 가능
+        if (status == ProductStatus.FSS_APPROVED) {
             System.out.println("\n[판매신청] [판매중단]");
             runSaleApplication(product);
 
-        // 판매 개시 전(SALE_PENDING) 상태만 판매개시 가능
-        } else if (status == ProductStatus.SALE_PENDING) {
+        // 판매 신고 중(FILING) 상태만 판매개시 가능
+        } else if (status == ProductStatus.FILING || status == ProductStatus.FILED) {
             System.out.println("\n[판매개시] [판매중단]");
             runSaleStart(product);
 

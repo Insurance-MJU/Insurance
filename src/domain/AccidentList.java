@@ -44,6 +44,14 @@ public class AccidentList {
         return dao.findByCustomerName(name);
     }
 
+    public AccidentList findByReportedBy(String reportedBy) {
+        return dao.findByReportedBy(reportedBy);
+    }
+
+    public AccidentList findByUserId(String userId) {
+        return dao.findByUserId(userId);
+    }
+
     public String nextId() {
         return dao.nextId();
     }

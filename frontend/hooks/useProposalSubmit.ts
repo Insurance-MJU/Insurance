@@ -36,8 +36,13 @@ export function useProposalSubmit() {
 
       const data = res.data ?? res;
       setProposal(data.subscriptionNo ?? data.proposalId ?? '');
-    } catch {
-      setError('청약 제출에 실패했습니다.');
+
+      // 청약에 사용된 실명으로 user_name 쿠키 갱신 (계약 현황 필터에 사용)
+      if (insured?.name) {
+        document.cookie = `user_name=${encodeURIComponent(insured.name)}; path=/; max-age=86400`;
+      }
+    } catch (e: any) {
+      setError(e?.message ? `청약 제출 실패: ${e.message}` : '청약 제출에 실패했습니다.');
     } finally {
       setSubmitting(false);
     }

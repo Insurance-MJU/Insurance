@@ -16,6 +16,7 @@ function ClaimsContent() {
     const [selectedCid, setSelectedCid] = useState(preselectedCid);
     const [phone, setPhone]             = useState("");
     const [accidentDate, setAccidentDate]         = useState("");
+    const [accidentTime, setAccidentTime]         = useState("");
     const [accidentLocation, setAccidentLocation] = useState("");
     const [accidentDetail, setAccidentDetail]     = useState("");
 
@@ -53,7 +54,7 @@ function ClaimsContent() {
                 body: JSON.stringify({
                     reportedBy:       selectedContract?.insuredName ?? "고객",
                     phone,
-                    accidentDate:     accidentDate.replace("T", " "),
+                    accidentDate:     `${accidentDate} ${accidentTime}`,
                     accidentLocation,
                     accidentDetail,
                     documents:        docNames,
@@ -132,9 +133,14 @@ function ClaimsContent() {
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">사고 발생 일시 *</label>
-                        <input type="datetime-local" required value={accidentDate}
-                            onChange={e => setAccidentDate(e.target.value)}
-                            className="w-full border p-2 rounded text-sm" />
+                        <div className="flex gap-2">
+                            <input type="date" required value={accidentDate}
+                                onChange={e => setAccidentDate(e.target.value)}
+                                className="flex-1 border p-2 rounded text-sm" />
+                            <input type="time" required value={accidentTime}
+                                onChange={e => setAccidentTime(e.target.value)}
+                                className="w-32 border p-2 rounded text-sm" />
+                        </div>
                     </div>
                     <div>
                         <label className="block text-sm font-semibold mb-1">사고 장소 *</label>

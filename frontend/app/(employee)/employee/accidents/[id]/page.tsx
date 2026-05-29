@@ -19,6 +19,10 @@ export default function AccidentDetailPage() {
         fetchApi(`/accidents/${id}`).then(r => setAccident(r.data ?? r)).catch(() => {});
         fetchApi(`/accidents/${id}/investigation`).then(r => setInvestigation(r.data ?? r)).catch(() => {});
         fetchApi(`/investigators`).then(r => setInvestigators(Array.isArray(r) ? r : r?.data ?? [])).catch(() => {});
+        fetchApi(`/accidents/${id}/claim`).then(r => {
+            const data = r.data ?? r;
+            if (data?.claimId) setAssignedClaim(data);
+        }).catch(() => {});
     }, [id]);
 
     const handleAssign = async () => {
@@ -68,31 +72,51 @@ export default function AccidentDetailPage() {
             {/* CL-01: 현장조사역 배당 */}
             <div className="bg-white border border-gray-200 rounded-xl p-5">
                 <h2 className="text-sm font-semibold text-gray-600 mb-4">현장조사역 배당 (CL-01)</h2>
-                {investigators.length > 0 && (
-                    <div className="mb-3 flex flex-wrap gap-2">
-                        <span className="text-xs text-gray-400">배당 가능 직원:</span>
-                        {investigators.map((inv: any) => (
-                            <button key={inv.employeeId} onClick={() => setEmpId(inv.employeeId)}
-                                className="text-xs px-2 py-0.5 bg-gray-100 rounded hover:bg-blue-50 text-gray-700">
-                                {inv.employeeId} ({inv.name ?? "직원"})
+                {accident.status === '접수 완료' || accident.status === '미처리' ? (
+                    <>
+                        {investigators.length > 0 && (
+                            <div className="mb-3 flex flex-wrap gap-2">
+                                <span className="text-xs text-gray-400">배당 가능 직원:</span>
+                                {investigators.map((inv: any) => (
+                                    <button key={inv.employeeId} onClick={() => setEmpId(inv.employeeId)}
+                                        className="text-xs px-2 py-0.5 bg-gray-100 rounded hover:bg-blue-50 text-gray-700">
+                                        {inv.employeeId} ({inv.name ?? "직원"})
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <div className="flex gap-2">
+                            <input value={empId} onChange={e => setEmpId(e.target.value)}
+                                placeholder="직원 번호 (예: EMP-1023)"
+                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                            <button onClick={handleAssign} disabled={assignLoading}
+                                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-40">
+                                {assignLoading ? "배당 중..." : "배당 및 접수 확정"}
                             </button>
-                        ))}
+                        </div>
+                        {assignedClaim && (
+                            <p className="mt-2 text-xs text-green-600">
+                                클레임 {assignedClaim.claimId} 생성 →{" "}
+                                <Link href={`/employee/claims/${assignedClaim.claimId}`} className="underline">손해 처리 이동</Link>
+                            </p>
+                        )}
+                    </>
+                ) : (
+                    <div className="space-y-3">
+                        <p className="text-sm text-green-600 font-medium">✓ 배당 완료</p>
+                        {assignedClaim && (
+                            <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 space-y-1">
+                                <p>담당자: <span className="font-medium">{assignedClaim.assignedEmployee ?? '—'}</span></p>
+                                <p>클레임 번호: <span className="font-medium">{assignedClaim.claimId}</span></p>
+                            </div>
+                        )}
+                        {assignedClaim?.claimId && (
+                            <Link href={`/employee/claims/${assignedClaim.claimId}`}
+                                className="inline-block px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                                다음 단계 (손해 처리) →
+                            </Link>
+                        )}
                     </div>
-                )}
-                <div className="flex gap-2">
-                    <input value={empId} onChange={e => setEmpId(e.target.value)}
-                        placeholder="직원 번호 (예: EMP-1023)"
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                    <button onClick={handleAssign} disabled={assignLoading}
-                        className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-40">
-                        {assignLoading ? "배당 중..." : "배당 및 접수 확정"}
-                    </button>
-                </div>
-                {assignedClaim && (
-                    <p className="mt-2 text-xs text-green-600">
-                        클레임 {assignedClaim.claimId} 생성 →{" "}
-                        <Link href={`/employee/claims/${assignedClaim.claimId}`} className="underline">손해 처리 이동</Link>
-                    </p>
                 )}
             </div>
 

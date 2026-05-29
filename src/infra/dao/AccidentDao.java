@@ -22,6 +22,7 @@ public class AccidentDao {
     private static Accident mapRow(ResultSet rs) throws SQLException {
         Accident a = new Accident();
         a.setAccidentId(rs.getString("accident_id"));
+        a.setUserId(rs.getString("user_id"));
         Timestamp ts = rs.getTimestamp("accident_date");
         if (ts != null) a.setAccidentDate(new java.util.Date(ts.getTime()));
         a.setReportedBy(rs.getString("reported_by"));
@@ -86,14 +87,26 @@ public class AccidentDao {
             EXTRACTOR, name);
     }
 
+    public AccidentList findByReportedBy(String reportedBy) {
+        return new AccidentList(db.queryForList(
+            "SELECT * FROM accidents WHERE reported_by = ? ORDER BY accident_date DESC",
+            EXTRACTOR, reportedBy));
+    }
+
+    public AccidentList findByUserId(String userId) {
+        return new AccidentList(db.queryForList(
+            "SELECT * FROM accidents WHERE user_id = ? ORDER BY accident_date DESC",
+            EXTRACTOR, userId));
+    }
+
     public void save(Accident a) {
         db.execute(
-            "INSERT INTO accidents (accident_id, accident_date, reported_by, phone, description," +
+            "INSERT INTO accidents (accident_id, user_id, accident_date, reported_by, phone, description," +
             " accident_location, accident_detail, documents, contract_id, coverage_description," +
             " coverage_limit, personal_injury_limit, vehicle_info, expected_repair_cost, region_code, status)" +
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
             " ON DUPLICATE KEY UPDATE" +
-            " accident_date=VALUES(accident_date), reported_by=VALUES(reported_by), phone=VALUES(phone)," +
+            " user_id=VALUES(user_id), accident_date=VALUES(accident_date), reported_by=VALUES(reported_by), phone=VALUES(phone)," +
             " description=VALUES(description), accident_location=VALUES(accident_location)," +
             " accident_detail=VALUES(accident_detail), documents=VALUES(documents)," +
             " contract_id=VALUES(contract_id), coverage_description=VALUES(coverage_description)," +
@@ -101,6 +114,7 @@ public class AccidentDao {
             " vehicle_info=VALUES(vehicle_info), expected_repair_cost=VALUES(expected_repair_cost)," +
             " region_code=VALUES(region_code), status=VALUES(status)",
             a.getAccidentId(),
+            a.getUserId(),
             a.getAccidentDate() != null ? new Timestamp(a.getAccidentDate().getTime()) : null,
             a.getReportedBy(),
             a.getPhone(),

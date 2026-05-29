@@ -11,6 +11,7 @@ public class Subscription implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String subscriptionNo;
+    private String userId;
     private String applicantName;
     private String ssn;
     private String address;
@@ -86,6 +87,7 @@ public class Subscription implements Serializable {
 
     // ── Setters ──────────────────────────────────────────────
     public void setSubscriptionNo(String v)      { this.subscriptionNo = v; }
+    public void setUserId(String v)              { this.userId = v; }
     public void setApplicantName(String v)        { this.applicantName = v; }
     public void setSsn(String v)                  { this.ssn = v; }
     public void setCarNumber(String v)            { this.carNumber = v; }
@@ -93,6 +95,7 @@ public class Subscription implements Serializable {
 
     // ── Getters ───────────────────────────────────────────────
     public String getSubscriptionNo()       { return subscriptionNo; }
+    public String getUserId()               { return userId; }
     public String getApplicantName()        { return applicantName; }
     public String getSsn()                  { return ssn; }
     public String getAddress()              { return address; }

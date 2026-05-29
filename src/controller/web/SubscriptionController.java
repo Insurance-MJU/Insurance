@@ -10,6 +10,7 @@ import domain.common.Money;
 import infra.external.verification.VerificationService;
 import infra.external.verification.dto.VerifiedIdentity;
 import infra.web.Router;
+import infra.web.auth.JwtUtil;
 
 import java.util.Date;
 import java.util.List;
@@ -21,27 +22,48 @@ public class SubscriptionController {
     private final ProductList productList;
     private final ContractList contractList;
     private final VerificationService verificationService;
+    private final JwtUtil jwtUtil;
 
     public SubscriptionController(SubscriptionList subscriptionList, ProductList productList,
-                                  ContractList contractList, VerificationService verificationService) {
+                                  ContractList contractList, VerificationService verificationService,
+                                  JwtUtil jwtUtil) {
         this.subscriptionList = subscriptionList;
         this.productList = productList;
         this.contractList = contractList;
         this.verificationService = verificationService;
+        this.jwtUtil = jwtUtil;
     }
 
     public void registerRoutes(Router router) {
-        router.get("/subscriptions",                 (req, res) -> res.ok(getAll()));
+        router.get("/subscriptions",                 (req, res) -> res.ok(getAll(req.header("Authorization"))));
         router.get("/subscriptions/pending",         (req, res) -> res.ok(getPending()));
         router.get("/subscriptions/{no}",            (req, res) -> res.ok(SubscriptionResponse.from(subscriptionList.getByNo(req.pathVariable("no")))));
-        router.post("/subscriptions",                (req, res) -> res.created(create(req.body(SubscriptionCreateRequest.class))));
+        router.post("/subscriptions",                (req, res) -> res.created(create(req, req.body(SubscriptionCreateRequest.class))));
         router.put("/subscriptions/{no}/approve",    (req, res) -> res.ok(approve(req.pathVariable("no"))));
         router.put("/subscriptions/{no}/reject",     (req, res) -> res.ok(reject(req.pathVariable("no"), req.body(RejectRequest.class).reason())));
         router.put("/subscriptions/{no}/supplement", (req, res) -> res.ok(supplement(req.pathVariable("no"), req.body(RejectRequest.class).reason())));
     }
 
-    private List<SubscriptionResponse> getAll() {
-        return subscriptionList.findAll().getAll().stream()
+    private String extractUserId(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        return jwtUtil.extractUserId(authHeader.substring(7));
+    }
+
+    private String extractRole(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        return jwtUtil.extractRole(authHeader.substring(7));
+    }
+
+    private List<SubscriptionResponse> getAll(String authHeader) {
+        String role = extractRole(authHeader);
+        String userId = extractUserId(authHeader);
+        // 직원/관리자는 전체 조회, 고객은 본인 것만
+        SubscriptionList list = ("EMPLOYEE".equals(role) || "ADMIN".equals(role))
+                ? subscriptionList.findAll()
+                : (userId != null && !userId.isBlank())
+                    ? subscriptionList.findByUserId(userId)
+                    : subscriptionList.findAll();
+        return list.getAll().stream()
                 .map(s -> {
                     Contract contract = contractList.findBySubscriptionNo(s.getSubscriptionNo());
                     return contract != null
@@ -57,7 +79,7 @@ public class SubscriptionController {
                 .collect(Collectors.toList());
     }
 
-    private SubscriptionResponse create(SubscriptionCreateRequest req) {
+    private SubscriptionResponse create(infra.web.dto.HttpRequest httpReq, SubscriptionCreateRequest req) {
         VerifiedIdentity identity = verificationService.resolveIdentity(req.verificationToken());
 
         Product product = productList.getById(req.productId());
@@ -65,6 +87,7 @@ public class SubscriptionController {
 
         int age = Party.calcAge(identity.ssn());
 
+        String userId = extractUserId(httpReq.header("Authorization"));
         Subscription subscription = Subscription.register(
                 subscriptionList.nextSubscriptionNo(),
                 identity.name(), identity.ssn(), req.address(),
@@ -76,6 +99,7 @@ public class SubscriptionController {
                 req.occupation(), age,
                 product.getDefaultCoverageDescription()
         );
+        subscription.setUserId(userId);
         subscriptionList.save(subscription);
         return SubscriptionResponse.from(subscription);
     }

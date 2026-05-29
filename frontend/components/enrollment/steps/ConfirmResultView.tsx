@@ -12,6 +12,25 @@ interface ConfirmResultViewProps {
 export function ConfirmResultView({ status, polling, policyNo, quoteTotalPremium }: ConfirmResultViewProps) {
   const router = useRouter();
 
+  if (status === 'PENDING_REVIEW') {
+    return (
+      <div className="flex flex-col items-center text-center gap-6 py-8">
+        <div className="text-5xl">✅</div>
+        <div>
+          <h2 className="text-2xl font-bold text-blue-600">청약 접수 완료</h2>
+          <p className="text-gray-500 mt-1">심사 결과는 영업일 기준 1~3일 내에 안내드립니다.</p>
+        </div>
+        <div className="w-full bg-blue-50 rounded-xl p-5 text-left">
+          <p className="text-sm text-gray-500 mb-1">최종 보험료 (일시납)</p>
+          <p className="text-lg font-bold text-blue-600">{formatMoney(quoteTotalPremium || 0)}</p>
+        </div>
+        <button onClick={() => router.push('/insurance/contracts')} className="w-full bg-blue-500 text-white font-semibold p-4 rounded-xl">
+          계약 현황 확인
+        </button>
+      </div>
+    );
+  }
+
   if (polling || status === 'CREDIT_CHECKED' || status === 'UNDERWRITING') {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-4">

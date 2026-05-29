@@ -26,6 +26,13 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string }> 
     DISCONTINUED:   { label: "판매 중단",          color: "text-red-600",    bg: "bg-red-100" },
 };
 
+// 백엔드 status → STATUS_FLOW 매핑 (비정규 status 처리)
+const STATUS_ALIAS: Record<string, string> = {
+    SALE_PENDING:   "FILING",
+    APPROVAL_PENDING: "FSS_APPLIED",
+    RATE_VERIFIED:  "KIDI_CONFIRMED",
+};
+
 // 서류 업로드로 자동 전환되는 상태는 수동 버튼 제거
 const MANUAL_NEXT: Record<string, string[]> = {
     DESIGNING:      ["KIDI_SUBMITTED"],
@@ -136,9 +143,10 @@ export default function ProductApprovalPage() {
     if (error)    return <p className="text-red-500 text-sm p-6">{error}</p>;
     if (!product) return <p className="text-gray-400 text-sm p-6">로딩 중...</p>;
 
-    const currentIdx   = STATUS_FLOW.indexOf(product.status);
-    const nextStatuses = MANUAL_NEXT[product.status] ?? [];
-    const sm = STATUS_META[product.status] ?? { label: product.status, color: "text-gray-600", bg: "bg-gray-100" };
+    const resolvedStatus = STATUS_ALIAS[product.status] ?? product.status;
+    const currentIdx   = STATUS_FLOW.indexOf(resolvedStatus);
+    const nextStatuses = MANUAL_NEXT[resolvedStatus] ?? [];
+    const sm = STATUS_META[resolvedStatus] ?? STATUS_META[product.status] ?? { label: product.status, color: "text-gray-600", bg: "bg-gray-100" };
     const selectedDocMeta = DOC_TYPES.find(d => d.value === docType);
 
     return (

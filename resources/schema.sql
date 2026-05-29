@@ -27,6 +27,7 @@ ON DUPLICATE KEY UPDATE password=VALUES(password), name=VALUES(name), role=VALUE
 -- ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS accidents (
     accident_id           VARCHAR(50)  NOT NULL PRIMARY KEY,
+    user_id               VARCHAR(50),
     accident_date         DATETIME,
     reported_by           VARCHAR(100),
     phone                 VARCHAR(30),
@@ -183,6 +184,7 @@ ON DUPLICATE KEY UPDATE
 -- ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS subscriptions (
     subscription_no       VARCHAR(50)  NOT NULL PRIMARY KEY,
+    user_id               VARCHAR(50),
     applicant_name        VARCHAR(100),
     ssn                   VARCHAR(20),
     address               VARCHAR(300),

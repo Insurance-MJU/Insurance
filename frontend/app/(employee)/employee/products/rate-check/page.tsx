@@ -4,15 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getProducts, changeProductStatus } from "@/queries/products";
 
-const STAGES = ["DESIGN", "DESIGN_COMPLETE"] as const;
+const STAGES = ["DESIGNING", "KIDI_SUBMITTED", "KIDI_CONFIRMED"] as const;
 
 const STATUS_META = {
-    DESIGN:          { label: "설계 중",    color: "text-gray-600",   bg: "bg-gray-100",   step: 1 },
-    DESIGN_COMPLETE: { label: "설계 완료",  color: "text-yellow-700", bg: "bg-yellow-100", step: 2 },
-    // 호환
-    DESIGNING:      { label: "설계 중",    color: "text-gray-600",   bg: "bg-gray-100",   step: 1 },
-    KIDI_SUBMITTED: { label: "보험개발원 제출", color: "text-orange-600", bg: "bg-orange-100", step: 2 },
-    KIDI_CONFIRMED: { label: "요율확인서 수령", color: "text-yellow-700", bg: "bg-yellow-100", step: 3 },
+    DESIGNING:      { label: "설계 중",          color: "text-gray-600",   bg: "bg-gray-100",   step: 1 },
+    KIDI_SUBMITTED: { label: "보험개발원 제출",   color: "text-orange-600", bg: "bg-orange-100", step: 2 },
+    KIDI_CONFIRMED: { label: "요율확인서 수령",   color: "text-yellow-700", bg: "bg-yellow-100", step: 3 },
 } as const;
 
 export default function RateCheckPage() {
@@ -27,9 +24,17 @@ export default function RateCheckPage() {
     useEffect(() => { load(); }, []);
 
     const handleSubmitKidi = async (id: number, name: string) => {
-        if (!confirm(`"${name}"의 설계를 완료 처리할까요?`)) return;
+        if (!confirm(`"${name}"을 보험개발원에 제출할까요?`)) return;
         setLoading(true);
-        try { await changeProductStatus(id, "DESIGN_COMPLETE"); await load(); }
+        try { await changeProductStatus(id, "KIDI_SUBMITTED"); await load(); }
+        catch (e: any) { alert(e?.message ?? "상태 변경 실패"); }
+        finally { setLoading(false); }
+    };
+
+    const handleReceiveCert = async (id: number, name: string) => {
+        if (!confirm(`"${name}" 요율확인서를 수령 처리할까요?`)) return;
+        setLoading(true);
+        try { await changeProductStatus(id, "KIDI_CONFIRMED"); await load(); }
         catch (e: any) { alert(e?.message ?? "상태 변경 실패"); }
         finally { setLoading(false); }
     };
@@ -95,13 +100,21 @@ export default function RateCheckPage() {
                                         </button>
                                     )}
                                     {p.status === "KIDI_SUBMITTED" && (
-                                        <span className="text-xs text-orange-500 bg-orange-50 px-3 py-1.5 rounded-lg">
-                                            요율확인서 대기 중
-                                        </span>
+                                        <>
+                                            <span className="text-xs text-orange-500 bg-orange-50 px-3 py-1.5 rounded-lg">
+                                                요율확인서 대기 중
+                                            </span>
+                                            <button
+                                                disabled={loading}
+                                                onClick={() => handleReceiveCert(p.id, p.productName)}
+                                                className="px-3 py-1.5 text-xs bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-40">
+                                                수령 완료 처리 →
+                                            </button>
+                                        </>
                                     )}
                                     {p.status === "KIDI_CONFIRMED" && (
                                         <span className="text-xs text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-lg">
-                                            인가신청 가능
+                                            ✓ 인가신청 가능
                                         </span>
                                     )}
                                     <Link href={`/employee/products/${p.id}/approval`}

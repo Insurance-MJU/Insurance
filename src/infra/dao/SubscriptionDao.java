@@ -41,6 +41,7 @@ public class SubscriptionDao {
         // The register() factory sets all those. We'll use register() to reconstruct.
 
         String subNo     = rs.getString("subscription_no");
+        String userId    = rs.getString("user_id");
         String appName   = rs.getString("applicant_name");
         String ssn       = rs.getString("ssn");
         String address   = rs.getString("address");
@@ -57,9 +58,6 @@ public class SubscriptionDao {
         int age          = rs.getInt("age");
         String coverages = rs.getString("coverages_description");
 
-        // Register creates with PENDING_REVIEW; we override status after
-        // Minimum age check: register() validates age >= 18
-        // Use a safe age of max(18, age)
         int safeAge = Math.max(18, age);
 
         Subscription sub = Subscription.register(
@@ -67,6 +65,7 @@ public class SubscriptionDao {
             new Money(premium, "KRW"), new Money(basePremium, "KRW"),
             subDate, occupation, safeAge, coverages
         );
+        sub.setUserId(userId);
 
         // Now apply stored status
         String statusStr = rs.getString("status");
@@ -101,6 +100,12 @@ public class SubscriptionDao {
             EXTRACTOR, applicantName));
     }
 
+    public SubscriptionList findByUserId(String userId) {
+        return new SubscriptionList(db.queryForList(
+            "SELECT * FROM subscriptions WHERE user_id = ? ORDER BY subscription_date DESC",
+            EXTRACTOR, userId));
+    }
+
     public Subscription findByNo(String subscriptionNo) {
         return db.queryForObject(
             "SELECT * FROM subscriptions WHERE subscription_no = ?",
@@ -118,12 +123,12 @@ public class SubscriptionDao {
 
     public void save(Subscription s) {
         db.execute(
-            "INSERT INTO subscriptions (subscription_no, applicant_name, ssn, address, car_number," +
+            "INSERT INTO subscriptions (subscription_no, user_id, applicant_name, ssn, address, car_number," +
             " chassis_number, product_name, premium, base_premium, subscription_date, status," +
             " occupation, age, coverages_description, reject_reason, supplement_documents)" +
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)" +
             " ON DUPLICATE KEY UPDATE" +
-            " applicant_name=VALUES(applicant_name), ssn=VALUES(ssn), address=VALUES(address)," +
+            " user_id=VALUES(user_id), applicant_name=VALUES(applicant_name), ssn=VALUES(ssn), address=VALUES(address)," +
             " car_number=VALUES(car_number), chassis_number=VALUES(chassis_number)," +
             " product_name=VALUES(product_name), premium=VALUES(premium), base_premium=VALUES(base_premium)," +
             " subscription_date=VALUES(subscription_date), status=VALUES(status)," +
@@ -131,6 +136,7 @@ public class SubscriptionDao {
             " coverages_description=VALUES(coverages_description)," +
             " reject_reason=VALUES(reject_reason), supplement_documents=VALUES(supplement_documents)",
             s.getSubscriptionNo(),
+            s.getUserId(),
             s.getApplicantName(),
             s.getSsn(),
             s.getAddress(),

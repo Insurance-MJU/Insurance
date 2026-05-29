@@ -13,9 +13,11 @@ import java.util.stream.Collectors;
 public class ClaimController {
 
     private final ClaimList claimList;
+    private final AccidentList accidentList;
 
-    public ClaimController(ClaimList claimList) {
+    public ClaimController(ClaimList claimList, AccidentList accidentList) {
         this.claimList = claimList;
+        this.accidentList = accidentList;
     }
 
     public void registerRoutes(Router router) {
@@ -35,6 +37,15 @@ public class ClaimController {
         Claim c = claimList.getById(id);
         c.assess(new Money(req.settlement(), "KRW"), new Money(req.deductible(), "KRW"));
         claimList.save(c);
+
+        if (c.getAccidentId() != null) {
+            Accident accident = accidentList.findById(c.getAccidentId());
+            if (accident != null) {
+                accident.setStatus(AccidentStatus.DAMAGE_ASSESSED);
+                accidentList.save(accident);
+            }
+        }
+
         return ClaimResponse.from(c);
     }
 
@@ -42,6 +53,16 @@ public class ClaimController {
         Claim c = claimList.getById(id);
         c.completePayment(req.bank(), req.accountNo());
         claimList.save(c);
+
+        // 보험금 지급 완료 시 사고 상태도 종결 처리
+        if (c.getAccidentId() != null) {
+            Accident accident = accidentList.findById(c.getAccidentId());
+            if (accident != null) {
+                accident.setStatus(AccidentStatus.CLOSED);
+                accidentList.save(accident);
+            }
+        }
+
         return ClaimResponse.from(c);
     }
 

@@ -4,28 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getProducts, changeProductStatus } from "@/queries/products";
 
-const STAGES = ["APPROVED", "SALE_PENDING", "ON_SALE", "DISCONTINUED",
-                "FSS_APPROVED", "FILING", "FILED"] as const;
+const STAGES = ["FSS_APPROVED", "FILING", "FILED", "ON_SALE", "DISCONTINUED"] as const;
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-    APPROVED:     { label: "인가 완료",    color: "text-indigo-600", bg: "bg-indigo-100" },
-    SALE_PENDING: { label: "판매신청 중",  color: "text-purple-600", bg: "bg-purple-100" },
-    ON_SALE:      { label: "판매 중",      color: "text-green-700",  bg: "bg-green-100"  },
-    DISCONTINUED: { label: "판매 중단",    color: "text-red-600",    bg: "bg-red-100"    },
-    // 호환
     FSS_APPROVED: { label: "금감원 인가완료", color: "text-indigo-600", bg: "bg-indigo-100" },
     FILING:       { label: "판매신고 중",     color: "text-purple-600", bg: "bg-purple-100" },
     FILED:        { label: "판매 확정",       color: "text-teal-700",   bg: "bg-teal-100"   },
+    ON_SALE:      { label: "판매 중",         color: "text-green-700",  bg: "bg-green-100"  },
+    DISCONTINUED: { label: "판매 중단",       color: "text-red-600",    bg: "bg-red-100"    },
 };
 
 const NEXT_ACTION: Record<string, { label: string; next: string; style: string }> = {
-    APPROVED:     { label: "판매 신청 →", next: "SALE_PENDING", style: "bg-purple-600 text-white hover:bg-purple-700" },
-    SALE_PENDING: { label: "판매 개시 →", next: "ON_SALE",      style: "bg-green-600 text-white hover:bg-green-700"  },
+    FSS_APPROVED: { label: "판매 신청 →", next: "FILING", style: "bg-purple-600 text-white hover:bg-purple-700" },
+    FILING:       { label: "판매 확정 →", next: "FILED",  style: "bg-teal-600 text-white hover:bg-teal-700"    },
+    FILED:        { label: "판매 시작 →", next: "ON_SALE", style: "bg-green-600 text-white hover:bg-green-700" },
     ON_SALE:      { label: "판매 중단",   next: "DISCONTINUED", style: "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100" },
-    // 호환
-    FSS_APPROVED: { label: "판매 신청 →", next: "SALE_PENDING", style: "bg-purple-600 text-white hover:bg-purple-700" },
-    FILING:       { label: "판매 확정 →", next: "ON_SALE",      style: "bg-green-600 text-white hover:bg-green-700"  },
-    FILED:        { label: "판매 시작 →", next: "ON_SALE",      style: "bg-green-600 text-white hover:bg-green-700"  },
 };
 
 export default function SalesPage() {

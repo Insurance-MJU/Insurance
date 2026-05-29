@@ -4,13 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getProducts, changeProductStatus } from "@/queries/products";
 
-const STAGES = ["DESIGN_COMPLETE", "APPROVAL_PENDING", "APPROVED"] as const;
+const STAGES = ["KIDI_CONFIRMED", "FSS_APPLIED", "FSS_APPROVED"] as const;
 
 const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
-    DESIGN_COMPLETE:  { label: "설계 완료",   color: "text-yellow-700", bg: "bg-yellow-100" },
-    APPROVAL_PENDING: { label: "인가신청 중", color: "text-blue-600",   bg: "bg-blue-100"   },
-    APPROVED:         { label: "인가 완료",   color: "text-indigo-600", bg: "bg-indigo-100" },
-    // 호환
     KIDI_CONFIRMED: { label: "요율확인서 수령", color: "text-yellow-700", bg: "bg-yellow-100" },
     FSS_APPLIED:    { label: "금감원 인가신청", color: "text-blue-600",   bg: "bg-blue-100"   },
     FSS_APPROVED:   { label: "금감원 인가완료", color: "text-indigo-600", bg: "bg-indigo-100" },
@@ -27,10 +23,18 @@ export default function LicensePage() {
 
     useEffect(() => { load(); }, []);
 
+    const handleApply = async (id: number, name: string) => {
+        if (!confirm(`"${name}"을 금감원에 인가 신청할까요?`)) return;
+        setLoading(true);
+        try { await changeProductStatus(id, "FSS_APPLIED"); await load(); }
+        catch (e: any) { alert(e?.message ?? "상태 변경 실패"); }
+        finally { setLoading(false); }
+    };
+
     const handleApprove = async (id: number, name: string) => {
         if (!confirm(`"${name}"의 금감원 인가를 완료 처리할까요?`)) return;
         setLoading(true);
-        try { await changeProductStatus(id, "APPROVED"); await load(); }
+        try { await changeProductStatus(id, "FSS_APPROVED"); await load(); }
         catch (e: any) { alert(e?.message ?? "상태 변경 실패"); }
         finally { setLoading(false); }
     };
@@ -89,13 +93,21 @@ export default function LicensePage() {
                                 </div>
 
                                 <div className="flex items-center gap-2 shrink-0">
-                                    {(p.status === "DESIGN_COMPLETE" || p.status === "KIDI_CONFIRMED") && (
-                                        <Link href={`/employee/products/${p.id}/approval`}
-                                            className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                                            인가신청서 업로드 →
-                                        </Link>
+                                    {p.status === "KIDI_CONFIRMED" && (
+                                        <>
+                                            <button
+                                                disabled={loading}
+                                                onClick={() => handleApply(p.id, p.productName)}
+                                                className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40">
+                                                인가 신청 →
+                                            </button>
+                                            <Link href={`/employee/products/${p.id}/approval`}
+                                                className="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">
+                                                서류 관리
+                                            </Link>
+                                        </>
                                     )}
-                                    {(p.status === "APPROVAL_PENDING" || p.status === "FSS_APPLIED") && (
+                                    {p.status === "FSS_APPLIED" && (
                                         <>
                                             <span className="text-xs text-blue-500 bg-blue-50 px-3 py-1.5 rounded-lg">
                                                 심사 중
@@ -108,9 +120,9 @@ export default function LicensePage() {
                                             </button>
                                         </>
                                     )}
-                                    {(p.status === "APPROVED" || p.status === "FSS_APPROVED") && (
+                                    {p.status === "FSS_APPROVED" && (
                                         <span className="text-xs text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg">
-                                            판매신청 가능
+                                            ✓ 판매신청 가능
                                         </span>
                                     )}
                                     <Link href={`/employee/products/${p.id}`}

@@ -14,7 +14,7 @@ function mapSubscription(s: any): ContractRow {
   };
 }
 
-/** 고객: 내 청약 목록 */
+/** 고객: 내 청약 목록 (JWT 기반 필터링) */
 export async function fetchMyContracts(): Promise<ContractRow[]> {
   const res = await fetchApi('/subscriptions', { method: 'GET' });
   const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);

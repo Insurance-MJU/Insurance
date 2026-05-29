@@ -2,11 +2,12 @@ import { fetchApi } from "./api";
 
 const SESSION_COOKIE_KEYS = ["is_logged_in", "user_role", "access_token"] as const;
 
-export function saveSession(res: { role: string; accessToken: string; refreshToken?: string }) {
+export function saveSession(res: { role: string; accessToken: string; name?: string; refreshToken?: string }) {
     const maxAge = 86400;
     document.cookie = `is_logged_in=true; path=/; max-age=${maxAge}`;
     document.cookie = `user_role=${res.role}; path=/; max-age=${maxAge}`;
     document.cookie = `access_token=${encodeURIComponent(res.accessToken)}; path=/; max-age=${maxAge}`;
+    if (res.name) document.cookie = `user_name=${encodeURIComponent(res.name)}; path=/; max-age=${maxAge}`;
 }
 
 export function saveIdentityToken(token: string) {

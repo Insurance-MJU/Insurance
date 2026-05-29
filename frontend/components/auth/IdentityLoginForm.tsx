@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import VerifyForm from "@/components/enrollment/steps/VerifyForm";
 import { loginByIdentity, saveSession, saveIdentityToken } from "@/queries/auth";
+import { useAuthStore } from "@/store/authStore";
 import { ApiError } from "@/queries/api";
 
 export default function IdentityLoginForm() {
@@ -14,11 +15,13 @@ export default function IdentityLoginForm() {
     const [verificationMethod, setVerificationMethod] = useState("PASS");
     const [verificationSessionId, setVerificationSessionId] = useState<string | null>(null);
     const router = useRouter();
+    const { login: storeLogin } = useAuthStore();
 
     const combinedSsn = `${ssnFront}${ssnBack}`;
 
     const saveSessionAndRedirect = (res: any) => {
         saveSession(res);
+        storeLogin(res.role, res.name, res.userId);
         if (res.role === "ADMIN" || res.role === "EMPLOYEE") {
             router.push("/employee/dashboard");
         } else {

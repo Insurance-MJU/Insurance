@@ -166,7 +166,11 @@ public class ProductController {
 
     private ProductResponse confirmSale(String id) {
         Product p = productList.getById(id);
-        p.onsale();
+        if (p.getStatus() == ProductStatus.ON_SALE) {
+            p.discontinue();
+        } else {
+            p.onsale(); // FSS_APPROVED→FILING→FILED→ON_SALE 순환
+        }
         productList.save(p);
         return ProductResponse.from(p);
     }
@@ -174,13 +178,16 @@ public class ProductController {
     private List<Map<String, Object>> getAllCoverages() {
         return coverageList.findAll().getAll().stream()
                 .map(c -> {
-                    List<String> options = c.getLimitOptions() != null
+                    List<Map<String, Object>> options = c.getLimitOptions() != null
                             ? c.getLimitOptions().stream()
-                                .map(o -> o.getOptionName())
+                                .map(o -> Map.<String, Object>of(
+                                    "id",         o.getOptionId(),
+                                    "optionName", o.getOptionName() != null ? o.getOptionName() : ""))
                                 .collect(Collectors.toList())
                             : List.of();
-                    return Map.of(
-                            "coverageId",   (Object) c.getCoverageId(),
+                    return Map.<String, Object>of(
+                            "id",           c.getCoverageId(),
+                            "coverageId",   c.getCoverageId(),
                             "coverageName", c.getCoverageName(),
                             "mandatory",    c.isMandatory(),
                             "limitOptions", options);

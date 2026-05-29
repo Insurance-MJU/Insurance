@@ -37,20 +37,27 @@ export default function ProductNewPage() {
         setCalcResult({ finalPremium, reserve, netPremium, expensePremium, totalRevenue, totalClaims, totalExpenses, profit });
     };
 
+    const TARGET_MAP: Record<string, string> = {
+        PERSONAL_AUTO:   'PERSONAL',
+        COMMERCIAL_AUTO: 'BUSINESS',
+        BUSINESS_AUTO:   'COMMERCIAL',
+    };
+
     const handleSubmit = async () => {
         form.setError("");
         try {
+            const riderCodes = (masterData?.riders ?? [])
+                .filter((r: any) => form.selRiders.has(r.id ?? r.riderCode))
+                .map((r: any) => r.riderCode);
+
             await createProduct({
-                ...form.info,
-                saleEndDate: form.info.saleEndDate || null,
-                coverages: Object.entries(form.selCoverages).map(([cid, opts], idx) => ({
-                    coverageMasterId: Number(cid),
-                    limitOptionIds: Array.from(opts),
-                    sortOrder: idx,
-                })),
-                riders: Array.from(form.selRiders).map((rid, idx) => ({
-                    riderId: rid, isDefault: false, sortOrder: idx,
-                })),
+                productCode:   form.info.productCode,
+                productName:   form.info.productName,
+                description:   form.info.description,
+                target:        TARGET_MAP[form.info.lineOfBusiness] ?? 'PERSONAL',
+                saleStartDate: form.info.saleStartDate,
+                saleEndDate:   form.info.saleEndDate || null,
+                riderCodes,
             });
             alert("상품 설계가 완료되었습니다.");
             router.push("/employee/products");

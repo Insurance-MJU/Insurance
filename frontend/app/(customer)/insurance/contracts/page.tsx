@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { fetchMyContracts } from '@/queries/contracts';
 import { CONTRACT_STATUS_META } from '@/types/contract';
 import type { ContractRow } from '@/types/contract';
-
 export default function ContractsPage() {
   const [rows, setRows] = useState<ContractRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,18 +27,24 @@ export default function ContractsPage() {
     };
   }, []);
 
-  const activeRows = useMemo(() => rows.filter((c) => c.status === 'ACTIVE'), [rows]);
+  const contractRows = useMemo(() => rows.filter((c) => c.status === 'APPROVED' || c.status === 'ACTIVE'), [rows]);
+  const activeRows = useMemo(() => contractRows.filter((c) => c.status === 'ACTIVE'), [contractRows]);
 
   return (
     <main className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">내 보험 계약 현황</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">내 보험 계약 현황</h1>
+        <Link href="/insurance/accidents" className="text-sm text-blue-600 hover:underline">
+          사고 접수 내역 →
+        </Link>
+      </div>
       <div className="flex flex-col gap-4">
         {loading ? (
           <div className="border rounded-lg p-6 text-center text-gray-400 text-sm">로딩 중...</div>
-        ) : rows.length === 0 ? (
-          <div className="border rounded-lg p-6 text-center text-gray-400 text-sm">계약 데이터가 없습니다.</div>
+        ) : contractRows.length === 0 ? (
+          <div className="border rounded-lg p-6 text-center text-gray-400 text-sm">체결된 계약이 없습니다.</div>
         ) : (
-          rows.map((contract) => {
+          contractRows.map((contract) => {
             const badge = CONTRACT_STATUS_META[contract.status] ?? { label: contract.status, color: 'bg-gray-100 text-gray-600' };
             return (
               <div key={contract.id} className="border rounded-lg p-5">
@@ -69,7 +74,7 @@ export default function ContractsPage() {
         )}
       </div>
 
-      {!loading && activeRows.length === 0 && rows.length > 0 && (
+      {!loading && activeRows.length === 0 && contractRows.length > 0 && (
         <p className="text-xs text-gray-400 mt-3">현재 보상/청구 가능한 ACTIVE 계약이 없습니다.</p>
       )}
     </main>

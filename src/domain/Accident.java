@@ -11,6 +11,7 @@ import java.util.Date;
 public class Accident implements Serializable {
     private static final long serialVersionUID = 1L;
     private String accidentId;
+    private String userId;
     private Date accidentDate;
     private String accidentDetail;
     private String accidentLocation;
@@ -153,7 +154,9 @@ public class Accident implements Serializable {
     public AccidentType getAccidentType() { return accidentType; }
     public SeverityLevel getSeverityLevel() { return severityLevel; }
 
-    public void setAccidentId(String v) { this.accidentId = v; }
+    public String getUserId()            { return userId; }
+    public void setUserId(String v)      { this.userId = v; }
+    public void setAccidentId(String v)  { this.accidentId = v; }
     public void setAccidentDate(Date v) { this.accidentDate = v; }
     public void setAccidentDetail(String v) { this.accidentDetail = v; }
     public void setAccidentLocation(String v) { this.accidentLocation = v; }

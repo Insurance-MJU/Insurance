@@ -6,7 +6,8 @@ public class WhiteList {
 
     private static final Set<String> EXACT = Set.of(
             "/auth/login",
-            "/auth/signup"
+            "/auth/signup",
+            "/auth/login/identity"
     );
 
     public static boolean contains(String path) {
