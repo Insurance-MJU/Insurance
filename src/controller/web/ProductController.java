@@ -29,6 +29,8 @@ public class ProductController {
 
     public void registerRoutes(Router router) {
         router.get("/products",                          (req, res) -> res.ok(getAll(req.queryParam("onSale"))));
+        router.get("/public/products",                   (req, res) -> res.ok(getAll("true")));
+        router.get("/public/products/{id}",              (req, res) -> res.ok(ProductResponse.from(productList.getById(req.pathVariable("id")))));
         router.get("/products/{id}",                     (req, res) -> res.ok(ProductResponse.from(productList.getById(req.pathVariable("id")))));
         router.post("/products",                         (req, res) -> res.created(create(req.body(ProductCreateRequest.class))));
         router.post("/products/{id}/estimate",           (req, res) -> res.ok(estimate(req.pathVariable("id"), req.body(PremiumEstimateRequest.class))));
@@ -38,6 +40,79 @@ public class ProductController {
         router.put("/products/{id}/sale",                (req, res) -> res.ok(confirmSale(req.pathVariable("id"))));
         router.get("/coverages",                         (req, res) -> res.ok(getAllCoverages()));
         router.get("/riders",                            (req, res) -> res.ok(getAllRiders()));
+        router.post("/products/{id}/documents",              (req, res) -> res.created(addDocument(req.pathVariable("id"), req.body(DocumentRequest.class))));
+        router.delete("/products/{id}/documents/{docId}",    (req, res) -> { deleteDocument(req.pathVariable("id"), req.pathVariable("docId")); res.noContent(); });
+        router.get("/products/{id}/documents/{docId}/download", (req, res) -> downloadDocument(req.pathVariable("id"), req.pathVariable("docId"), res));
+    }
+
+    private static final String UPLOAD_DIR = "uploads";
+
+    public record DocumentRequest(String docType, String title, String note, String filename, String fileContent) {}
+
+    private ProductResponse addDocument(String productId, DocumentRequest req) {
+        Product p = productList.getById(productId);
+        ProductDocument doc = new ProductDocument();
+        String docId = "DOC-" + System.nanoTime();
+        doc.setProductDocumentId(docId);
+        doc.setProductId(productId);
+        if (req.docType() != null) {
+            try { doc.setDocType(ProductDocument.DocType.valueOf(req.docType())); } catch (Exception ignored) {}
+        }
+        doc.setTitle(req.title());
+        doc.setNote(req.note());
+        doc.setFilename(req.filename());
+        doc.setSubmittedAt(new Date());
+
+        // 실제 파일 저장
+        if (req.fileContent() != null && !req.fileContent().isEmpty()) {
+            try {
+                java.nio.file.Path dir = java.nio.file.Paths.get(UPLOAD_DIR);
+                java.nio.file.Files.createDirectories(dir);
+                String savedName = docId + "_" + (req.filename() != null ? req.filename() : "file");
+                java.nio.file.Path filePath = dir.resolve(savedName);
+                byte[] bytes = java.util.Base64.getDecoder().decode(req.fileContent());
+                java.nio.file.Files.write(filePath, bytes);
+                doc.setFilePath(filePath.toAbsolutePath().toString());
+            } catch (Exception e) {
+                System.err.println("[FILE] 저장 실패: " + e.getMessage());
+            }
+        }
+
+        if (p.getDocuments() == null) p.setDocuments(new java.util.ArrayList<>());
+        p.getDocuments().add(doc);
+        productList.save(p);
+        return ProductResponse.from(productList.getById(productId));
+    }
+
+    private void deleteDocument(String productId, String docId) {
+        Product p = productList.getById(productId);
+        if (p.getDocuments() != null) {
+            // 파일도 함께 삭제
+            p.getDocuments().stream()
+                .filter(d -> docId.equals(d.getProductDocumentId()) && d.getFilePath() != null)
+                .forEach(d -> {
+                    try { java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(d.getFilePath())); }
+                    catch (Exception ignored) {}
+                });
+            p.getDocuments().removeIf(d -> docId.equals(d.getProductDocumentId()));
+            productList.save(p);
+        }
+    }
+
+    private void downloadDocument(String productId, String docId, infra.web.dto.HttpResponse res) throws java.io.IOException {
+        Product p = productList.getById(productId);
+        if (p.getDocuments() == null) { res.error(404, "문서 없음"); return; }
+        ProductDocument doc = p.getDocuments().stream()
+                .filter(d -> docId.equals(d.getProductDocumentId()))
+                .findFirst().orElse(null);
+        if (doc == null) { res.error(404, "문서 없음"); return; }
+        if (doc.getFilePath() == null) { res.error(404, "파일 없음"); return; }
+        java.nio.file.Path path = java.nio.file.Paths.get(doc.getFilePath());
+        if (!java.nio.file.Files.exists(path)) { res.error(404, "파일 없음"); return; }
+        byte[] bytes = java.nio.file.Files.readAllBytes(path);
+        String filename = doc.getFilename() != null ? doc.getFilename() : "document";
+        String ct = filename.endsWith(".pdf") ? "application/pdf" : "application/octet-stream";
+        res.sendFile(bytes, filename, ct);
     }
 
     private List<ProductResponse> getAll(String onSale) {

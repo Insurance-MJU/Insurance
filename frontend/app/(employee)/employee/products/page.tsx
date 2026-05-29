@@ -1,98 +1,101 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getProducts, applyForApproval, applyRateVerification, confirmSale } from '@/queries/products';
-import Link from 'next/link';
-import type { Product } from '@/types';
 
-// 시나리오 흐름: CT-04(인가신청) 안에 CT-05(요율검증) include → CT-06(판매확정)
-// 백엔드 상태: 설계완료 → 인가신청중 → 인가완료 → 판매신청중 → 판매중
-const ACTION_MAP: Record<string, { label: string; color: string; fn: (id: string) => Promise<Product>; hint?: string }> = {
-    '설계완료':   { label: '① 인가 신청 (CT-04)', color: 'bg-blue-600 hover:bg-blue-700', fn: applyForApproval,
-                    hint: '인가 신청 전 보험개발원 요율검증(CT-05)이 선행되어야 합니다.' },
-    '인가완료':   { label: '② 요율검증/판매신청 (CT-05)', color: 'bg-indigo-600 hover:bg-indigo-700', fn: applyRateVerification },
-    '판매신청중': { label: '③ 판매 확정 (CT-06)', color: 'bg-green-600 hover:bg-green-700', fn: confirmSale },
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { getProducts, deleteProduct } from "@/queries/products";
+
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+    DESIGN:           { label: "설계 중",      color: "bg-gray-100 text-gray-600" },
+    DESIGN_COMPLETE:  { label: "설계 완료",    color: "bg-yellow-100 text-yellow-700" },
+    APPROVAL_PENDING: { label: "인가신청 중",  color: "bg-blue-100 text-blue-600" },
+    APPROVED:         { label: "인가 완료",    color: "bg-indigo-100 text-indigo-600" },
+    SALE_PENDING:     { label: "판매신청 중",  color: "bg-purple-100 text-purple-600" },
+    ON_SALE:          { label: "판매 중",      color: "bg-green-100 text-green-700" },
+    SALE_EXPIRED:     { label: "판매기간 만료",color: "bg-gray-100 text-gray-500" },
+    DISCONTINUED:     { label: "판매 중단",    color: "bg-red-100 text-red-600" },
+    // toss-app 호환
+    DESIGNING:      { label: "설계 중",           color: "bg-gray-100 text-gray-600" },
+    KIDI_SUBMITTED: { label: "보험개발원 제출",    color: "bg-orange-100 text-orange-600" },
+    KIDI_CONFIRMED: { label: "요율확인서 수령",    color: "bg-yellow-100 text-yellow-700" },
+    FSS_APPLIED:    { label: "금감원 인가신청",    color: "bg-blue-100 text-blue-600" },
+    FSS_APPROVED:   { label: "금감원 인가완료",    color: "bg-indigo-100 text-indigo-600" },
+    FILING:         { label: "판매신고 중",        color: "bg-purple-100 text-purple-600" },
+    FILED:          { label: "판매 확정",          color: "bg-teal-100 text-teal-700" },
 };
 
-const STATUS_COLOR: Record<string, string> = {
-    '설계중':       'bg-gray-100 text-gray-600',
-    '설계완료':     'bg-blue-50 text-blue-700',
-    '인가신청중':   'bg-yellow-50 text-yellow-700',
-    '인가완료':     'bg-indigo-50 text-indigo-700',
-    '판매신청중':   'bg-orange-50 text-orange-700',
-    '판매중':       'bg-green-50 text-green-700',
-    '판매기간만료': 'bg-red-50 text-red-500',
-    '판매중지':     'bg-red-50 text-red-500',
+const LOB_LABELS: Record<string, string> = {
+    PERSONAL_AUTO: "개인용자동차보험",
+    COMMERCIAL_AUTO: "업무용자동차보험",
+    BUSINESS_AUTO: "영업용자동차보험",
+    MOTORCYCLE: "이륜자동차보험",
+    AGRICULTURAL: "농기계보험",
 };
 
-export default function EmployeeProductsPage() {
-    const qc = useQueryClient();
-    const { data: products, isLoading } = useQuery<Product[]>({
-        queryKey: ['products', 'all'],
-        queryFn: () => getProducts(),
-    });
+export default function ProductListPage() {
+    const [products, setProducts] = useState<any[]>([]);
+    const [error, setError] = useState("");
 
-    const mutation = useMutation({
-        mutationFn: ({ id, fn }: { id: string; fn: (id: string) => Promise<Product> }) => fn(id),
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
-        onError: (e: any) => alert(e.message),
-    });
+    const load = async () => {
+        try { setProducts(await getProducts()); }
+        catch { setError("상품 목록 로드 실패"); }
+    };
+    useEffect(() => { load(); }, []);
 
     return (
-        <div className="max-w-5xl mx-auto px-6 py-12">
-            <div className="flex items-center justify-between mb-2">
-                <h1 className="text-3xl font-extrabold text-slate-900">상품 관리</h1>
+        <div className="max-w-5xl">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h1 className="text-xl font-bold text-gray-800">보험상품 관리</h1>
+                    <p className="text-sm text-gray-500">상품 목록 및 신규 등록</p>
+                </div>
                 <Link href="/employee/products/new"
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition">
-                    + 신규 상품 등록 (CT-01)
+                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700">
+                    + 신규 상품 등록
                 </Link>
             </div>
-            <p className="text-slate-500 mb-10">상품 설계 · 인가 신청 · 요율검증 · 판매 확정을 처리하세요</p>
-
-            {isLoading && <p className="text-center py-20 text-slate-500">불러오는 중...</p>}
-            {products?.length === 0 && <p className="text-center py-20 text-slate-400">등록된 상품이 없습니다.</p>}
-
-            <div className="flex flex-col gap-4">
-                {products?.map(p => {
-                    const action = ACTION_MAP[p.status];
-                    return (
-                        <div key={p.productId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center justify-between gap-4">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLOR[p.status] ?? 'bg-slate-100 text-slate-600'}`}>
-                                        {p.status}
-                                    </span>
-                                    <span className="text-xs text-slate-400">{p.productCode}</span>
-                                </div>
-                                <h3 className="font-bold text-slate-900 break-keep">{p.productName}</h3>
-                                <p className="text-sm text-slate-500 mt-0.5">
-                                    {p.saleStartDate} ~ {p.saleEndDate} · {p.target}
-                                </p>
-                            </div>
-                            {action && (
-                                <div className="flex flex-col items-end gap-1">
-                                    {action.hint && (
-                                        <p className="text-xs text-amber-600 text-right max-w-48">⚠ {action.hint}</p>
-                                    )}
-                                    <button
-                                        onClick={() => mutation.mutate({ id: p.productId, fn: action.fn })}
-                                        disabled={mutation.isPending}
-                                        className={`px-4 py-2 text-white text-sm font-semibold rounded-lg transition shrink-0 ${action.color} disabled:bg-slate-300`}
-                                    >
-                                        {action.label}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            <div className="mt-8 p-4 bg-slate-50 rounded-xl text-xs text-slate-400 leading-relaxed">
-                <p className="font-semibold text-slate-500 mb-1">상품 인가 흐름</p>
-                설계완료 → <span className="text-blue-600 font-medium">인가 신청 (CT-04)</span> →
-                인가완료 → <span className="text-indigo-600 font-medium">요율검증 요청 (CT-05)</span> →
-                판매신청중 → <span className="text-green-600 font-medium">판매 확정 (CT-06)</span> → 판매중
-            </div>
+            {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
+            <table className="w-full text-sm bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <thead className="bg-gray-50 text-xs text-gray-500 font-medium">
+                    <tr>
+                        {["상품코드", "상품명", "종목", "판매기간", "상태", "담보수", "특약수", ""].map(h => (
+                            <th key={h} className="px-4 py-3 text-left">{h}</th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                    {products.length === 0 && (
+                        <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">등록된 상품이 없습니다</td></tr>
+                    )}
+                    {products.map((p: any) => {
+                        const st = STATUS_LABELS[p.status] ?? { label: p.statusDisplayName ?? p.status, color: "bg-gray-100 text-gray-600" };
+                        return (
+                            <tr key={p.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 font-mono text-xs text-gray-500">{p.productCode}</td>
+                                <td className="px-4 py-3 font-medium">
+                                    <Link href={`/employee/products/${p.id}`} className="hover:text-blue-600">{p.productName}</Link>
+                                </td>
+                                <td className="px-4 py-3 text-gray-500 text-xs">{p.lineOfBusinessDisplayName ?? LOB_LABELS[p.lineOfBusiness] ?? p.lineOfBusiness}</td>
+                                <td className="px-4 py-3 text-xs text-gray-500">
+                                    {p.saleStartDate} ~ {p.saleEndDate ?? "무기한"}
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}>{st.label}</span>
+                                </td>
+                                <td className="px-4 py-3 text-center text-gray-500">{p.coverages?.length ?? 0}</td>
+                                <td className="px-4 py-3 text-center text-gray-500">{p.riders?.length ?? 0}</td>
+                                <td className="px-4 py-3 text-right">
+                                    <div className="flex gap-2 justify-end">
+                                        <Link href={`/employee/products/${p.id}/edit`}
+                                            className="text-xs text-blue-500 hover:text-blue-700">수정</Link>
+                                        <button onClick={() => { if (confirm("삭제?")) deleteProduct(p.id).then(load); }}
+                                            className="text-xs text-red-400 hover:text-red-600">삭제</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
         </div>
     );
 }

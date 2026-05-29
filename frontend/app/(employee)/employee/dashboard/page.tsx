@@ -1,30 +1,45 @@
-import Link from 'next/link';
+'use client';
 
-const CARDS = [
-    { href: '/employee/subscriptions', icon: '📋', title: '청약 심사', desc: '신규 가입 신청 검토 및 승인/반려' },
-    { href: '/employee/claims', icon: '💰', title: '보험금 처리', desc: '손해사정 및 보험금 지급 처리' },
-];
+import { useEffect, useState } from "react";
+import { getProducts } from "@/queries/products";
 
 export default function DashboardPage() {
+    const [products, setProducts] = useState<any[]>([]);
+
+    useEffect(() => {
+        getProducts().then(setProducts).catch(() => { });
+    }, []);
+
+    const onSale = products.filter(p => p.status === "ON_SALE").length;
+    const inProgress = products.filter(p =>
+        ["DESIGN", "DESIGN_COMPLETE", "APPROVAL_PENDING", "APPROVED", "SALE_PENDING"].includes(p.status)
+    ).length;
+    const designing = products.filter(p =>
+        ["SALE_EXPIRED", "DISCONTINUED"].includes(p.status)
+    ).length;
+
     return (
-        <div className="max-w-4xl mx-auto px-6 py-12">
-            <h1 className="text-3xl font-extrabold text-slate-900 mb-2">대시보드</h1>
-            <p className="text-slate-500 mb-10">업무를 선택하세요</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {CARDS.map(card => (
-                    <Link
-                        key={card.href}
-                        href={card.href}
-                        className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all p-8 flex items-center gap-6"
-                    >
-                        <div className="text-4xl">{card.icon}</div>
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-900">{card.title}</h2>
-                            <p className="text-sm text-slate-500 mt-1">{card.desc}</p>
-                        </div>
-                    </Link>
+        <div className="max-w-5xl space-y-8">
+            <div>
+                <h1 className="text-xl font-bold text-gray-800">대시보드</h1>
+                <p className="text-sm text-gray-500 mt-0.5">보험사 상품·계약 관리 시스템</p>
+            </div>
+
+            {/* 상품 현황 요약 */}
+            <div className="grid grid-cols-3 gap-4">
+                {[
+                    { label: "판매 중", value: onSale, color: "text-green-600", sub: "현재 판매 중인 상품" },
+                    { label: "인허가 진행", value: inProgress, color: "text-blue-600", sub: "심사·신고 진행 중" },
+                    { label: "판매종료/중지", value: designing, color: "text-gray-600", sub: "판매기간 만료·중지 상품" },
+                ].map(s => (
+                    <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-5">
+                        <p className="text-xs text-gray-400 mb-1">{s.label}</p>
+                        <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
+                        <p className="text-xs text-gray-400 mt-1">{s.sub}</p>
+                    </div>
                 ))}
             </div>
+
         </div>
     );
 }

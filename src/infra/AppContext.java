@@ -60,6 +60,9 @@ public class AppContext {
         RiskAnalysisReportDao  riskReportDao     = new RiskAnalysisReportDao(db);
         DamageInvestigationDao damageInvDao      = new DamageInvestigationDao(db);
         CoverageDao            coverageDao       = new CoverageDao(db);
+        BaseRateDao            baseRateDao       = new BaseRateDao(db);
+        ExclusionDao           exclusionDao      = new ExclusionDao(db);
+        ProvisionDao           provisionDao      = new ProvisionDao(db);
 
         // ── 3. 도메인 컬렉션 ─────────────────────────────────────
         UserList                userList              = new UserList(userDao);
@@ -100,6 +103,7 @@ public class AppContext {
         new ClaimController(claimList).registerRoutes(router);
         new RiskAnalysisController(subscriptionList, riskReportList, creditService).registerRoutes(router);
         new DamageInvestigationController(accidentList, claimList, damageInvList).registerRoutes(router);
+        new MasterController(baseRateDao, exclusionDao, provisionDao, riderDao, coverageDao).registerRoutes(router);
 
         DispatcherServlet dispatcher = new DispatcherServlet(router, jwtFilter);
         Server server = new Server(config.getServerConfig());

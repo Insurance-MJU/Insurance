@@ -35,4 +35,32 @@ public class RiderDao {
     public RiderList findAll() {
         return new RiderList(db.queryForList("SELECT * FROM riders", EXTRACTOR));
     }
+
+    public void saveNew(java.util.Map<String, Object> data) {
+        String riderId   = "R-" + System.currentTimeMillis();
+        String riderCode = (String) data.get("riderCode");
+        String riderName = data.get("riderName") != null ? (String) data.get("riderName") : (String) data.get("name");
+        String desc      = (String) data.get("description");
+        String type      = (String) data.get("riderType");
+        int mandatory    = Boolean.TRUE.equals(data.get("mandatory")) ? 1 : 0;
+        double rate      = data.get("discountRate") instanceof Number n ? n.doubleValue() : 0.0;
+        db.execute(
+            "INSERT INTO riders (rider_id, rider_code, rider_name, description, rider_type, mandatory, discount_rate) VALUES (?,?,?,?,?,?,?)",
+            riderId, riderCode, riderName, desc, type, mandatory, rate);
+    }
+
+    public void updateByCode(String riderCode, java.util.Map<String, Object> data) {
+        String riderName = data.get("riderName") != null ? (String) data.get("riderName") : (String) data.get("name");
+        String desc      = (String) data.get("description");
+        String type      = (String) data.get("riderType");
+        int mandatory    = Boolean.TRUE.equals(data.get("mandatory")) ? 1 : 0;
+        double rate      = data.get("discountRate") instanceof Number n ? n.doubleValue() : 0.0;
+        db.execute(
+            "UPDATE riders SET rider_name=?, description=?, rider_type=?, mandatory=?, discount_rate=? WHERE rider_code=?",
+            riderName, desc, type, mandatory, rate, riderCode);
+    }
+
+    public void deleteByCode(String riderCode) {
+        db.execute("DELETE FROM riders WHERE rider_code = ?", riderCode);
+    }
 }

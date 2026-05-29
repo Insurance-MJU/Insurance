@@ -25,6 +25,17 @@ public class HttpResponse {
     public void noContent() throws IOException          { send(204, ""); }
     public void error(int status, String message) throws IOException { send(status, MAPPER.writeValueAsString(new ErrorBody(status, message))); }
 
+    public void sendFile(byte[] bytes, String filename, String contentType) throws IOException {
+        if (committed) return;
+        committed = true;
+        exchange.getResponseHeaders().set("Content-Type", contentType);
+        exchange.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+        exchange.sendResponseHeaders(200, bytes.length);
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(bytes);
+        }
+    }
+
     public void send(int status, String body) throws IOException {
         if (committed) return;
         committed = true;

@@ -13,6 +13,8 @@ public class ProductDocument implements Serializable {
     private Date receivedAt;
     private Date submittedAt;
     private String title;
+    private String filename;
+    private String filePath;
 
     public enum DocType {
         GENERAL_TERMS("보험약관"),
@@ -63,6 +65,8 @@ public class ProductDocument implements Serializable {
     public void setReceivedAt(Date v)           { this.receivedAt = v; }
     public void setSubmittedAt(Date v)          { this.submittedAt = v; }
     public void setTitle(String v)              { this.title = v; }
+    public void setFilename(String v)           { this.filename = v; }
+    public void setFilePath(String v)           { this.filePath = v; }
 
     // Getters
     public Date getCreatedAt()           { return createdAt; }
@@ -73,4 +77,6 @@ public class ProductDocument implements Serializable {
     public Date getReceivedAt()          { return receivedAt; }
     public Date getSubmittedAt()         { return submittedAt; }
     public String getTitle()             { return title; }
+    public String getFilename()          { return filename; }
+    public String getFilePath()          { return filePath; }
 }

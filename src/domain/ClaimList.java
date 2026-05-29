@@ -22,6 +22,10 @@ public class ClaimList {
     }
 
     // ── DAO 위임 ──────────────────────────────────────────────
+    public ClaimList findAll() {
+        return dao.findAll();
+    }
+
     public ClaimList findAwaitingPayment() {
         return dao.findAwaitingPayment();
     }

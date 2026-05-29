@@ -69,6 +69,8 @@ public class ProductDao {
         if (docType != null) doc.setDocType(ProductDocument.DocType.valueOf(docType));
         doc.setTitle(rs.getString("title"));
         doc.setNote(rs.getString("note"));
+        doc.setFilename(rs.getString("filename"));
+        doc.setFilePath(rs.getString("file_path"));
         Timestamp createdTs = rs.getTimestamp("created_at");
         if (createdTs != null) doc.setCreatedAt(new java.util.Date(createdTs.getTime()));
         Timestamp submittedTs = rs.getTimestamp("submitted_at");
@@ -170,13 +172,13 @@ public class ProductDao {
                 String docId = doc.getProductDocumentId() != null ? doc.getProductDocumentId()
                     : "DOC-" + System.nanoTime();
                 db.execute(
-                    "INSERT INTO product_documents (product_document_id, product_id, doc_type, title, note," +
-                    " created_at, submitted_at, received_at) VALUES (?,?,?,?,?,?,?,?)" +
-                    " ON DUPLICATE KEY UPDATE title=VALUES(title), note=VALUES(note)," +
-                    " submitted_at=VALUES(submitted_at), received_at=VALUES(received_at)",
+                    "INSERT INTO product_documents (product_document_id, product_id, doc_type, title, note, filename, file_path," +
+                    " created_at, submitted_at, received_at) VALUES (?,?,?,?,?,?,?,?,?,?)" +
+                    " ON DUPLICATE KEY UPDATE title=VALUES(title), note=VALUES(note), filename=VALUES(filename)," +
+                    " file_path=VALUES(file_path), submitted_at=VALUES(submitted_at), received_at=VALUES(received_at)",
                     docId, p.getProductId(),
                     doc.getDocType() != null ? doc.getDocType().name() : null,
-                    doc.getTitle(), doc.getNote(),
+                    doc.getTitle(), doc.getNote(), doc.getFilename(), doc.getFilePath(),
                     doc.getCreatedAt() != null ? new Timestamp(doc.getCreatedAt().getTime()) : null,
                     doc.getSubmittedAt() != null ? new Timestamp(doc.getSubmittedAt().getTime()) : null,
                     doc.getReceivedAt() != null ? new Timestamp(doc.getReceivedAt().getTime()) : null

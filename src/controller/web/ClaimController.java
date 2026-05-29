@@ -26,7 +26,7 @@ public class ClaimController {
     }
 
     private List<ClaimResponse> getAll() {
-        return claimList.findAwaitingPayment().getAll().stream()
+        return claimList.findAll().getAll().stream()
                 .map(ClaimResponse::from)
                 .collect(Collectors.toList());
     }

@@ -7,6 +7,7 @@ export function proxy(request: NextRequest) {
     const path = request.nextUrl.pathname;
     const isEmployee = userRole === 'EMPLOYEE' || userRole === 'ADMIN';
 
+    // 직원/관리자 전용 경로 보호
     if (path.startsWith('/employee')) {
         if (!isLoggedIn) {
             const url = new URL('/auth/login', request.url);
@@ -21,6 +22,13 @@ export function proxy(request: NextRequest) {
         }
     }
 
+    // 고객 경로: 직원/관리자는 직원 대시보드로 리다이렉트
+    const isCustomerPath = path === '/' || path.startsWith('/insurance');
+    if (isCustomerPath && isLoggedIn && isEmployee) {
+        return NextResponse.redirect(new URL('/employee/dashboard', request.url));
+    }
+
+    // 고객 보호 경로 (비로그인 차단)
     if (path.startsWith('/insurance/contracts') || path.startsWith('/insurance/claims')) {
         if (!isLoggedIn) {
             const url = new URL('/auth/login', request.url);

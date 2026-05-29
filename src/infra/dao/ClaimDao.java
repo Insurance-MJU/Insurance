@@ -79,6 +79,12 @@ public class ClaimDao {
             EXTRACTOR, claimId);
     }
 
+    public ClaimList findAll() {
+        return new ClaimList(db.queryForList(
+            "SELECT * FROM claims ORDER BY claim_date DESC",
+            EXTRACTOR));
+    }
+
     public ClaimList findAwaitingPayment() {
         return new ClaimList(db.queryForList(
             "SELECT * FROM claims WHERE claim_status = ?",

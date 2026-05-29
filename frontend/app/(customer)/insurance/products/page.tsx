@@ -1,72 +1,80 @@
 'use client';
-import { useQuery } from '@tanstack/react-query';
-import { getProducts } from '@/queries/products';
 import Link from 'next/link';
-import type { Product } from '@/types';
+import { useOnSaleProducts } from '@/queries/products';
+import type { ProductCatalogItem } from '@/types/product';
 
 export default function ProductsPage() {
-    const { data: products, isLoading, error } = useQuery<Product[]>({
-        queryKey: ['products', 'onSale'],
-        queryFn: () => getProducts(true),
-    });
+  const { data: products, isLoading, error } = useOnSaleProducts();
 
-    if (isLoading) return <PageShell><p className="text-center py-20 text-slate-500">상품을 불러오는 중...</p></PageShell>;
-    if (error) return <PageShell><p className="text-center py-20 text-red-500">상품을 불러올 수 없습니다.</p></PageShell>;
-
+  if (isLoading) {
     return (
-        <PageShell>
-            {products && products.length === 0 ? (
-                <p className="text-center py-20 text-slate-500">현재 판매 중인 상품이 없습니다.</p>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {products?.map(product => (
-                        <ProductCard key={product.productId} product={product} />
-                    ))}
-                </div>
-            )}
-        </PageShell>
-    );
-}
-
-function PageShell({ children }: { children: React.ReactNode }) {
-    return (
-        <div className="max-w-6xl mx-auto px-4 py-12">
-            <h1 className="text-3xl font-extrabold text-slate-900 mb-2">자동차보험 상품</h1>
-            <p className="text-slate-500 mb-10">나에게 맞는 상품을 선택하세요</p>
-            {children}
+      <main className="max-w-xl mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-6">추천 보험 상품</h1>
+        <div className="flex flex-col gap-4">
+          {[1, 2].map((i) => (
+            <div key={i} className="border rounded-lg p-5 shadow-sm animate-pulse">
+              <div className="h-5 bg-gray-200 rounded w-2/3 mb-3" />
+              <div className="h-4 bg-gray-100 rounded w-1/2 mb-4" />
+              <div className="h-10 bg-gray-100 rounded" />
+            </div>
+          ))}
         </div>
+      </main>
     );
+  }
+
+  if (error || !products?.length) {
+    return (
+      <main className="max-w-xl mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-6">추천 보험 상품</h1>
+        <div className="border rounded-lg p-8 text-center text-gray-400">
+          <p className="text-lg mb-2">현재 판매 중인 상품이 없습니다.</p>
+          <p className="text-sm">잠시 후 다시 확인해 주세요.</p>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="max-w-xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">추천 보험 상품</h1>
+      <div className="flex flex-col gap-4">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </main>
+  );
 }
 
-function ProductCard({ product }: { product: Product }) {
-    return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-100 transition-all p-6 flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">{product.target}</span>
-                    <span className="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full shrink-0">{product.status}</span>
-                </div>
-                <h2 className="text-lg font-bold text-slate-900 break-keep">{product.productName}</h2>
-                <p className="text-xs text-slate-400">{product.productCode}</p>
-            </div>
-            <p className="text-sm text-slate-600 leading-relaxed flex-1">{product.description}</p>
-            <div className="text-xs text-slate-400">
-                판매기간: {product.saleStartDate} ~ {product.saleEndDate}
-            </div>
-            <div className="flex gap-2">
-                <Link
-                    href={`/insurance/products/${product.productId}`}
-                    className="flex-1 text-center py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-gray-200 font-semibold rounded-xl text-sm transition"
-                >
-                    상세보기
-                </Link>
-                <Link
-                    href={`/insurance/apply?productId=${product.productId}`}
-                    className="flex-1 text-center py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm transition"
-                >
-                    가입하기
-                </Link>
-            </div>
-        </div>
-    );
+function ProductCard({ product }: { product: ProductCatalogItem }) {
+  return (
+    <div className="border rounded-lg p-5 shadow-sm">
+      <div className="flex items-start justify-between mb-1">
+        <h2 className="text-lg font-semibold">{product.productName}</h2>
+        <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
+          판매 중
+        </span>
+      </div>
+      <p className="text-sm text-gray-400 mb-1">{product.lineOfBusinessDisplayName}</p>
+      {product.description && (
+        <p className="text-sm text-gray-500 mb-3">{product.description}</p>
+      )}
+      <div className="flex gap-2">
+        <Link
+          href={`/insurance/products/${product.id}`}
+          className="flex-1 bg-gray-100 hover:bg-gray-200 p-2 text-center rounded text-sm font-medium transition-colors"
+        >
+          상품 자세히 보기
+        </Link>
+        <Link
+          href={`/insurance/apply?prodId=${product.id}`}
+          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white p-2 text-center rounded text-sm font-medium transition-colors"
+        >
+          바로 가입
+        </Link>
+      </div>
+    </div>
+  );
 }
+
