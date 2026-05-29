@@ -14,9 +14,13 @@ MySQL이 설치되어 있어야 합니다. (기본 포트 3306)
 mysql -u root -p0000 < resources/schema.sql
 ```
 
-기존 DB가 있고 `user_id` 컬럼만 추가할 경우:
+**기존 DB가 있는 경우** (처음 셋업이 아닌 경우) 아래 마이그레이션 실행:
 ```cmd
 mysql -u root -p0000 insurance_db -e "ALTER TABLE accidents ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) NULL AFTER accident_id; ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS user_id VARCHAR(50) NULL AFTER subscription_no;"
+```
+
+```cmd
+mysql -u root -p0000 insurance_db -e "UPDATE products SET status='DESIGNING' WHERE status IN ('DESIGN','DESIGN_COMPLETE'); UPDATE products SET status='FSS_APPLIED' WHERE status='APPROVAL_PENDING'; UPDATE products SET status='FSS_APPROVED' WHERE status='APPROVED'; UPDATE products SET status='FILING' WHERE status='SALE_PENDING';"
 ```
 
 DB 접속 정보는 `resources/application.properties`에서 수정 가능합니다.
