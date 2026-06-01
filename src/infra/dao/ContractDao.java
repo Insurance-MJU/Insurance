@@ -1,10 +1,5 @@
 package infra.dao;
 
-import domain.Contract;
-import domain.ContractStatus;
-import domain.Deductible;
-import domain.SelectedCoverage;
-import domain.common.Money;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 import infra.vo.ContractVO;
@@ -25,9 +20,9 @@ public class ContractDao {
     private static final ResultSetExtractor<ContractVO> EXTRACTOR = rs -> mapRow(rs);
 
     private static ContractVO mapRow(ResultSet rs) throws SQLException {
-        Timestamp issueTs  = rs.getTimestamp("issue_date");
-        Timestamp startTs  = rs.getTimestamp("start_date");
-        Timestamp endTs    = rs.getTimestamp("end_date");
+        Timestamp issueTs = rs.getTimestamp("issue_date");
+        Timestamp startTs = rs.getTimestamp("start_date");
+        Timestamp endTs   = rs.getTimestamp("end_date");
         return new ContractVO(
             rs.getString("contract_id"),
             rs.getString("policy_no"),
@@ -38,9 +33,9 @@ public class ContractDao {
             rs.getString("coverages_description"),
             rs.getString("coverage_limit"),
             rs.getString("riders_description"),
-            issueTs  != null ? new java.util.Date(issueTs.getTime())  : null,
-            startTs  != null ? new java.util.Date(startTs.getTime())  : null,
-            endTs    != null ? new java.util.Date(endTs.getTime())    : null,
+            issueTs != null ? new java.util.Date(issueTs.getTime()) : null,
+            startTs != null ? new java.util.Date(startTs.getTime()) : null,
+            endTs   != null ? new java.util.Date(endTs.getTime())   : null,
             rs.getString("status"),
             rs.getString("holder_name"),
             rs.getString("holder_party_id"),
@@ -65,12 +60,12 @@ public class ContractDao {
 
     private ContractVO loadFull(ContractVO vo) {
         if (vo == null) return null;
-        List<SelectedCoverageVO> scs = loadSelectedCoverages(vo.contractId);
         return new ContractVO(
             vo.contractId, vo.policyNo, vo.productName, vo.subscriptionNo,
             vo.premium, vo.carNumber, vo.coveragesDescription, vo.coverageLimit,
             vo.ridersDescription, vo.issueDate, vo.startDate, vo.endDate,
-            vo.status, vo.holderName, vo.holderPartyId, scs
+            vo.status, vo.holderName, vo.holderPartyId,
+            loadSelectedCoverages(vo.contractId)
         );
     }
 
@@ -91,15 +86,13 @@ public class ContractDao {
     }
 
     public ContractVO findByPolicyNo(String policyNo) {
-        ContractVO vo = db.queryForObject(
-            "SELECT * FROM contracts WHERE policy_no = ?", EXTRACTOR, policyNo);
-        return loadFull(vo);
+        return loadFull(db.queryForObject(
+            "SELECT * FROM contracts WHERE policy_no = ?", EXTRACTOR, policyNo));
     }
 
     public ContractVO findByContractId(String contractId) {
-        ContractVO vo = db.queryForObject(
-            "SELECT * FROM contracts WHERE contract_id = ?", EXTRACTOR, contractId);
-        return loadFull(vo);
+        return loadFull(db.queryForObject(
+            "SELECT * FROM contracts WHERE contract_id = ?", EXTRACTOR, contractId));
     }
 
     public ContractVO findBySubscriptionNo(String subscriptionNo) {
@@ -110,34 +103,19 @@ public class ContractDao {
     public List<ContractVO> findByCondition(String holderName, String periodChoice, String statusChoice) {
         StringBuilder sql = new StringBuilder("SELECT * FROM contracts WHERE 1=1");
         List<Object> params = new ArrayList<>();
-
-        if (holderName != null && !holderName.isEmpty()) {
-            sql.append(" AND holder_name = ?");
-            params.add(holderName);
-        }
-        if ("2".equals(periodChoice)) {
-            sql.append(" AND issue_date >= DATE_SUB(NOW(), INTERVAL 1 YEAR)");
-        } else if ("3".equals(periodChoice)) {
-            sql.append(" AND issue_date >= DATE_SUB(NOW(), INTERVAL 3 YEAR)");
-        }
-        if ("1".equals(statusChoice)) {
-            sql.append(" AND status = 'ACTIVE'");
-        } else if ("2".equals(statusChoice)) {
-            sql.append(" AND status = 'EXPIRED'");
-        } else if ("3".equals(statusChoice)) {
-            sql.append(" AND status = 'CANCELLED'");
-        }
-
+        if (holderName != null && !holderName.isEmpty()) { sql.append(" AND holder_name = ?"); params.add(holderName); }
+        if ("2".equals(periodChoice))      sql.append(" AND issue_date >= DATE_SUB(NOW(), INTERVAL 1 YEAR)");
+        else if ("3".equals(periodChoice)) sql.append(" AND issue_date >= DATE_SUB(NOW(), INTERVAL 3 YEAR)");
+        if ("1".equals(statusChoice))      sql.append(" AND status = 'ACTIVE'");
+        else if ("2".equals(statusChoice)) sql.append(" AND status = 'EXPIRED'");
+        else if ("3".equals(statusChoice)) sql.append(" AND status = 'CANCELLED'");
         List<ContractVO> list = db.queryForList(sql.toString(), EXTRACTOR, params.toArray());
         List<ContractVO> result = new ArrayList<>();
         for (ContractVO vo : list) result.add(loadFull(vo));
         return result;
     }
 
-    public void save(Contract c) {
-        String holderName    = (c.getPolicyholder() != null) ? c.getPolicyholder().getName()    : null;
-        String holderPartyId = (c.getPolicyholder() != null) ? c.getPolicyholder().getPartyId() : null;
-
+    public void save(ContractVO vo) {
         db.execute(
             "INSERT INTO contracts (contract_id, policy_no, product_name, subscription_no, premium," +
             " car_number, coverages_description, coverage_limit, riders_description," +
@@ -150,29 +128,19 @@ public class ContractDao {
             " coverage_limit=VALUES(coverage_limit), riders_description=VALUES(riders_description)," +
             " issue_date=VALUES(issue_date), start_date=VALUES(start_date), end_date=VALUES(end_date)," +
             " status=VALUES(status), holder_name=VALUES(holder_name), holder_party_id=VALUES(holder_party_id)",
-            c.getContractId(),
-            c.getPolicyNo(),
-            c.getProductName(),
-            c.getSubscriptionNo(),
-            c.getPremium() != null ? c.getPremium().getAmount() : 0L,
-            c.getCarNumber(),
-            c.getCoveragesDescription(),
-            c.getCoverageLimit(),
-            c.getRidersDescription(),
-            c.getIssueDate()  != null ? new Timestamp(c.getIssueDate().getTime())  : null,
-            c.getStartDate()  != null ? new Timestamp(c.getStartDate().getTime())  : null,
-            c.getEndDate()    != null ? new Timestamp(c.getEndDate().getTime())    : null,
-            c.getStatus()     != null ? c.getStatus().name() : null,
-            holderName,
-            holderPartyId
+            vo.contractId, vo.policyNo, vo.productName, vo.subscriptionNo, vo.premium,
+            vo.carNumber, vo.coveragesDescription, vo.coverageLimit, vo.ridersDescription,
+            vo.issueDate  != null ? new Timestamp(vo.issueDate.getTime())  : null,
+            vo.startDate  != null ? new Timestamp(vo.startDate.getTime())  : null,
+            vo.endDate    != null ? new Timestamp(vo.endDate.getTime())    : null,
+            vo.status, vo.holderName, vo.holderPartyId
         );
 
-        if (c.getSelectedCoverages() != null) {
-            db.execute("DELETE FROM contract_selected_coverages WHERE contract_id = ?", c.getContractId());
-            for (SelectedCoverage sc : c.getSelectedCoverages()) {
-                String id = c.getContractId() + "-" + sc.getCoverageMasterId();
-                String dedType = sc.getDeductibleType() != null ? sc.getDeductibleType().name() : "NONE";
-                long dedAmt = sc.getDeductibleAmount() != null ? sc.getDeductibleAmount().getAmount() : 0L;
+        if (vo.selectedCoverages != null) {
+            db.execute("DELETE FROM contract_selected_coverages WHERE contract_id = ?", vo.contractId);
+            for (SelectedCoverageVO sc : vo.selectedCoverages) {
+                String id = vo.contractId + "-" + sc.coverageMasterId;
+                String dedType = sc.deductibleType != null ? sc.deductibleType : "NONE";
                 db.execute(
                     "INSERT INTO contract_selected_coverages" +
                     " (id, contract_id, coverage_master_id, coverage_name, mandatory, deductible_type, deductible_amount)" +
@@ -180,8 +148,8 @@ public class ContractDao {
                     " ON DUPLICATE KEY UPDATE coverage_name=VALUES(coverage_name)," +
                     " mandatory=VALUES(mandatory), deductible_type=VALUES(deductible_type)," +
                     " deductible_amount=VALUES(deductible_amount)",
-                    id, c.getContractId(), sc.getCoverageMasterId(), sc.getCoverageName(),
-                    sc.isMandatory() ? 1 : 0, dedType, dedAmt
+                    id, vo.contractId, sc.coverageMasterId, sc.coverageName,
+                    sc.mandatory ? 1 : 0, dedType, sc.deductibleAmount
                 );
             }
         }
@@ -189,13 +157,11 @@ public class ContractDao {
 
     public String nextPolicyNo() {
         Integer count = db.queryForObject("SELECT COUNT(*) FROM contracts", rs -> rs.getInt(1));
-        int next = (count != null ? count : 0) + 1;
-        return String.format("IN-2026-%03d", next);
+        return String.format("IN-2026-%03d", (count != null ? count : 0) + 1);
     }
 
     public String nextContractId() {
         Integer count = db.queryForObject("SELECT COUNT(*) FROM contracts", rs -> rs.getInt(1));
-        int next = (count != null ? count : 0) + 1;
-        return String.format("CNT-%d-%03d", LocalDate.now().getYear(), next);
+        return String.format("CNT-%d-%03d", LocalDate.now().getYear(), (count != null ? count : 0) + 1);
     }
 }

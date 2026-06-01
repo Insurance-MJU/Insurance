@@ -41,7 +41,18 @@ public class RiskAnalysisReportList {
     }
 
     public void save(RiskAnalysisReport report) {
-        dao.save(report);
+        dao.save(new RiskAnalysisReportVO(
+            report.getSubscriptionNo(),
+            report.getRiskScore(), report.getRiskGrade(),
+            report.getAccidentScore(), report.getDrivingExpScore(),
+            report.getCreditGradeScore(), report.getTrafficViolationScore(),
+            report.getSurchargeRate(),
+            report.getBasePremium()     != null ? report.getBasePremium().getAmount()     : 0L,
+            report.getSurchargeAmount() != null ? report.getSurchargeAmount().getAmount() : 0L,
+            report.getTotalPremium()    != null ? report.getTotalPremium().getAmount()    : 0L,
+            report.getReviewGuide(), report.getReviewerName(),
+            report.getReviewDate(), report.getReviewOpinion()
+        ));
     }
 
     // ── 도메인 로직 ────────────────────────────────────────────

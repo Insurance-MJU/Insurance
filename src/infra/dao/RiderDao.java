@@ -1,6 +1,5 @@
 package infra.dao;
 
-import domain.Rider;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 import infra.vo.RiderVO;

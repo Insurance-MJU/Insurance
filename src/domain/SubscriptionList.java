@@ -104,6 +104,15 @@ public class SubscriptionList {
     }
 
     public void save(Subscription s) {
-        dao.save(s);
+        dao.save(new SubscriptionVO(
+            s.getSubscriptionNo(), s.getUserId(), s.getApplicantName(), s.getSsn(),
+            s.getAddress(), s.getCarNumber(), s.getChassisNumber(), s.getProductName(),
+            s.getPremium()     != null ? s.getPremium().getAmount()     : 0L,
+            s.getBasePremium() != null ? s.getBasePremium().getAmount() : 0L,
+            s.getSubscriptionDate(),
+            s.getStatus() != null ? s.getStatus().name() : null,
+            s.getOccupation(), s.getAge(), s.getCoveragesDescription(),
+            s.getRejectReason(), s.getSupplementDocuments()
+        ));
     }
 }

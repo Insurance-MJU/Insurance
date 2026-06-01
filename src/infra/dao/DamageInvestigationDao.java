@@ -1,8 +1,5 @@
 package infra.dao;
 
-import domain.DamageInvestigation;
-import domain.InjuryGrade;
-import domain.common.Money;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 import infra.vo.DamageInvestigationVO;
@@ -38,13 +35,11 @@ public class DamageInvestigationDao {
         );
     }
 
-    public void save(DamageInvestigation inv) {
-        String invId = inv.getInvestigationId();
+    public void save(DamageInvestigationVO vo) {
+        String invId = vo.investigationId;
         if (invId == null || invId.isEmpty()) {
-            invId = "INV-" + inv.getAccidentId();
-            inv.setInvestigationId(invId);
+            invId = "INV-" + vo.accidentId;
         }
-
         db.execute(
             "INSERT INTO damage_investigations" +
             " (investigation_id, accident_id, claim_id, investigator_name, investigation_date," +
@@ -58,21 +53,13 @@ public class DamageInvestigationDao {
             " our_fault=VALUES(our_fault), other_fault=VALUES(other_fault), liability=VALUES(liability)," +
             " expected_repair_cost=VALUES(expected_repair_cost), compensation_limit=VALUES(compensation_limit)," +
             " final_opinion=VALUES(final_opinion), saved_at=VALUES(saved_at)",
-            invId,
-            inv.getAccidentId(),
-            inv.getClaimId(),
-            inv.getInvestigatorName(),
-            inv.getSavedAt() != null ? new Timestamp(inv.getSavedAt().getTime()) : null,
-            inv.getOpinion(),
-            inv.getDamageCode(),
-            inv.getInjuryGrade()         != null ? inv.getInjuryGrade().getGrade()           : 0,
-            inv.getOurFault(),
-            inv.getOtherFault(),
-            inv.getLiability(),
-            inv.getExpectedRepairCost()  != null ? inv.getExpectedRepairCost().getAmount()   : 0L,
-            inv.getCompensationLimit()   != null ? inv.getCompensationLimit().getAmount()    : 0L,
-            inv.getFinalOpinion(),
-            inv.getSavedAt() != null ? new Timestamp(inv.getSavedAt().getTime()) : null
+            invId, vo.accidentId, vo.claimId, vo.investigatorName,
+            vo.savedAt != null ? new Timestamp(vo.savedAt.getTime()) : null,
+            vo.opinion, vo.damageCode, vo.injuryGrade,
+            vo.ourFault, vo.otherFault, vo.liability,
+            vo.expectedRepairCost, vo.compensationLimit,
+            vo.finalOpinion,
+            vo.savedAt != null ? new Timestamp(vo.savedAt.getTime()) : null
         );
     }
 

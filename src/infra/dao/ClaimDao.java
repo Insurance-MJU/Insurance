@@ -1,11 +1,5 @@
 package infra.dao;
 
-import domain.Claim;
-import domain.ClaimStatus;
-import domain.DamageAssessment;
-import domain.DamageInvestigation;
-import domain.ClaimPayment;
-import domain.common.Money;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 import infra.vo.ClaimVO;
@@ -61,24 +55,11 @@ public class ClaimDao {
 
     public List<ClaimVO> findAwaitingPayment() {
         return db.queryForList(
-            "SELECT * FROM claims WHERE claim_status = ?",
-            EXTRACTOR, ClaimStatus.PAYMENT_PENDING.name());
+            "SELECT * FROM claims WHERE claim_status = 'PAYMENT_PENDING'",
+            EXTRACTOR);
     }
 
-    public void save(Claim c) {
-        String accidentId   = (c.getAccident() != null) ? c.getAccident().getAccidentId() : null;
-        long settlementAmt  = 0L;
-        long dedAmt         = 0L;
-        long compAmt        = 0L;
-        if (c.getDamageAssessment() != null) {
-            DamageAssessment da = c.getDamageAssessment();
-            settlementAmt = da.getSettlement()         != null ? da.getSettlement().getAmount()         : 0L;
-            dedAmt        = da.getDeductibleAmount()   != null ? da.getDeductibleAmount().getAmount()   : 0L;
-            compAmt       = da.getCompensationAmount() != null ? da.getCompensationAmount().getAmount() : 0L;
-        }
-        String bankName   = c.getBankName();
-        String accountNo  = c.getAccountNumber();
-
+    public void save(ClaimVO vo) {
         db.execute(
             "INSERT INTO claims (claim_id, accident_id, claimant_name, claim_date, contract_id," +
             " description, claim_status, assigned_employee," +
@@ -93,19 +74,19 @@ public class ClaimDao {
             " deductible_amount=VALUES(deductible_amount)," +
             " compensation_amount=VALUES(compensation_amount)," +
             " bank_name=VALUES(bank_name), account_number=VALUES(account_number)",
-            c.getClaimId(),
-            accidentId,
-            c.getClaimantName(),
-            c.getClaimDate() != null ? new Timestamp(c.getClaimDate().getTime()) : null,
-            c.getContractId(),
-            c.getDescription(),
-            c.getClaimStatus() != null ? c.getClaimStatus().name() : null,
-            c.getAssignedEmployee(),
-            settlementAmt,
-            dedAmt,
-            compAmt,
-            bankName,
-            accountNo
+            vo.claimId,
+            vo.accidentId,
+            vo.claimantName,
+            vo.claimDate != null ? new Timestamp(vo.claimDate.getTime()) : null,
+            vo.contractId,
+            vo.description,
+            vo.claimStatus,
+            vo.assignedEmployee,
+            vo.settlementAmount,
+            vo.deductibleAmount,
+            vo.compensationAmount,
+            vo.bankName,
+            vo.accountNumber
         );
     }
 

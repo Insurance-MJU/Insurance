@@ -105,7 +105,27 @@ public class ContractList {
     }
 
     public void save(Contract contract) {
-        dao.save(contract);
+        List<SelectedCoverageVO> scVOs = null;
+        if (contract.getSelectedCoverages() != null) {
+            scVOs = contract.getSelectedCoverages().stream()
+                .map(sc -> new SelectedCoverageVO(
+                    sc.getCoverageMasterId(), sc.getCoverageName(), sc.isMandatory(),
+                    sc.getDeductibleType() != null ? sc.getDeductibleType().name() : null,
+                    sc.getDeductibleAmount() != null ? sc.getDeductibleAmount().getAmount() : 0L
+                ))
+                .collect(Collectors.toList());
+        }
+        dao.save(new ContractVO(
+            contract.getContractId(), contract.getPolicyNo(), contract.getProductName(),
+            contract.getSubscriptionNo(),
+            contract.getPremium() != null ? contract.getPremium().getAmount() : 0L,
+            contract.getCarNumber(), contract.getCoveragesDescription(), contract.getCoverageLimit(),
+            contract.getRidersDescription(), contract.getIssueDate(), contract.getStartDate(), contract.getEndDate(),
+            contract.getStatus() != null ? contract.getStatus().name() : null,
+            contract.getPolicyholder() != null ? contract.getPolicyholder().getName()    : null,
+            contract.getPolicyholder() != null ? contract.getPolicyholder().getPartyId() : null,
+            scVOs
+        ));
     }
 
     public String nextPolicyNo() {

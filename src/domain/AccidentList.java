@@ -86,7 +86,18 @@ public class AccidentList {
     }
 
     public void save(Accident accident) {
-        dao.save(accident);
+        dao.save(new AccidentVO(
+            accident.getAccidentId(), accident.getUserId(), accident.getAccidentDate(),
+            accident.getReportedBy(), accident.getPhone(), accident.getDescription(),
+            accident.getAccidentLocation(), accident.getAccidentDetail(), accident.getDocuments(),
+            accident.getContractId(), accident.getCoverageDescription(),
+            accident.getCoverageLimit()       != null ? accident.getCoverageLimit().getAmount()       : 0L,
+            accident.getPersonalInjuryLimit() != null ? accident.getPersonalInjuryLimit().getAmount() : 0L,
+            accident.getVehicleInfo(),
+            accident.getExpectedRepairCost()  != null ? accident.getExpectedRepairCost().getAmount()  : 0L,
+            accident.getRegionCode(),
+            accident.getStatus() != null ? accident.getStatus().name() : null
+        ));
     }
 
     // ── 도메인 로직 ────────────────────────────────────────────

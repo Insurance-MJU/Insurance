@@ -1,7 +1,5 @@
 package infra.dao;
 
-import domain.Accident;
-import domain.AccidentStatus;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 import infra.vo.AccidentVO;
@@ -59,16 +57,24 @@ public class AccidentDao {
     }
 
     private String resolveStatusEnumName(String label) {
-        for (AccidentStatus s : AccidentStatus.values()) {
-            if (s.getLabel().equals(label) || s.name().equals(label)) return s.name();
+        for (String[] entry : STATUS_LABELS) {
+            if (entry[1].equals(label) || entry[0].equals(label)) return entry[0];
         }
         return null;
     }
 
+    // enum name → display label mapping (mirrors AccidentStatus)
+    private static final String[][] STATUS_LABELS = {
+        {"PENDING",     "접수"},
+        {"INVESTIGATING", "조사중"},
+        {"CLOSED",      "처리완료"},
+        {"REJECTED",    "반려"}
+    };
+
     public List<AccidentVO> findPendingAccidents() {
         return db.queryForList(
-            "SELECT * FROM accidents WHERE status = ?",
-            EXTRACTOR, AccidentStatus.PENDING.name());
+            "SELECT * FROM accidents WHERE status = 'PENDING'",
+            EXTRACTOR);
     }
 
     public AccidentVO findById(String accidentId) {
@@ -95,7 +101,7 @@ public class AccidentDao {
             EXTRACTOR, userId);
     }
 
-    public void save(Accident a) {
+    public void save(AccidentVO vo) {
         db.execute(
             "INSERT INTO accidents (accident_id, user_id, accident_date, reported_by, phone, description," +
             " accident_location, accident_detail, documents, contract_id, coverage_description," +
@@ -109,23 +115,23 @@ public class AccidentDao {
             " coverage_limit=VALUES(coverage_limit), personal_injury_limit=VALUES(personal_injury_limit)," +
             " vehicle_info=VALUES(vehicle_info), expected_repair_cost=VALUES(expected_repair_cost)," +
             " region_code=VALUES(region_code), status=VALUES(status)",
-            a.getAccidentId(),
-            a.getUserId(),
-            a.getAccidentDate() != null ? new Timestamp(a.getAccidentDate().getTime()) : null,
-            a.getReportedBy(),
-            a.getPhone(),
-            a.getDescription(),
-            a.getAccidentLocation(),
-            a.getAccidentDetail(),
-            a.getDocuments(),
-            a.getContractId(),
-            a.getCoverageDescription(),
-            a.getCoverageLimit()          != null ? a.getCoverageLimit().getAmount()          : 0L,
-            a.getPersonalInjuryLimit()    != null ? a.getPersonalInjuryLimit().getAmount()    : 0L,
-            a.getVehicleInfo(),
-            a.getExpectedRepairCost()     != null ? a.getExpectedRepairCost().getAmount()     : 0L,
-            a.getRegionCode(),
-            a.getStatus() != null ? a.getStatus().name() : null
+            vo.accidentId,
+            vo.userId,
+            vo.accidentDate != null ? new Timestamp(vo.accidentDate.getTime()) : null,
+            vo.reportedBy,
+            vo.phone,
+            vo.description,
+            vo.accidentLocation,
+            vo.accidentDetail,
+            vo.documents,
+            vo.contractId,
+            vo.coverageDescription,
+            vo.coverageLimit,
+            vo.personalInjuryLimit,
+            vo.vehicleInfo,
+            vo.expectedRepairCost,
+            vo.regionCode,
+            vo.status
         );
     }
 

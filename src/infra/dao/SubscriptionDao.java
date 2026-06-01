@@ -1,6 +1,5 @@
 package infra.dao;
 
-import domain.Subscription;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
 import infra.vo.SubscriptionVO;
@@ -48,8 +47,7 @@ public class SubscriptionDao {
 
     public List<SubscriptionVO> findPendingReview() {
         return db.queryForList(
-            "SELECT * FROM subscriptions WHERE status = 'PENDING_REVIEW'",
-            EXTRACTOR);
+            "SELECT * FROM subscriptions WHERE status = 'PENDING_REVIEW'", EXTRACTOR);
     }
 
     public List<SubscriptionVO> findByApplicantName(String applicantName) {
@@ -75,11 +73,10 @@ public class SubscriptionDao {
         Integer count = db.queryForObject(
             "SELECT COUNT(*) FROM subscriptions WHERE subscription_no LIKE ?",
             rs -> rs.getInt(1), today + "-%");
-        int next = (count != null ? count : 0) + 1;
-        return String.format("%s-%04d", today, next);
+        return String.format("%s-%04d", today, (count != null ? count : 0) + 1);
     }
 
-    public void save(Subscription s) {
+    public void save(SubscriptionVO vo) {
         db.execute(
             "INSERT INTO subscriptions (subscription_no, user_id, applicant_name, ssn, address, car_number," +
             " chassis_number, product_name, premium, base_premium, subscription_date, status," +
@@ -93,23 +90,11 @@ public class SubscriptionDao {
             " occupation=VALUES(occupation), age=VALUES(age)," +
             " coverages_description=VALUES(coverages_description)," +
             " reject_reason=VALUES(reject_reason), supplement_documents=VALUES(supplement_documents)",
-            s.getSubscriptionNo(),
-            s.getUserId(),
-            s.getApplicantName(),
-            s.getSsn(),
-            s.getAddress(),
-            s.getCarNumber(),
-            s.getChassisNumber(),
-            s.getProductName(),
-            s.getPremium()     != null ? s.getPremium().getAmount()     : 0L,
-            s.getBasePremium() != null ? s.getBasePremium().getAmount() : 0L,
-            s.getSubscriptionDate() != null ? new Timestamp(s.getSubscriptionDate().getTime()) : null,
-            s.getStatus()      != null ? s.getStatus().name() : null,
-            s.getOccupation(),
-            s.getAge(),
-            s.getCoveragesDescription(),
-            s.getRejectReason(),
-            s.getSupplementDocuments()
+            vo.subscriptionNo, vo.userId, vo.applicantName, vo.ssn, vo.address,
+            vo.carNumber, vo.chassisNumber, vo.productName, vo.premium, vo.basePremium,
+            vo.subscriptionDate != null ? new Timestamp(vo.subscriptionDate.getTime()) : null,
+            vo.status, vo.occupation, vo.age, vo.coveragesDescription,
+            vo.rejectReason, vo.supplementDocuments
         );
     }
 }

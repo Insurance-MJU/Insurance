@@ -47,7 +47,15 @@ public class DamageInvestigationList {
     }
 
     public void save(DamageInvestigation inv) {
-        dao.save(inv);
+        dao.save(new DamageInvestigationVO(
+            inv.getInvestigationId(), inv.getAccidentId(), inv.getClaimId(),
+            inv.getInvestigatorName(), inv.getOpinion(), inv.getDamageCode(),
+            inv.getInjuryGrade() != null ? inv.getInjuryGrade().getGrade() : 0,
+            inv.getOurFault(), inv.getOtherFault(), inv.getLiability(),
+            inv.getExpectedRepairCost() != null ? inv.getExpectedRepairCost().getAmount() : 0L,
+            inv.getCompensationLimit()  != null ? inv.getCompensationLimit().getAmount()  : 0L,
+            inv.getFinalOpinion(), inv.getSavedAt()
+        ));
     }
 
     // ── 도메인 로직 ────────────────────────────────────────────

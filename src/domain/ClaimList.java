@@ -91,7 +91,18 @@ public class ClaimList {
     }
 
     public void save(Claim claim) {
-        dao.save(claim);
+        DamageAssessment da = claim.getDamageAssessment();
+        dao.save(new ClaimVO(
+            claim.getClaimId(), claim.getClaimantName(), claim.getClaimDate(),
+            claim.getContractId(), claim.getDescription(),
+            claim.getClaimStatus() != null ? claim.getClaimStatus().name() : null,
+            claim.getAssignedEmployee(),
+            claim.getAccident() != null ? claim.getAccident().getAccidentId() : null,
+            da != null && da.getSettlement()         != null ? da.getSettlement().getAmount()         : 0L,
+            da != null && da.getDeductibleAmount()   != null ? da.getDeductibleAmount().getAmount()   : 0L,
+            da != null && da.getCompensationAmount() != null ? da.getCompensationAmount().getAmount() : 0L,
+            claim.getBankName(), claim.getAccountNumber()
+        ));
     }
 
     // ── 도메인 로직 ────────────────────────────────────────────

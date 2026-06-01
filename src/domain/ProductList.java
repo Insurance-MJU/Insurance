@@ -129,6 +129,31 @@ public class ProductList {
     }
 
     public void save(Product product) {
-        dao.save(product);
+        List<ProductCoverageVO> covVOs = product.getCoverages() != null
+            ? product.getCoverages().stream().map(pc -> new ProductCoverageVO(
+                pc.getProductCoverageId(), pc.getProductId(), pc.getCoverageMasterId(),
+                pc.getCoverageName(),
+                pc.getCoverageType() != null ? pc.getCoverageType().name() : null,
+                pc.isMandatory())).collect(Collectors.toList()) : null;
+        List<ProductRiderVO> riderVOs = product.getRiders() != null
+            ? product.getRiders().stream().map(pr -> new ProductRiderVO(
+                pr.getProductRiderId(), pr.getProductId(), pr.getRiderId(),
+                pr.getRiderCode(), pr.getRiderName(),
+                pr.getDiscountRate() != null ? pr.getDiscountRate() : 0.0)).collect(Collectors.toList()) : null;
+        List<ProductDocumentVO> docVOs = product.getDocuments() != null
+            ? product.getDocuments().stream().map(doc -> new ProductDocumentVO(
+                doc.getProductDocumentId(), doc.getProductId(),
+                doc.getDocType() != null ? doc.getDocType().name() : null,
+                doc.getTitle(), doc.getNote(), doc.getFilename(), doc.getFilePath(),
+                doc.getCreatedAt(), doc.getSubmittedAt(), doc.getReceivedAt())).collect(Collectors.toList()) : null;
+        dao.save(new ProductVO(
+            product.getProductId(), product.getProductCode(), product.getProductName(),
+            product.getDescription(),
+            product.getLineOfBusiness() != null ? product.getLineOfBusiness().name() : null,
+            product.getSaleStartDate(), product.getSaleEndDate(),
+            product.getStatus() != null ? product.getStatus().name() : null,
+            product.getTarget() != null ? product.getTarget().name() : null,
+            product.getCreatedAt(), covVOs, riderVOs, docVOs
+        ));
     }
 }
