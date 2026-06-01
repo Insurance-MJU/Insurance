@@ -58,7 +58,7 @@ function ClaimsContent() {
                     accidentLocation,
                     accidentDetail,
                     documents:        docNames,
-                    contractId:       selectedContract?.policyNo ?? selectedCid,
+                    contractId:       selectedCid,
                 }),
             });
             const acc = res.data ?? res;

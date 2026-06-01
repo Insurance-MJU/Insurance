@@ -48,6 +48,7 @@ export default function Home() {
                                 <QuickLink href="/insurance/products" icon="🚗" label="자동차보험 가입" desc="지금 바로 가입하고 할인혜택 받기" />
                                 <QuickLink href="/insurance/contracts" icon="📋" label="내 계약 확인" desc="보험 계약 현황 및 상세 정보" />
                                 <QuickLink href="/insurance/claims" icon="🏥" label="사고 접수·보험금 청구" desc="빠른 접수로 신속한 보상" />
+                                <QuickLink href="/insurance/accidents" icon="🔍" label="청구 현황 조회" desc="접수한 사고·청구의 처리 단계 확인" />
                             </div>
                         </div>
                     </div>

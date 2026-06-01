@@ -60,15 +60,19 @@ export default function AccidentsPage() {
                     {accidents.map((a) => {
                         const badge = STATUS_META[a.status] ?? { label: a.status, color: 'bg-gray-100 text-gray-600' };
                         return (
-                            <div key={a.accidentId} className="border rounded-lg p-5">
+                            <Link key={a.accidentId} href={`/insurance/accidents/${a.accidentId}`}
+                                className="border rounded-lg p-5 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
-                                        <p className="font-semibold text-sm">{a.accidentId}</p>
+                                        <p className="font-semibold text-sm group-hover:text-blue-700">{a.accidentId}</p>
                                         <p className="text-xs text-gray-400 mt-0.5">{a.accidentDate}</p>
                                     </div>
-                                    <span className={`px-2 py-1 text-xs rounded font-bold ${badge.color}`}>
-                                        {badge.label}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-1 text-xs rounded font-bold ${badge.color}`}>
+                                            {badge.label}
+                                        </span>
+                                        <span className="text-gray-300 group-hover:text-blue-400">›</span>
+                                    </div>
                                 </div>
                                 <p className="text-sm text-gray-600 mb-1">
                                     장소: {a.accidentLocation || '—'}
@@ -76,7 +80,7 @@ export default function AccidentsPage() {
                                 <p className="text-xs text-gray-400">
                                     계약번호: {a.contractId || '—'}
                                 </p>
-                            </div>
+                            </Link>
                         );
                     })}
                 </div>
