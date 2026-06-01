@@ -39,9 +39,8 @@ export async function changeProductStatus(id: number | string, status: string) {
   return fetchApi(`/products/${id}/approval`, { method: "PUT" });
 }
 
-export async function deleteProduct(id: number) {
-  // Insurance 백엔드에 미구현
-  throw new Error("상품 삭제는 현재 지원되지 않습니다.");
+export async function deleteProduct(id: number | string) {
+  return fetchApi(`/products/${id}`, { method: "DELETE" });
 }
 
 export async function applyForApproval(id: number) {

@@ -38,6 +38,7 @@ export default function Header() {
           <Link href="/insurance/products" className="hover:text-blue-600 transition-colors">상품조회</Link>
           <Link href="/insurance/contracts" className="hover:text-blue-600 transition-colors">계약관리</Link>
           <Link href="/insurance/claims?type=accident" className="hover:text-blue-600 transition-colors">보상/청구</Link>
+          <Link href="/insurance/accidents" className="hover:text-blue-600 transition-colors">청구조회</Link>
         </nav>
         <div className="flex items-center gap-4">
           {isLoggedIn ? (

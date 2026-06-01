@@ -41,6 +41,7 @@ public class ProductController {
         router.get("/coverages",                         (req, res) -> res.ok(getAllCoverages()));
         router.get("/riders",                            (req, res) -> res.ok(getAllRiders()));
         router.post("/products/{id}/documents",              (req, res) -> res.created(addDocument(req.pathVariable("id"), req.body(DocumentRequest.class))));
+        router.delete("/products/{id}",                       (req, res) -> { deleteProduct(req.pathVariable("id")); res.noContent(); });
         router.delete("/products/{id}/documents/{docId}",    (req, res) -> { deleteDocument(req.pathVariable("id"), req.pathVariable("docId")); res.noContent(); });
         router.get("/products/{id}/documents/{docId}/download", (req, res) -> downloadDocument(req.pathVariable("id"), req.pathVariable("docId"), res));
     }
@@ -82,6 +83,11 @@ public class ProductController {
         p.getDocuments().add(doc);
         productList.save(p);
         return ProductResponse.from(productList.getById(productId));
+    }
+
+    private void deleteProduct(String id) {
+        productList.validateExists(id);
+        productList.delete(id);
     }
 
     private void deleteDocument(String productId, String docId) {

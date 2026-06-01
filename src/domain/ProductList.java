@@ -128,6 +128,10 @@ public class ProductList {
         if (!existsById(productId)) throw new NotFoundException("상품을 찾을 수 없습니다: " + productId);
     }
 
+    public void delete(String productId) {
+        dao.delete(productId);
+    }
+
     public void save(Product product) {
         List<ProductCoverageVO> covVOs = product.getCoverages() != null
             ? product.getCoverages().stream().map(pc -> new ProductCoverageVO(

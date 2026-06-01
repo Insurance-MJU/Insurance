@@ -95,6 +95,13 @@ public class ProductDao {
         return count != null && count > 0;
     }
 
+    public void delete(String productId) {
+        db.execute("DELETE FROM product_documents WHERE product_id = ?", productId);
+        db.execute("DELETE FROM product_coverages WHERE product_id = ?", productId);
+        db.execute("DELETE FROM product_riders    WHERE product_id = ?", productId);
+        db.execute("DELETE FROM products          WHERE product_id = ?", productId);
+    }
+
     public void save(ProductVO vo) {
         db.execute(
             "INSERT INTO products (product_id, product_code, product_name, description," +

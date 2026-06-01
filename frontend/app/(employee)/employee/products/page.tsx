@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getProducts, deleteProduct } from "@/queries/products";
+import ConfirmModal from "@/components/common/ui/ConfirmModal";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
     DESIGN:           { label: "설계 중",      color: "bg-gray-100 text-gray-600" },
@@ -34,6 +35,7 @@ const LOB_LABELS: Record<string, string> = {
 export default function ProductListPage() {
     const [products, setProducts] = useState<any[]>([]);
     const [error, setError] = useState("");
+    const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 
     const load = async () => {
         try { setProducts(await getProducts()); }
@@ -41,8 +43,24 @@ export default function ProductListPage() {
     };
     useEffect(() => { load(); }, []);
 
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        await deleteProduct(deleteTarget.id);
+        setDeleteTarget(null);
+        load();
+    };
+
     return (
         <div className="max-w-5xl">
+            {deleteTarget && (
+                <ConfirmModal
+                    title="상품을 삭제할까요?"
+                    message={`"${deleteTarget.productName}" 상품이 영구적으로 삭제됩니다.`}
+                    confirmLabel="삭제하기"
+                    onConfirm={handleDeleteConfirm}
+                    onCancel={() => setDeleteTarget(null)}
+                />
+            )}
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-xl font-bold text-gray-800">보험상품 관리</h1>
@@ -87,7 +105,7 @@ export default function ProductListPage() {
                                     <div className="flex gap-2 justify-end">
                                         <Link href={`/employee/products/${p.id}/edit`}
                                             className="text-xs text-blue-500 hover:text-blue-700">수정</Link>
-                                        <button onClick={() => { if (confirm("삭제?")) deleteProduct(p.id).then(load); }}
+                                        <button onClick={() => setDeleteTarget(p)}
                                             className="text-xs text-red-400 hover:text-red-600">삭제</button>
                                     </div>
                                 </td>

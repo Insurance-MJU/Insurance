@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getProduct, deleteProduct } from "@/queries/products";
+import ConfirmModal from "@/components/common/ui/ConfirmModal";
 import ProductBasicInfo    from "../_components/ProductBasicInfo";
 import ProductCoverages    from "../_components/ProductCoverages";
 import ProductRiders       from "../_components/ProductRiders";
@@ -32,8 +33,9 @@ export default function ProductDetailPage() {
     const router  = useRouter();
     const pid     = String(id);
 
-    const [product, setProduct] = useState<any>(null);
-    const [error, setError]     = useState("");
+    const [product, setProduct]       = useState<any>(null);
+    const [error, setError]           = useState("");
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
         if (!pid) return;
@@ -48,13 +50,21 @@ export default function ProductDetailPage() {
     const sm = STATUS_META[product.status] ?? { label: product.status, color: "text-gray-600", bg: "bg-gray-100" };
 
     const handleDelete = async () => {
-        if (!confirm(`"${product.productName}" 상품을 삭제할까요?`)) return;
         await deleteProduct(pid as any);
         router.push("/employee/products");
     };
 
     return (
         <div className="max-w-3xl space-y-5">
+            {showDeleteModal && (
+                <ConfirmModal
+                    title="상품을 삭제할까요?"
+                    message={`"${product.productName}" 상품이 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.`}
+                    confirmLabel="삭제하기"
+                    onConfirm={handleDelete}
+                    onCancel={() => setShowDeleteModal(false)}
+                />
+            )}
             <div className="flex items-start justify-between">
                 <div>
                     <div className="flex items-center gap-3 mb-1">
@@ -73,7 +83,7 @@ export default function ProductDetailPage() {
                         className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
                         수정
                     </Link>
-                    <button onClick={handleDelete}
+                    <button onClick={() => setShowDeleteModal(true)}
                         className="px-3 py-1.5 text-sm border border-red-200 text-red-500 rounded-lg hover:bg-red-50">
                         삭제
                     </button>
