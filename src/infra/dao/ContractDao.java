@@ -84,6 +84,14 @@ public class ContractDao {
         return new ContractList(list);
     }
 
+    public ContractList findByUserId(String userId) {
+        List<Contract> list = db.queryForList(
+            "SELECT c.* FROM contracts c JOIN subscriptions s ON c.subscription_no = s.subscription_no WHERE s.user_id = ?",
+            EXTRACTOR, userId);
+        list.forEach(this::loadFull);
+        return new ContractList(list);
+    }
+
     public Contract findByPolicyNo(String policyNo) {
         Contract c = db.queryForObject(
             "SELECT * FROM contracts WHERE policy_no = ?", EXTRACTOR, policyNo);

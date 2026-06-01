@@ -20,10 +20,18 @@ public class UserList {
         return user;
     }
 
-    public User signup(String email, String name, String password) {
+    public User signup(String email, String name, String password, String ssn) {
         if (dao.findById(email) != null)
             throw new BadRequestException("이미 사용 중인 이메일입니다.");
-        dao.save(email, password, name, UserRole.CUSTOMER.name());
-        return new User(email, password, name, UserRole.CUSTOMER);
+        dao.save(email, password, name, UserRole.CUSTOMER.name(), ssn);
+        return new User(email, password, name, UserRole.CUSTOMER, ssn);
+    }
+
+    public User findOrCreateBySsn(String ssn, String name) {
+        User existing = dao.findBySsn(ssn);
+        if (existing != null) return existing;
+        String userId = "IDENTITY-" + ssn.replaceAll("[^0-9]", "").substring(0, Math.min(10, ssn.replaceAll("[^0-9]", "").length()));
+        dao.save(userId, "", name, UserRole.CUSTOMER.name(), ssn);
+        return new User(userId, "", name, UserRole.CUSTOMER, ssn);
     }
 }

@@ -50,13 +50,17 @@ export function useTossPayment(amount: { currency: string; value: number }) {
         widgets.setAmount(amount).catch(console.error);
     }, [widgets, amount]);
 
-    async function requestPayment(orderId: string, orderName: string) {
+    async function requestPayment(orderId: string, orderName: string, extra?: { subscriptionNo?: string; amount?: number }) {
         if (!widgets) return;
+        const base = window.location.origin;
+        const failParams = extra?.subscriptionNo
+            ? `?subscriptionNo=${extra.subscriptionNo}&amount=${extra.amount ?? 0}`
+            : '';
         await widgets.requestPayment({
             orderId,
             orderName,
-            successUrl: `${window.location.origin}/payments/success`,
-            failUrl: `${window.location.origin}/payments/fail`,
+            successUrl: `${base}/payments/success`,
+            failUrl: `${base}/payments/fail${failParams}`,
         });
     }
 

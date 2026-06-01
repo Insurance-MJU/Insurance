@@ -26,6 +26,10 @@ public class ContractList {
         return dao.findAll();
     }
 
+    public ContractList findByUserId(String userId) {
+        return dao.findByUserId(userId);
+    }
+
     public ContractList findByCondition(String holderName, String periodChoice, String statusChoice) {
         return dao.findByCondition(holderName, periodChoice, statusChoice);
     }

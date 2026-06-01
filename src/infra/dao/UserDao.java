@@ -14,7 +14,8 @@ public class UserDao {
         rs.getString("user_id"),
         rs.getString("password"),
         rs.getString("name"),
-        UserRole.valueOf(rs.getString("role"))
+        UserRole.valueOf(rs.getString("role")),
+        rs.getString("ssn")
     );
 
     public User findByCredentials(String userId, String password) {
@@ -29,9 +30,14 @@ public class UserDao {
             "SELECT * FROM users WHERE user_id = ?", EXTRACTOR, userId);
     }
 
-    public void save(String userId, String password, String name, String role) {
+    public User findBySsn(String ssn) {
+        return db.queryForObject(
+            "SELECT * FROM users WHERE ssn = ?", EXTRACTOR, ssn);
+    }
+
+    public void save(String userId, String password, String name, String role, String ssn) {
         db.execute(
-            "INSERT INTO users (user_id, password, name, role) VALUES (?, ?, ?, ?)",
-            userId, password, name, role);
+            "INSERT INTO users (user_id, password, name, role, ssn) VALUES (?, ?, ?, ?, ?)",
+            userId, password, name, role, ssn);
     }
 }

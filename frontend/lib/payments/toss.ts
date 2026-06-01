@@ -4,7 +4,7 @@ export async function confirmPayment(data: { paymentKey: string; orderId: string
     const response = await fetch(`${SERVER_URL}/payments/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, amount: Number(data.amount) }),
     });
     if (!response.ok) throw await response.json();
     return response.json();

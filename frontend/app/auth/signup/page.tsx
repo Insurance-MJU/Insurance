@@ -10,12 +10,13 @@ export default function SignupPage() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [ssn, setSsn] = useState("");
     const router = useRouter();
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await signup({ name, email, password });
+            await signup({ name, email, password, ssn });
             alert("회원가입이 완료되었습니다.");
             router.push("/auth/login");
         } catch (error) {
@@ -54,10 +55,23 @@ export default function SignupPage() {
                     />
                 </div>
                 <div>
+                    <label className="block text-sm font-medium mb-1">주민등록번호</label>
+                    <input
+                        type="text"
+                        required
+                        value={ssn}
+                        onChange={(e) => setSsn(e.target.value)}
+                        className="w-full border p-2 rounded font-mono"
+                        placeholder="예) 000101-1234567"
+                        maxLength={14}
+                    />
+                    <p className="text-xs text-gray-400 mt-1">본인인증 로그인과 연동됩니다.</p>
+                </div>
+                <div>
                     <label className="block text-sm font-medium mb-1">비밀번호</label>
-                    <input 
-                        type="password" 
-                        required 
+                    <input
+                        type="password"
+                        required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full border p-2 rounded"

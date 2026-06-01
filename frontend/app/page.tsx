@@ -22,7 +22,7 @@ export default function Home() {
                         </h1>
                         <p className="text-lg lg:text-xl text-slate-600 mb-10 leading-relaxed font-medium">
                             복잡한 보험가입은 이제 그만.<br className="hidden lg:block" />
-                            스마트 다이렉트 솔루션으로 1분 만에 끝내세요.
+                            스마트 다이렉트 솔루션으로 간편하게 가입하세요.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                             <Link
@@ -32,10 +32,10 @@ export default function Home() {
                                 내게 맞는 상품 찾기
                             </Link>
                             <Link
-                                href="/insurance/calculator"
+                                href="/insurance/contracts"
                                 className="px-8 py-4 bg-white hover:bg-gray-50 text-slate-800 border border-gray-200 font-bold rounded-xl text-lg transition-transform active:scale-95 shadow-sm"
                             >
-                                1분 보험료 계산
+                                내 보험 현황
                             </Link>
                         </div>
                     </div>
@@ -63,8 +63,8 @@ export default function Home() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                         {[
-                            { title: '1분 다이렉트 가입', desc: '복잡한 서류 없이 모바일로 간편하게 가입하세요.', icon: '⚡' },
-                            { title: '맞춤형 보험료 계산', desc: '내 차량과 운전 습관으로 가장 합리적인 옵션을 추천받으세요.', icon: '🎯' },
+                            { title: '다이렉트 가입', desc: '복잡한 서류 없이 모바일로 간편하게 가입하세요.', icon: '⚡' },
+                            { title: '맞춤형 담보 선택', desc: '내 차량과 운전 습관에 맞는 담보를 직접 선택하세요.', icon: '🎯' },
                             { title: '24시간 사고 접수', desc: '언제 어디서든 즉시 모바일로 접수하고 빠르게 보상받으세요.', icon: '🏥' },
                         ].map((f, i) => (
                             <div key={i} className="text-center p-8 rounded-3xl bg-slate-50 hover:bg-blue-50 transition-colors cursor-pointer border border-transparent hover:border-blue-100">

@@ -13,14 +13,15 @@ CREATE TABLE IF NOT EXISTS users (
     user_id  VARCHAR(50)  NOT NULL PRIMARY KEY,
     password VARCHAR(100) NOT NULL,
     name     VARCHAR(100) NOT NULL,
-    role     VARCHAR(20)  NOT NULL
+    role     VARCHAR(20)  NOT NULL,
+    ssn      VARCHAR(20)  NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO users (user_id, password, name, role) VALUES
-    ('customer1', '1234', '박수현', 'CUSTOMER'),
-    ('employee1', '1234', '김직원', 'EMPLOYEE'),
-    ('admin1',    '1234', '관리자', 'ADMIN')
-ON DUPLICATE KEY UPDATE password=VALUES(password), name=VALUES(name), role=VALUES(role);
+INSERT INTO users (user_id, password, name, role, ssn) VALUES
+    ('customer1', '1234', '박수현', 'CUSTOMER', '900101-1234567'),
+    ('employee1', '1234', '김직원', 'EMPLOYEE', NULL),
+    ('admin1',    '1234', '관리자', 'ADMIN',    NULL)
+ON DUPLICATE KEY UPDATE password=VALUES(password), name=VALUES(name), role=VALUES(role), ssn=VALUES(ssn);
 
 -- ─────────────────────────────────────────────────────────────────
 -- accidents

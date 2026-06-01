@@ -14,6 +14,8 @@ public class WhiteList {
         if (EXACT.contains(path)) return true;
         if (path.startsWith("/public/")) return true;
         if (path.startsWith("/verification/")) return true;
+        if (path.startsWith("/vehicles/")) return true;
+        if (path.startsWith("/payments/")) return true;
         return false;
     }
 }

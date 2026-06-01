@@ -37,14 +37,15 @@ public class AuthController {
     }
 
     private AuthResponse signup(SignupRequest req) {
-        User user = userList.signup(req.email(), req.name(), req.password());
+        User user = userList.signup(req.email(), req.name(), req.password(), req.ssn());
         String token = jwtUtil.generateAccessToken(user.getUserId(), user.getRole().name());
         return new AuthResponse(token, user.getUserId(), user.getName(), user.getRole().name());
     }
 
     private AuthResponse loginByIdentity(IdentityLoginRequest req) {
         VerifiedIdentity identity = verificationService.resolveIdentity(req.verifyToken());
-        String token = jwtUtil.generateAccessToken(identity.name(), "CUSTOMER");
-        return new AuthResponse(token, identity.name(), identity.name(), "CUSTOMER");
+        User user = userList.findOrCreateBySsn(identity.ssn(), identity.name());
+        String token = jwtUtil.generateAccessToken(user.getUserId(), user.getRole().name());
+        return new AuthResponse(token, user.getUserId(), user.getName(), user.getRole().name());
     }
 }

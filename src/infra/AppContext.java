@@ -99,6 +99,8 @@ public class AppContext {
         new VerificationController(verificationService).registerRoutes(router);
         new ProductController(productList, riderList, coverageList).registerRoutes(router);
         new SubscriptionController(subscriptionList, productList, contractList, verificationService, jwtUtil).registerRoutes(router);
+        new ContractController(contractList, jwtUtil).registerRoutes(router);
+        new PaymentController(contractList, config.getTossConfig()).registerRoutes(router);
         new AccidentController(accidentList, claimList, contractList, fieldInvestigatorList, jwtUtil).registerRoutes(router);
         new ClaimController(claimList, accidentList).registerRoutes(router);
         new RiskAnalysisController(subscriptionList, riskReportList, creditService).registerRoutes(router);

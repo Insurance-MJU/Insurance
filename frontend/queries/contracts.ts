@@ -5,7 +5,7 @@ function mapSubscription(s: any): ContractRow {
   return {
     id:          s.subscriptionNo ?? s.id,
     proposalId:  s.subscriptionNo,
-    policyNo:    s.contractId ?? s.subscriptionNo,
+    policyNo:    s.contractId ?? '',
     insuredName: s.applicantName ?? s.insuredName ?? '',
     productName: s.productName ?? '',
     premium:     s.premium ?? 0,
@@ -14,18 +14,38 @@ function mapSubscription(s: any): ContractRow {
   };
 }
 
-/** 고객: 내 청약 목록 (JWT 기반 필터링) */
-export async function fetchMyContracts(): Promise<ContractRow[]> {
+function mapContract(c: any): ContractRow {
+  return {
+    id:          c.contractId ?? c.id,
+    proposalId:  c.subscriptionNo ?? '',
+    policyNo:    c.policyNo ?? '',
+    insuredName: c.holderName ?? '',
+    productName: c.productName ?? '',
+    premium:     c.premium ?? 0,
+    appliedAt:   c.issueDate ?? '',
+    status:      c.status ?? '',
+  };
+}
+
+/** 고객: 내 청약 현황 (전체 상태) */
+export async function fetchMySubscriptions(): Promise<ContractRow[]> {
   const res = await fetchApi('/subscriptions', { method: 'GET' });
   const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
   return list.map(mapSubscription);
 }
 
-/** 직원: 전체 청약 목록 */
-export async function fetchAllContracts(): Promise<ContractRow[]> {
-  const res = await fetchApi('/subscriptions', { method: 'GET' });
+/** 고객: 내 계약 목록 */
+export async function fetchMyContracts(): Promise<ContractRow[]> {
+  const res = await fetchApi('/contracts', { method: 'GET' });
   const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
-  return list.map(mapSubscription);
+  return list.map(mapContract);
+}
+
+/** 직원: 전체 계약 목록 */
+export async function fetchAllContracts(): Promise<ContractRow[]> {
+  const res = await fetchApi('/contracts', { method: 'GET' });
+  const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+  return list.map(mapContract);
 }
 
 /** 직원: 승인 대기 청약 목록 */
