@@ -1,27 +1,44 @@
 package domain;
 
 import infra.dao.RiderDao;
+import infra.vo.RiderVO;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RiderList {
     private final RiderDao dao;
     private final List<Rider> riders;
 
     public RiderList(RiderDao dao) {
-        this.dao = dao;
+        this.dao    = dao;
         this.riders = Collections.emptyList();
     }
 
     public RiderList(List<Rider> riders) {
-        this.dao = null;
+        this.dao    = null;
         this.riders = Collections.unmodifiableList(riders);
+    }
+
+    private static Rider toDomain(RiderVO vo) {
+        if (vo == null) return null;
+        Rider r = new Rider();
+        r.setRiderId(vo.riderId);
+        r.setRiderCode(vo.riderCode);
+        r.setRiderName(vo.riderName);
+        r.setDescription(vo.description);
+        if (vo.riderType != null) {
+            try { r.setRiderType(RiderType.valueOf(vo.riderType)); } catch (Exception ignored) {}
+        }
+        r.setMandatory(vo.mandatory);
+        r.setDiscountRate(vo.discountRate);
+        return r;
     }
 
     // ── DAO 위임 ──────────────────────────────────────────────
     public RiderList findAll() {
-        return dao.findAll();
+        return new RiderList(dao.findAll().stream().map(RiderList::toDomain).collect(Collectors.toList()));
     }
 
     // ── 도메인 로직 ────────────────────────────────────────────
@@ -37,7 +54,7 @@ public class RiderList {
                 .findFirst()
                 .orElse(null);
         }
-        return dao.findByCode(riderCode);
+        return toDomain(dao.findByCode(riderCode));
     }
 
     public Rider findById(String riderId) {

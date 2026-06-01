@@ -5,6 +5,7 @@ import common.exception.infra.UnauthorizedException;
 import domain.common.User;
 import domain.common.UserRole;
 import infra.dao.UserDao;
+import infra.vo.UserVO;
 
 public class UserList {
 
@@ -14,8 +15,13 @@ public class UserList {
         this.dao = dao;
     }
 
+    private static User toDomain(UserVO vo) {
+        if (vo == null) return null;
+        return new User(vo.userId, vo.password, vo.name, UserRole.valueOf(vo.role), vo.ssn);
+    }
+
     public User login(String userId, String password) {
-        User user = dao.findByCredentials(userId, password);
+        User user = toDomain(dao.findByCredentials(userId, password));
         if (user == null) throw new UnauthorizedException("아이디 또는 비밀번호가 올바르지 않습니다.");
         return user;
     }
@@ -28,7 +34,7 @@ public class UserList {
     }
 
     public User findOrCreateBySsn(String ssn, String name) {
-        User existing = dao.findBySsn(ssn);
+        User existing = toDomain(dao.findBySsn(ssn));
         if (existing != null) return existing;
         String userId = "IDENTITY-" + ssn.replaceAll("[^0-9]", "").substring(0, Math.min(10, ssn.replaceAll("[^0-9]", "").length()));
         dao.save(userId, "", name, UserRole.CUSTOMER.name(), ssn);

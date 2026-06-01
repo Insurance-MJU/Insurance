@@ -1,11 +1,9 @@
 package infra.dao;
 
 import domain.Subscription;
-import domain.SubscriptionList;
-import domain.SubscriptionStatus;
-import domain.common.Money;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
+import infra.vo.SubscriptionVO;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,94 +17,54 @@ public class SubscriptionDao {
 
     public SubscriptionDao(Database db) { this.db = db; }
 
-    private static final ResultSetExtractor<Subscription> EXTRACTOR = rs -> mapRow(rs);
+    private static final ResultSetExtractor<SubscriptionVO> EXTRACTOR = rs -> mapRow(rs);
 
-    private static Subscription mapRow(ResultSet rs) throws SQLException {
-        Subscription s = new Subscription();
-        s.setSubscriptionNo(rs.getString("subscription_no"));
-        s.setApplicantName(rs.getString("applicant_name"));
-        s.setSsn(rs.getString("ssn"));
-        // address, chassisNumber, productName, occupation, coveragesDescription, rejectReason, supplementDocuments
-        // via setters not exposed for all fields in Subscription - checking the class
-        // Subscription has setCarNumber, setBasePremium, but not setAddress etc.
-        // We use the register factory for new ones, but for loading we need all fields.
-        // The register() factory sets all required fields including status=PENDING_REVIEW.
-        // For loading, since there are limited setters, we use register() to rebuild,
-        // then apply any status changes.
-
-        // Re-checking Subscription: it has setters only for:
-        // setSubscriptionNo, setApplicantName, setSsn, setCarNumber, setBasePremium
-        // For address, chassisNumber, productName, occupation, age, coveragesDescription,
-        // rejectReason, supplementDocuments - no individual setters visible.
-        // The register() factory sets all those. We'll use register() to reconstruct.
-
-        String subNo     = rs.getString("subscription_no");
-        String userId    = rs.getString("user_id");
-        String appName   = rs.getString("applicant_name");
-        String ssn       = rs.getString("ssn");
-        String address   = rs.getString("address");
-        String carNo     = rs.getString("car_number");
-        String chassis   = rs.getString("chassis_number");
-        String prodName  = rs.getString("product_name");
-        long premium     = rs.getLong("premium");
-        long basePremium = rs.getLong("base_premium");
-        Timestamp subTs  = rs.getTimestamp("subscription_date");
-        String subDate   = subTs != null
-            ? new SimpleDateFormat("yyyy-MM-dd").format(new Date(subTs.getTime()))
-            : new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-        String occupation = rs.getString("occupation");
-        int age          = rs.getInt("age");
-        String coverages = rs.getString("coverages_description");
-
-        int safeAge = Math.max(18, age);
-
-        Subscription sub = Subscription.register(
-            subNo, appName, ssn, address, carNo, chassis, prodName,
-            new Money(premium, "KRW"), new Money(basePremium, "KRW"),
-            subDate, occupation, safeAge, coverages
+    private static SubscriptionVO mapRow(ResultSet rs) throws SQLException {
+        Timestamp subTs = rs.getTimestamp("subscription_date");
+        return new SubscriptionVO(
+            rs.getString("subscription_no"),
+            rs.getString("user_id"),
+            rs.getString("applicant_name"),
+            rs.getString("ssn"),
+            rs.getString("address"),
+            rs.getString("car_number"),
+            rs.getString("chassis_number"),
+            rs.getString("product_name"),
+            rs.getLong("premium"),
+            rs.getLong("base_premium"),
+            subTs != null ? new Date(subTs.getTime()) : null,
+            rs.getString("status"),
+            rs.getString("occupation"),
+            rs.getInt("age"),
+            rs.getString("coverages_description"),
+            rs.getString("reject_reason"),
+            rs.getString("supplement_documents")
         );
-        sub.setUserId(userId);
-
-        // Now apply stored status
-        String statusStr = rs.getString("status");
-        if (statusStr != null) {
-            SubscriptionStatus status = SubscriptionStatus.valueOf(statusStr);
-            if (status == SubscriptionStatus.APPROVED) sub.approve();
-            else if (status == SubscriptionStatus.REJECTED) {
-                String reason = rs.getString("reject_reason");
-                sub.reject(reason != null ? reason : "");
-            } else if (status == SubscriptionStatus.SUPPLEMENT_REQUIRED) {
-                String docs = rs.getString("supplement_documents");
-                sub.requestSupplement(docs != null ? docs : "");
-            }
-        }
-
-        return sub;
     }
 
-    public SubscriptionList findAll() {
-        return new SubscriptionList(db.queryForList("SELECT * FROM subscriptions", EXTRACTOR));
+    public List<SubscriptionVO> findAll() {
+        return db.queryForList("SELECT * FROM subscriptions", EXTRACTOR);
     }
 
-    public SubscriptionList findPendingReview() {
-        return new SubscriptionList(db.queryForList(
-            "SELECT * FROM subscriptions WHERE status = ?",
-            EXTRACTOR, SubscriptionStatus.PENDING_REVIEW.name()));
+    public List<SubscriptionVO> findPendingReview() {
+        return db.queryForList(
+            "SELECT * FROM subscriptions WHERE status = 'PENDING_REVIEW'",
+            EXTRACTOR);
     }
 
-    public SubscriptionList findByApplicantName(String applicantName) {
-        return new SubscriptionList(db.queryForList(
+    public List<SubscriptionVO> findByApplicantName(String applicantName) {
+        return db.queryForList(
             "SELECT * FROM subscriptions WHERE applicant_name = ? ORDER BY subscription_date DESC",
-            EXTRACTOR, applicantName));
+            EXTRACTOR, applicantName);
     }
 
-    public SubscriptionList findByUserId(String userId) {
-        return new SubscriptionList(db.queryForList(
+    public List<SubscriptionVO> findByUserId(String userId) {
+        return db.queryForList(
             "SELECT * FROM subscriptions WHERE user_id = ? ORDER BY subscription_date DESC",
-            EXTRACTOR, userId));
+            EXTRACTOR, userId);
     }
 
-    public Subscription findByNo(String subscriptionNo) {
+    public SubscriptionVO findByNo(String subscriptionNo) {
         return db.queryForObject(
             "SELECT * FROM subscriptions WHERE subscription_no = ?",
             EXTRACTOR, subscriptionNo);
@@ -143,10 +101,10 @@ public class SubscriptionDao {
             s.getCarNumber(),
             s.getChassisNumber(),
             s.getProductName(),
-            s.getPremium() != null ? s.getPremium().getAmount() : 0L,
+            s.getPremium()     != null ? s.getPremium().getAmount()     : 0L,
             s.getBasePremium() != null ? s.getBasePremium().getAmount() : 0L,
             s.getSubscriptionDate() != null ? new Timestamp(s.getSubscriptionDate().getTime()) : null,
-            s.getStatus() != null ? s.getStatus().name() : null,
+            s.getStatus()      != null ? s.getStatus().name() : null,
             s.getOccupation(),
             s.getAge(),
             s.getCoveragesDescription(),

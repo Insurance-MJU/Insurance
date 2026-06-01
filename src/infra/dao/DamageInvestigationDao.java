@@ -5,6 +5,7 @@ import domain.InjuryGrade;
 import domain.common.Money;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
+import infra.vo.DamageInvestigationVO;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,40 +16,34 @@ public class DamageInvestigationDao {
 
     public DamageInvestigationDao(Database db) { this.db = db; }
 
-    private static final ResultSetExtractor<DamageInvestigation> EXTRACTOR = rs -> mapRow(rs);
+    private static final ResultSetExtractor<DamageInvestigationVO> EXTRACTOR = rs -> mapRow(rs);
 
-    private static DamageInvestigation mapRow(ResultSet rs) throws SQLException {
-        DamageInvestigation inv = new DamageInvestigation();
-        inv.setInvestigationId(rs.getString("investigation_id"));
-        inv.setAccidentId(rs.getString("accident_id"));
-        inv.setInvestigatorName(rs.getString("investigator_name"));
-        Timestamp invTs = rs.getTimestamp("investigation_date");
-        // investigation_date not a field with getter/setter directly, skip
-        inv.setOpinion(rs.getString("opinion"));
-        inv.setDamageCode(rs.getString("damage_code"));
-        int injuryGradeInt = rs.getInt("injury_grade");
-        if (injuryGradeInt > 0) inv.setInjuryGrade(InjuryGrade.fromGrade(injuryGradeInt));
-        inv.setOurFault(rs.getInt("our_fault"));
-        inv.setOtherFault(rs.getInt("other_fault"));
-        inv.setLiability(rs.getString("liability"));
-        inv.setExpectedRepairCost(new Money(rs.getLong("expected_repair_cost"), "KRW"));
-        inv.setCompensationLimit(new Money(rs.getLong("compensation_limit"), "KRW"));
-        inv.setFinalOpinion(rs.getString("final_opinion"));
+    private static DamageInvestigationVO mapRow(ResultSet rs) throws SQLException {
         Timestamp savedTs = rs.getTimestamp("saved_at");
-        if (savedTs != null) inv.setSavedAt(new java.util.Date(savedTs.getTime()));
-
-        inv.setClaimId(rs.getString("claim_id"));
-        return inv;
+        return new DamageInvestigationVO(
+            rs.getString("investigation_id"),
+            rs.getString("accident_id"),
+            rs.getString("claim_id"),
+            rs.getString("investigator_name"),
+            rs.getString("opinion"),
+            rs.getString("damage_code"),
+            rs.getInt("injury_grade"),
+            rs.getInt("our_fault"),
+            rs.getInt("other_fault"),
+            rs.getString("liability"),
+            rs.getLong("expected_repair_cost"),
+            rs.getLong("compensation_limit"),
+            rs.getString("final_opinion"),
+            savedTs != null ? new java.util.Date(savedTs.getTime()) : null
+        );
     }
 
     public void save(DamageInvestigation inv) {
-        // Generate investigation_id from accident_id if missing
         String invId = inv.getInvestigationId();
         if (invId == null || invId.isEmpty()) {
             invId = "INV-" + inv.getAccidentId();
             inv.setInvestigationId(invId);
         }
-        String claimId = inv.getClaimId();
 
         db.execute(
             "INSERT INTO damage_investigations" +
@@ -65,23 +60,23 @@ public class DamageInvestigationDao {
             " final_opinion=VALUES(final_opinion), saved_at=VALUES(saved_at)",
             invId,
             inv.getAccidentId(),
-            claimId,
+            inv.getClaimId(),
             inv.getInvestigatorName(),
             inv.getSavedAt() != null ? new Timestamp(inv.getSavedAt().getTime()) : null,
             inv.getOpinion(),
             inv.getDamageCode(),
-            inv.getInjuryGrade() != null ? inv.getInjuryGrade().getGrade() : 0,
+            inv.getInjuryGrade()         != null ? inv.getInjuryGrade().getGrade()           : 0,
             inv.getOurFault(),
             inv.getOtherFault(),
             inv.getLiability(),
-            inv.getExpectedRepairCost() != null ? inv.getExpectedRepairCost().getAmount() : 0L,
-            inv.getCompensationLimit() != null ? inv.getCompensationLimit().getAmount() : 0L,
+            inv.getExpectedRepairCost()  != null ? inv.getExpectedRepairCost().getAmount()   : 0L,
+            inv.getCompensationLimit()   != null ? inv.getCompensationLimit().getAmount()    : 0L,
             inv.getFinalOpinion(),
             inv.getSavedAt() != null ? new Timestamp(inv.getSavedAt().getTime()) : null
         );
     }
 
-    public DamageInvestigation findByAccidentId(String accidentId) {
+    public DamageInvestigationVO findByAccidentId(String accidentId) {
         return db.queryForObject(
             "SELECT * FROM damage_investigations WHERE accident_id = ? LIMIT 1",
             EXTRACTOR, accidentId);

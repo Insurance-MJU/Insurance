@@ -2,64 +2,60 @@ package infra.dao;
 
 import domain.Accident;
 import domain.AccidentStatus;
-import domain.common.Money;
 import infra.persistence.Database;
 import infra.persistence.ResultSetExtractor;
-
-import domain.AccidentList;
+import infra.vo.AccidentVO;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 
 public class AccidentDao {
     private final Database db;
 
     public AccidentDao(Database db) { this.db = db; }
 
-    private static final ResultSetExtractor<Accident> EXTRACTOR = rs -> mapRow(rs);
+    private static final ResultSetExtractor<AccidentVO> EXTRACTOR = rs -> mapRow(rs);
 
-    private static Accident mapRow(ResultSet rs) throws SQLException {
-        Accident a = new Accident();
-        a.setAccidentId(rs.getString("accident_id"));
-        a.setUserId(rs.getString("user_id"));
+    private static AccidentVO mapRow(ResultSet rs) throws SQLException {
         Timestamp ts = rs.getTimestamp("accident_date");
-        if (ts != null) a.setAccidentDate(new java.util.Date(ts.getTime()));
-        a.setReportedBy(rs.getString("reported_by"));
-        a.setPhone(rs.getString("phone"));
-        a.setDescription(rs.getString("description"));
-        a.setAccidentLocation(rs.getString("accident_location"));
-        a.setAccidentDetail(rs.getString("accident_detail"));
-        a.setDocuments(rs.getString("documents"));
-        a.setContractId(rs.getString("contract_id"));
-        a.setCoverageDescription(rs.getString("coverage_description"));
-        a.setCoverageLimit(new Money(rs.getLong("coverage_limit"), "KRW"));
-        a.setPersonalInjuryLimit(new Money(rs.getLong("personal_injury_limit"), "KRW"));
-        a.setVehicleInfo(rs.getString("vehicle_info"));
-        a.setExpectedRepairCost(new Money(rs.getLong("expected_repair_cost"), "KRW"));
-        a.setRegionCode(rs.getString("region_code"));
-        String statusStr = rs.getString("status");
-        if (statusStr != null) a.setStatus(AccidentStatus.valueOf(statusStr));
-        return a;
+        return new AccidentVO(
+            rs.getString("accident_id"),
+            rs.getString("user_id"),
+            ts != null ? new java.util.Date(ts.getTime()) : null,
+            rs.getString("reported_by"),
+            rs.getString("phone"),
+            rs.getString("description"),
+            rs.getString("accident_location"),
+            rs.getString("accident_detail"),
+            rs.getString("documents"),
+            rs.getString("contract_id"),
+            rs.getString("coverage_description"),
+            rs.getLong("coverage_limit"),
+            rs.getLong("personal_injury_limit"),
+            rs.getString("vehicle_info"),
+            rs.getLong("expected_repair_cost"),
+            rs.getString("region_code"),
+            rs.getString("status")
+        );
     }
 
-    public AccidentList findByDateAndStatus(String date, String status) {
+    public List<AccidentVO> findByDateAndStatus(String date, String status) {
         if (status == null || status.isEmpty()) {
-            return new AccidentList(db.queryForList(
+            return db.queryForList(
                 "SELECT * FROM accidents WHERE DATE(accident_date) LIKE ?",
-                EXTRACTOR, date + "%"));
+                EXTRACTOR, date + "%");
         }
-        // status parameter is the label - find by enum name matching label
-        // Try to match by enum name first
         String enumName = resolveStatusEnumName(status);
         if (enumName != null) {
-            return new AccidentList(db.queryForList(
+            return db.queryForList(
                 "SELECT * FROM accidents WHERE DATE_FORMAT(accident_date,'%Y-%m-%d') LIKE ? AND status = ?",
-                EXTRACTOR, date + "%", enumName));
+                EXTRACTOR, date + "%", enumName);
         }
-        return new AccidentList(db.queryForList(
+        return db.queryForList(
             "SELECT * FROM accidents WHERE DATE_FORMAT(accident_date,'%Y-%m-%d') LIKE ?",
-            EXTRACTOR, date + "%"));
+            EXTRACTOR, date + "%");
     }
 
     private String resolveStatusEnumName(String label) {
@@ -69,34 +65,34 @@ public class AccidentDao {
         return null;
     }
 
-    public AccidentList findPendingAccidents() {
-        return new AccidentList(db.queryForList(
+    public List<AccidentVO> findPendingAccidents() {
+        return db.queryForList(
             "SELECT * FROM accidents WHERE status = ?",
-            EXTRACTOR, AccidentStatus.PENDING.name()));
+            EXTRACTOR, AccidentStatus.PENDING.name());
     }
 
-    public Accident findById(String accidentId) {
+    public AccidentVO findById(String accidentId) {
         return db.queryForObject(
             "SELECT * FROM accidents WHERE accident_id = ?",
             EXTRACTOR, accidentId);
     }
 
-    public Accident findByCustomerName(String name) {
+    public AccidentVO findByCustomerName(String name) {
         return db.queryForObject(
             "SELECT * FROM accidents WHERE reported_by = ? LIMIT 1",
             EXTRACTOR, name);
     }
 
-    public AccidentList findByReportedBy(String reportedBy) {
-        return new AccidentList(db.queryForList(
+    public List<AccidentVO> findByReportedBy(String reportedBy) {
+        return db.queryForList(
             "SELECT * FROM accidents WHERE reported_by = ? ORDER BY accident_date DESC",
-            EXTRACTOR, reportedBy));
+            EXTRACTOR, reportedBy);
     }
 
-    public AccidentList findByUserId(String userId) {
-        return new AccidentList(db.queryForList(
+    public List<AccidentVO> findByUserId(String userId) {
+        return db.queryForList(
             "SELECT * FROM accidents WHERE user_id = ? ORDER BY accident_date DESC",
-            EXTRACTOR, userId));
+            EXTRACTOR, userId);
     }
 
     public void save(Accident a) {
@@ -124,10 +120,10 @@ public class AccidentDao {
             a.getDocuments(),
             a.getContractId(),
             a.getCoverageDescription(),
-            a.getCoverageLimit() != null ? a.getCoverageLimit().getAmount() : 0L,
-            a.getPersonalInjuryLimit() != null ? a.getPersonalInjuryLimit().getAmount() : 0L,
+            a.getCoverageLimit()          != null ? a.getCoverageLimit().getAmount()          : 0L,
+            a.getPersonalInjuryLimit()    != null ? a.getPersonalInjuryLimit().getAmount()    : 0L,
             a.getVehicleInfo(),
-            a.getExpectedRepairCost() != null ? a.getExpectedRepairCost().getAmount() : 0L,
+            a.getExpectedRepairCost()     != null ? a.getExpectedRepairCost().getAmount()     : 0L,
             a.getRegionCode(),
             a.getStatus() != null ? a.getStatus().name() : null
         );

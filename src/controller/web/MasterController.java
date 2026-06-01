@@ -1,12 +1,13 @@
 package controller.web;
 
-import domain.Coverage;
-import domain.Rider;
 import infra.dao.BaseRateDao;
 import infra.dao.CoverageDao;
 import infra.dao.ExclusionDao;
 import infra.dao.ProvisionDao;
 import infra.dao.RiderDao;
+import infra.vo.CoverageVO;
+import infra.vo.CoverageLimitOptionVO;
+import infra.vo.RiderVO;
 import infra.web.Router;
 
 import java.util.LinkedHashMap;
@@ -89,29 +90,29 @@ public class MasterController {
                 (req, res) -> { coverageDao.delete(req.pathVariable("id")); res.noContent(); });
     }
 
-    private Map<String, Object> riderToMap(Rider r) {
+    private Map<String, Object> riderToMap(RiderVO r) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id",           r.getRiderCode());
-        m.put("riderCode",    r.getRiderCode());
-        m.put("name",         r.getRiderName());
-        m.put("riderName",    r.getRiderName());
-        m.put("description",  r.getDescription() != null ? r.getDescription() : "");
-        m.put("riderType",    r.getRiderType() != null ? r.getRiderType().name() : "DISCOUNT");
-        m.put("mandatory",    r.isMandatory());
-        m.put("discountRate", r.getDiscountRate() != null ? r.getDiscountRate() : 0.0);
+        m.put("id",           r.riderCode);
+        m.put("riderCode",    r.riderCode);
+        m.put("name",         r.riderName);
+        m.put("riderName",    r.riderName);
+        m.put("description",  r.description != null ? r.description : "");
+        m.put("riderType",    r.riderType != null ? r.riderType : "DISCOUNT");
+        m.put("mandatory",    r.mandatory);
+        m.put("discountRate", r.discountRate);
         m.put("exclusions",   List.of());
         m.put("provisionId",  null);
         return m;
     }
 
-    private Map<String, Object> coverageToMap(Coverage c) {
+    private Map<String, Object> coverageToMap(CoverageVO c) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id",               c.getCoverageId());
-        m.put("coverageId",       c.getCoverageId());
-        m.put("name",             c.getCoverageName());
-        m.put("coverageName",     c.getCoverageName());
-        m.put("coverageType",     c.getCoverageType() != null ? c.getCoverageType().name() : null);
-        m.put("mandatory",        c.isMandatory());
+        m.put("id",               c.coverageId);
+        m.put("coverageId",       c.coverageId);
+        m.put("name",             c.coverageName);
+        m.put("coverageName",     c.coverageName);
+        m.put("coverageType",     c.coverageType);
+        m.put("mandatory",        c.mandatory);
         m.put("description",      null);
         m.put("limitType",        null);
         m.put("limitAmount",      null);
@@ -125,10 +126,10 @@ public class MasterController {
         m.put("provisionId",      null);
         m.put("exclusions",       List.of());
         m.put("requiredCoverages", List.of());
-        m.put("limitOptions", c.getLimitOptions() != null
-            ? c.getLimitOptions().stream().map(o -> Map.of(
-                "id",         (Object) o.getOptionId(),
-                "optionName", o.getOptionName() != null ? o.getOptionName() : ""
+        m.put("limitOptions", c.limitOptions != null
+            ? c.limitOptions.stream().map(o -> Map.of(
+                "id",         (Object) o.optionId,
+                "optionName", o.optionName != null ? o.optionName : ""
               )).collect(Collectors.toList())
             : List.of());
         return m;
