@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY!;
 const customerKey = process.env.NEXT_PUBLIC_TOSS_CUSTOMER_KEY!;
 
-export function useTossPayment(amount: { currency: string; value: number }) {
+export function useTossPayment(amount: { currency: string; value: number }, enabled = true) {
     const [ready, setReady] = useState(false);
     const [widgets, setWidgets] = useState<TossPaymentsWidgets | null>(null);
     const paymentMethodWidgetRef = useRef<WidgetPaymentMethodWidget | null>(null);
@@ -18,7 +18,7 @@ export function useTossPayment(amount: { currency: string; value: number }) {
     }, []);
 
     useEffect(() => {
-        if (!widgets) return;
+        if (!widgets || !enabled) return;
         const w = widgets;
 
         async function render() {
@@ -43,7 +43,7 @@ export function useTossPayment(amount: { currency: string; value: number }) {
             paymentMethodWidgetRef.current?.destroy();
             agreementWidgetRef.current?.destroy();
         };
-    }, [widgets]);
+    }, [widgets, enabled]);
 
     useEffect(() => {
         if (!widgets) return;

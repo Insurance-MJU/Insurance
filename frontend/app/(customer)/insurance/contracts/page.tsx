@@ -56,15 +56,21 @@ export default function MyInsurancePage() {
                   </div>
                   <p className="text-xs text-gray-400">청약번호: {row.id}</p>
                   <p className="text-xs text-gray-400">청약일: {row.appliedAt}</p>
-                  <p className="text-xs text-gray-500 mt-1">보험료: {Number(row.premium ?? 0).toLocaleString()}원</p>
-                  {canPay && (
-                    <Link
-                      href={`/payments?subscriptionNo=${row.id}&amount=${row.premium}`}
-                      className="mt-3 inline-block px-4 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700"
-                    >
-                      초회보험료 납부
-                    </Link>
-                  )}
+                  <p className="text-xs text-gray-500 mt-1">월 보험료: {Number(row.premium ?? 0).toLocaleString()}원</p>
+                  {canPay && (() => {
+                    const initialPremium = Math.round(Number(row.premium ?? 0) * 0.1);
+                    return (
+                      <>
+                        <p className="text-xs text-gray-500">초회보험료: {initialPremium.toLocaleString()}원 (월 보험료의 10%)</p>
+                        <Link
+                          href={`/payments?subscriptionNo=${row.id}&amount=${initialPremium}`}
+                          className="mt-3 inline-block px-4 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700"
+                        >
+                          초회보험료 납부
+                        </Link>
+                      </>
+                    );
+                  })()}
                 </div>
               );
             })}

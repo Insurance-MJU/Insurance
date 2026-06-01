@@ -15,7 +15,7 @@ export default function PaymentWidget({ subscriptionNo, amount }: Props) {
     const [prepareError, setPrepareError] = useState("");
 
     const tossAmount = { currency: "KRW", value: amount };
-    const { ready, requestPayment } = useTossPayment(tossAmount);
+    const { ready, requestPayment } = useTossPayment(tossAmount, !preparing && !prepareError);
 
     useEffect(() => {
         if (!subscriptionNo || !amount) { setPreparing(false); return; }
