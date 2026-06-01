@@ -23,5 +23,7 @@ export const CONTRACT_STATUS_META: Record<string, { label: string; color: string
   ACTIVE:    { label: '유지',    color: 'bg-green-100 text-green-700'   },
   LAPSED:    { label: '실효',    color: 'bg-red-100 text-red-600'       },
   CANCELLED: { label: '거절/해지', color: 'bg-gray-100 text-gray-600'  },
-  MATURED:   { label: '만기',    color: 'bg-blue-100 text-blue-600'     },
+  MATURED:        { label: '만기',    color: 'bg-blue-100 text-blue-600'     },
+  EXPIRED:        { label: '만기',    color: 'bg-gray-100 text-gray-500'     },
+  PENDING_PAYMENT:{ label: '납부 대기', color: 'bg-yellow-100 text-yellow-700' },
 };
