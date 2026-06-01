@@ -9,6 +9,7 @@ export interface ContractRow {
   premium: number;
   appliedAt: string;
   status: string;
+  contractStatus?: string;
 }
 
 // ─── 상태 메타 ───────────────────────────────────────────────────────

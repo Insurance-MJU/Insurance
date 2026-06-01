@@ -3,14 +3,15 @@ import type { ContractRow } from '@/types/contract';
 
 function mapSubscription(s: any): ContractRow {
   return {
-    id:          s.subscriptionNo ?? s.id,
-    proposalId:  s.subscriptionNo,
-    policyNo:    s.contractId ?? '',
-    insuredName: s.applicantName ?? s.insuredName ?? '',
-    productName: s.productName ?? '',
-    premium:     s.premium ?? 0,
-    appliedAt:   s.subscriptionDate ?? s.appliedAt ?? '',
-    status:      s.status ?? '',
+    id:             s.subscriptionNo ?? s.id,
+    proposalId:     s.subscriptionNo,
+    policyNo:       s.contractId ?? '',
+    insuredName:    s.applicantName ?? s.insuredName ?? '',
+    productName:    s.productName ?? '',
+    premium:        s.premium ?? 0,
+    appliedAt:      s.subscriptionDate ?? s.appliedAt ?? '',
+    status:         s.status ?? '',
+    contractStatus: s.contractStatus ?? undefined,
   };
 }
 

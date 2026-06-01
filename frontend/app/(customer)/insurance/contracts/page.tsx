@@ -45,7 +45,7 @@ export default function MyInsurancePage() {
           <p className="text-sm text-gray-400">청약 내역이 없습니다.</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {subs.map(row => {
+            {subs.filter(row => row.contractStatus !== 'ACTIVE').map(row => {
               const badge = SUB_STATUS[row.status] ?? { label: row.status, color: 'bg-gray-100 text-gray-600' };
               const canPay = row.status === 'APPROVED' && row.policyNo;
               return (

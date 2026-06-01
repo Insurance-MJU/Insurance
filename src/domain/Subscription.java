@@ -71,6 +71,10 @@ public class Subscription implements Serializable {
         this.status = SubscriptionStatus.APPROVED;
     }
 
+    public void contract() {
+        this.status = SubscriptionStatus.CONTRACTED;
+    }
+
     public void reject(String reason) {
         this.status = SubscriptionStatus.REJECTED;
         this.rejectReason = reason;

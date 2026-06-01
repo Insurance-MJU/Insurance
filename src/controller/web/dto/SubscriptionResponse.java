@@ -11,7 +11,8 @@ public record SubscriptionResponse(
         long premium,
         String status,
         String subscriptionDate,
-        String contractId
+        String contractId,
+        String contractStatus
 ) {
     public static SubscriptionResponse from(Subscription s) {
         return new SubscriptionResponse(
@@ -23,11 +24,12 @@ public record SubscriptionResponse(
                 s.getPremium() != null ? s.getPremium().getAmount() : 0,
                 s.getStatus() != null ? s.getStatus().name() : null,
                 s.getSubscriptionDateDisplay(),
+                null,
                 null
         );
     }
 
-    public static SubscriptionResponse from(Subscription s, String contractId) {
+    public static SubscriptionResponse from(Subscription s, String contractId, String contractStatus) {
         return new SubscriptionResponse(
                 s.getSubscriptionNo(),
                 s.getApplicantName(),
@@ -37,7 +39,8 @@ public record SubscriptionResponse(
                 s.getPremium() != null ? s.getPremium().getAmount() : 0,
                 s.getStatus() != null ? s.getStatus().name() : null,
                 s.getSubscriptionDateDisplay(),
-                contractId
+                contractId,
+                contractStatus
         );
     }
 }

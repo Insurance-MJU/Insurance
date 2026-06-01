@@ -64,10 +64,12 @@ public class SubscriptionController {
                     ? subscriptionList.findByUserId(userId)
                     : subscriptionList.findAll();
         return list.getAll().stream()
+                .filter(s -> s.getStatus() != SubscriptionStatus.CONTRACTED)
                 .map(s -> {
                     Contract contract = contractList.findBySubscriptionNo(s.getSubscriptionNo());
                     return contract != null
-                            ? SubscriptionResponse.from(s, contract.getContractId())
+                            ? SubscriptionResponse.from(s, contract.getContractId(),
+                                    contract.getStatus() != null ? contract.getStatus().name() : null)
                             : SubscriptionResponse.from(s);
                 })
                 .collect(Collectors.toList());
@@ -123,7 +125,7 @@ public class SubscriptionController {
         contract.setSubscriptionNo(s.getSubscriptionNo());
         contractList.save(contract);
 
-        return SubscriptionResponse.from(s, contractId);
+        return SubscriptionResponse.from(s, contractId, contract.getStatus() != null ? contract.getStatus().name() : null);
     }
 
     private SubscriptionResponse reject(String no, String reason) {
