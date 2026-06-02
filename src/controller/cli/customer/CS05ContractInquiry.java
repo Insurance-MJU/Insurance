@@ -2,27 +2,26 @@ package controller.cli.customer;
 
 import domain.Contract;
 import domain.ContractList;
+import domain.IdentityVerifier;
+import domain.OtpSession;
+import domain.OtpVerifyResult;
 import domain.Subscription;
 import domain.SubscriptionList;
+import domain.VerifiedUser;
 import controller.cli.Context;
-import infra.external.verification.VerificationService;
-import infra.external.verification.dto.OtpSendRequest;
-import infra.external.verification.dto.OtpVerifyRequest;
-import infra.external.verification.dto.OtpVerifyResponse;
-import infra.external.verification.dto.VerifiedIdentity;
 import java.util.Scanner;
 
 public class CS05ContractInquiry {
     private final Scanner sc = Context.getInstance().scanner();
     private final SubscriptionList subscriptionList;
     private final ContractList contractList;
-    private final VerificationService verificationService;
+    private final IdentityVerifier identityVerifier;
 
     public CS05ContractInquiry(SubscriptionList subscriptionList, ContractList contractList,
-                               VerificationService verificationService) {
+                               IdentityVerifier identityVerifier) {
         this.subscriptionList = subscriptionList;
         this.contractList = contractList;
-        this.verificationService = verificationService;
+        this.identityVerifier = identityVerifier;
     }
 
     public void run() {
@@ -34,17 +33,17 @@ public class CS05ContractInquiry {
         System.out.print(" 이름: ");         String name  = sc.nextLine().trim();
         System.out.print(" 주민번호: ");      String ssn   = sc.nextLine().trim();
         System.out.print(" 휴대전화번호: ");  String phone = sc.nextLine().trim();
-        var sendResp = verificationService.sendOtp(new OtpSendRequest(name, ssn, phone, "1"));
+
+        OtpSession session = identityVerifier.sendOtp(name, ssn, phone, "1");
         System.out.print(" 인증번호: ");
-        OtpVerifyResponse verifyResp = verificationService.verifyOtp(
-            new OtpVerifyRequest(sendResp.sessionId(), sc.nextLine().trim()));
-        if (!verifyResp.success()) {
-            System.out.println("[오류] 본인 인증 실패: " + verifyResp.errorMessage());
+        OtpVerifyResult verifyResult = identityVerifier.verifyOtp(session, sc.nextLine().trim());
+        if (!verifyResult.isSuccess()) {
+            System.out.println("[오류] 본인 인증 실패: " + verifyResult.getErrorMessage());
             System.out.print("\nEnter를 누르면 메인 메뉴로 돌아갑니다...");
             sc.nextLine(); System.out.println(); return;
         }
-        VerifiedIdentity identity = verificationService.resolveIdentity(verifyResp.verificationToken());
-        runFlow(identity.name());
+        VerifiedUser user = identityVerifier.resolveIdentity(verifyResult.getVerificationToken());
+        runFlow(user.getName());
         System.out.print("\nEnter를 누르면 메인 메뉴로 돌아갑니다...");
         sc.nextLine();
         System.out.println();

@@ -3,11 +3,6 @@ package controller.cli.customer;
 import domain.*;
 import domain.common.Money;
 import controller.cli.Context;
-import infra.external.vehicle.VehicleInquiryService;
-import infra.external.vehicle.dto.VehicleInquiryRequest;
-import infra.external.vehicle.dto.VehicleInquiryResponse;
-import infra.external.verification.VerificationService;
-import infra.external.verification.dto.*;
 import java.util.Scanner;
 
 public class CS01ProductSubscription {
@@ -16,17 +11,17 @@ public class CS01ProductSubscription {
     private final ProductList productList;
     private final SubscriptionList subscriptionList;
     private final RiderList riderList;
-    private final VehicleInquiryService vehicleService;
-    private final VerificationService verificationService;
+    private final CarList carList;
+    private final IdentityVerifier identityVerifier;
 
     public CS01ProductSubscription(ProductList productList, SubscriptionList subscriptionList,
-                                   RiderList riderList, VehicleInquiryService vehicleService,
-                                   VerificationService verificationService) {
+                                   RiderList riderList, CarList carList,
+                                   IdentityVerifier identityVerifier) {
         this.productList = productList;
         this.subscriptionList = subscriptionList;
         this.riderList = riderList;
-        this.vehicleService = vehicleService;
-        this.verificationService = verificationService;
+        this.carList = carList;
+        this.identityVerifier = identityVerifier;
     }
 
     public void run() {
@@ -53,19 +48,19 @@ public class CS01ProductSubscription {
         System.out.print(" 휴대전화번호: ");
         String phone = sc.nextLine().trim();
 
-        var sendResp = verificationService.sendOtp(new OtpSendRequest(name, ssn, phone, method));
+        OtpSession session = identityVerifier.sendOtp(name, ssn, phone, method);
         System.out.print(" 인증번호 입력: ");
         String otp = sc.nextLine().trim();
-        OtpVerifyResponse verifyResp = verificationService.verifyOtp(new OtpVerifyRequest(sendResp.sessionId(), otp));
-        if (!verifyResp.success()) {
-            System.out.println("[오류] 본인 인증 실패: " + verifyResp.errorMessage());
+        OtpVerifyResult verifyResult = identityVerifier.verifyOtp(session, otp);
+        if (!verifyResult.isSuccess()) {
+            System.out.println("[오류] 본인 인증 실패: " + verifyResult.getErrorMessage());
             returnToMenu();
             return;
         }
-        VerifiedIdentity identity = verificationService.resolveIdentity(verifyResp.verificationToken());
-        name  = identity.name();
-        ssn   = identity.ssn();
-        phone = identity.phone();
+        VerifiedUser user = identityVerifier.resolveIdentity(verifyResult.getVerificationToken());
+        name  = user.getName();
+        ssn   = user.getSsn();
+        phone = user.getPhone();
 
         // E1: 나이 조건 검사 (PERSONAL → 만 20~39세)
         if (selectedProduct.getTarget() == Target.PERSONAL) {
@@ -89,13 +84,13 @@ public class CS01ProductSubscription {
 
         // ── Step 3-5: 차량 조회 ──────────────────────────────
         System.out.println("\n[차량 정보 조회]");
-        VehicleInquiryResponse vehicleInfo = null;
+        VehicleInfo vehicleInfo = null;
         String carNo = null;
-        while (vehicleInfo == null || !vehicleInfo.isSuccess()) {
+        while (vehicleInfo == null || !vehicleInfo.isFound()) {
             System.out.print(" 차량번호를 입력하세요: ");
             carNo = sc.nextLine().trim();
-            vehicleInfo = vehicleService.inquire(new VehicleInquiryRequest(carNo));
-            if (!vehicleInfo.isSuccess()) {
+            vehicleInfo = carList.findByCarNumber(carNo);
+            if (!vehicleInfo.isFound()) {
                 System.out.println("[경고] 입력하신 차량번호로 차량 정보를 조회할 수 없습니다. 차량번호를 확인해 주세요.");
                 System.out.print(" 다시 입력하시겠습니까? (Y/N): ");
                 if (!sc.nextLine().trim().equalsIgnoreCase("Y")) { returnToMenu(); return; }
@@ -109,18 +104,18 @@ public class CS01ProductSubscription {
         car.setDriverScope(driverScope);
 
         String safetyDevices = (vehicleInfo.hasABS() ? "ABS" : "") + (vehicleInfo.hasBlackbox() ? ", 블랙박스" : "");
-        long stdValue = vehicleInfo.standardValue();
+        long stdValue = vehicleInfo.getStandardValue();
 
         System.out.println("\n[조회된 차량 정보]");
-        System.out.printf(" 차량번호    : %s%n",     vehicleInfo.carNumber());
-        System.out.printf(" 제조사      : %s%n",     vehicleInfo.manufacturer());
-        System.out.printf(" 모델명      : %s%n",     vehicleInfo.modelName());
-        System.out.printf(" 차종        : %s%n",     vehicleInfo.modelType());
-        System.out.printf(" 연료        : %s%n",     vehicleInfo.fuelType());
-        System.out.printf(" 배기량      : %,dcc%n",  vehicleInfo.engineCC());
-        System.out.printf(" 연식        : %d년%n",   vehicleInfo.modelYear());
+        System.out.printf(" 차량번호    : %s%n", vehicleInfo.getCarNumber());
+        System.out.printf(" 제조사      : %s%n", vehicleInfo.getManufacturer());
+        System.out.printf(" 모델명      : %s%n", vehicleInfo.getModelName());
+        System.out.printf(" 차종        : %s%n", vehicleInfo.getModelType());
+        System.out.printf(" 연료        : %s%n", vehicleInfo.getFuelType());
+        System.out.printf(" 배기량      : %,dcc%n", vehicleInfo.getEngineCC());
+        System.out.printf(" 연식        : %d년%n",   vehicleInfo.getModelYear());
         System.out.printf(" 차량기준가액 : %,d원%n", stdValue);
-        System.out.printf(" 안전장치    : %s%n",     safetyDevices);
+        System.out.printf(" 안전장치    : %s%n", safetyDevices);
 
         System.out.print("\n차량 정보를 확인했습니다. 계속 진행하시겠습니까? (Y/N): ");
         if (!sc.nextLine().trim().equalsIgnoreCase("Y")) {
@@ -166,14 +161,13 @@ public class CS01ProductSubscription {
         }
 
         // ── Step 8: <<include>> CS-03 예상보험료 산출 ─────────
-        long confirmedPremium = new CS03PremiumEstimate(productList, riderList, vehicleService).runAsInclude(selectedProduct, stdValue, purpose);
+        long confirmedPremium = new CS03PremiumEstimate(productList, riderList, carList).runAsInclude(selectedProduct, stdValue, purpose);
         if (confirmedPremium < 0) {
             returnToMenu();
             return;
         }
 
         // E2: 자동심사 (영업용 거절, 연령 제한 위반 거절)
-        // calcAge가 -1을 반환하면 SSN 파싱 실패이므로 연령 제한은 통과(E1에서 이미 검사)
         int driverAge = Party.calcAge(ssn);
         boolean ageAllowed = (driverAge == -1) || car.isDriverAllowed(driverAge);
         if (!ageAllowed || purpose == CarPurpose.COMMERCIAL) {
@@ -189,12 +183,12 @@ public class CS01ProductSubscription {
         Subscription subscription = Subscription.register(
             subscriptionList.nextSubscriptionNo(),
             name, ssn,
-            "",                                  // 주소 (CS01에서 미수집)
-            car.getCarNumber(), "",              // 차대번호 (CS01에서 미수집)
+            "",
+            car.getCarNumber(), "",
             selectedProduct.getProductName(),
             new Money(confirmedPremium, "KRW"),
             new Money(confirmedPremium, "KRW"),
-            today, "",                           // 직업 (CS01에서 미수집)
+            today, "",
             driverAge < 0 ? 20 : driverAge,
             coveragesDesc
         );

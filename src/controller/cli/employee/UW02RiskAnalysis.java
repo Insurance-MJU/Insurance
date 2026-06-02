@@ -1,9 +1,7 @@
 package controller.cli.employee;
 
 import domain.CreditInfo;
-import infra.external.credit.CreditInquiryService;
-import infra.external.credit.dto.CreditInquiryRequest;
-import infra.external.credit.dto.CreditInquiryResponse;
+import domain.CreditList;
 import domain.RiskAnalysisReport;
 import domain.RiskAnalysisReportList;
 import domain.Subscription;
@@ -18,11 +16,11 @@ public class UW02RiskAnalysis {
     private final Scanner sc = Context.getInstance().scanner();
     private static final NumberFormat NF = NumberFormat.getInstance(Locale.KOREA);
     private final RiskAnalysisReportList riskReportList;
-    private final CreditInquiryService creditService;
+    private final CreditList creditList;
 
-    public UW02RiskAnalysis(RiskAnalysisReportList riskReportList, CreditInquiryService creditService) {
+    public UW02RiskAnalysis(RiskAnalysisReportList riskReportList, CreditList creditList) {
         this.riskReportList = riskReportList;
-        this.creditService = creditService;
+        this.creditList = creditList;
     }
 
     public void run() {
@@ -73,8 +71,7 @@ public class UW02RiskAnalysis {
         System.out.println("[조회]");
 
         // Step 3: 신용정보원 조회 결과
-        CreditInquiryResponse resp = creditService.inquire(new CreditInquiryRequest(sub.getSsn(), sub.getCarNumber()));
-        CreditInfo creditInfo = toCreditInfo(resp);
+        CreditInfo creditInfo = creditList.findByApplicant(sub.getSsn(), sub.getCarNumber());
 
         // A1: 신규 가입자 데이터 없음
         if (creditInfo == null) {
@@ -108,7 +105,6 @@ public class UW02RiskAnalysis {
         sc.nextLine();
         System.out.println("[위험등급 산출]");
 
-        // 도메인이 직접 분석 수행
         RiskAnalysisReport report =
             RiskAnalysisReport.analyze(sub.getSubscriptionNo(), sub.getBasePremium(), creditInfo);
         riskReportList.save(report);
@@ -149,31 +145,10 @@ public class UW02RiskAnalysis {
         System.out.println("------------------------------------------------------------");
     }
 
-    /** CreditInquiryResponse(infra DTO) → CreditInfo(domain 객체) 변환 */
-    private CreditInfo toCreditInfo(CreditInquiryResponse r) {
-        if (r == null) return null;
-        CreditInfo info = new CreditInfo();
-        info.setApplicantName(r.applicantName());
-        info.setCreditGrade(r.creditGrade());
-        info.setDrivingExperienceYears(r.drivingExperienceYears());
-        info.setFraudHistory(r.fraudHistory());
-        if (r.accidentHistory() != null) {
-            info.setAccidentHistory(r.accidentHistory().stream()
-                .map(a -> new CreditInfo.AccidentRecord(
-                    a.date(), a.description(),
-                    new domain.common.Money(a.amountKrw(), "KRW")))
-                .collect(java.util.stream.Collectors.toList()));
-        }
-        return info;
-    }
-
     private void confirmResult() {
-        // Step 8: 분석 결과 확정
         System.out.print("\n[분석 결과 확정] 버튼을 누르려면 Enter를 입력하세요...");
         sc.nextLine();
         System.out.println("[분석 결과 확정]");
-
-        // Step 9: 완료
         System.out.println("\n위험 분석 데이터가 성공적으로 반영되었습니다.");
         System.out.println("  → UW-01: 계약인수를 심사한다. Basic Flow 6번으로 이동합니다.");
     }

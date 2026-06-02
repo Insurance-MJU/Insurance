@@ -2,18 +2,17 @@ package controller.cli.employee;
 
 import domain.*;
 import controller.cli.Context;
-import infra.external.kidi.KidiService;
 import common.util.DocumentUploadHelper;
 import java.util.*;
 
 public class CT05RateVerification {
     private final Scanner sc = Context.getInstance().scanner();
-    private final KidiService kidiService;
     private final ProductList productList;
+    private final ProductApprovalGateway approvalGateway;
 
-    public CT05RateVerification(ProductList productList, KidiService kidiService) {
+    public CT05RateVerification(ProductList productList, ProductApprovalGateway approvalGateway) {
         this.productList = productList;
-        this.kidiService = kidiService;
+        this.approvalGateway = approvalGateway;
     }
 
     private static final String[] REQUIRED_DOCS = {"요율 산출 근거서", "담보별 기준 순보험료 산출표"};
@@ -67,7 +66,7 @@ public class CT05RateVerification {
         sc.nextLine();
 
         // E1: 보험개발원 시스템 연결 실패 (mock - 항상 성공)
-        if (!kidiService.submitRateVerification(product.getProductId())) {
+        if (!approvalGateway.submitRateVerification(product.getProductId())) {
             System.out.println("[오류] 보험개발원 시스템 연결에 실패하였습니다. 잠시 후 다시 시도해 주세요.");
             return false;
         }

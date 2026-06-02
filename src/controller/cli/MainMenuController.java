@@ -1,11 +1,16 @@
 package controller.cli;
 
 import domain.AccidentList;
+import domain.BankGateway;
+import domain.CarList;
 import domain.ClaimList;
 import domain.ContractList;
 import domain.CoverageList;
+import domain.CreditList;
 import domain.DamageInvestigationList;
 import domain.FieldInvestigatorList;
+import domain.IdentityVerifier;
+import domain.ProductApprovalGateway;
 import domain.ProductList;
 import domain.RiderList;
 import domain.RiskAnalysisReportList;
@@ -14,12 +19,6 @@ import domain.common.UserRole;
 import common.exception.domain.ValidationException;
 import controller.cli.customer.*;
 import controller.cli.employee.*;
-import infra.external.bank.BankService;
-import infra.external.credit.CreditInquiryService;
-import infra.external.fss.FssService;
-import infra.external.kidi.KidiService;
-import infra.external.vehicle.VehicleInquiryService;
-import infra.external.verification.VerificationService;
 import java.util.Scanner;
 
 public class MainMenuController {
@@ -35,12 +34,11 @@ public class MainMenuController {
     private final RiskAnalysisReportList riskReportList;
     private final DamageInvestigationList damageInvestigationList;
     private final CoverageList coverageList;
-    private final VehicleInquiryService vehicleService;
-    private final VerificationService verificationService;
-    private final BankService bankService;
-    private final CreditInquiryService creditService;
-    private final FssService fssService;
-    private final KidiService kidiService;
+    private final CarList carList;
+    private final IdentityVerifier identityVerifier;
+    private final BankGateway bankGateway;
+    private final CreditList creditList;
+    private final ProductApprovalGateway approvalGateway;
 
     public MainMenuController(
         ProductList productList,
@@ -53,12 +51,11 @@ public class MainMenuController {
         RiskAnalysisReportList riskReportList,
         DamageInvestigationList damageInvestigationList,
         CoverageList coverageList,
-        VehicleInquiryService vehicleService,
-        VerificationService verificationService,
-        BankService bankService,
-        CreditInquiryService creditService,
-        FssService fssService,
-        KidiService kidiService
+        CarList carList,
+        IdentityVerifier identityVerifier,
+        BankGateway bankGateway,
+        CreditList creditList,
+        ProductApprovalGateway approvalGateway
     ) {
         this.productList = productList;
         this.subscriptionList = subscriptionList;
@@ -70,12 +67,11 @@ public class MainMenuController {
         this.riskReportList = riskReportList;
         this.damageInvestigationList = damageInvestigationList;
         this.coverageList = coverageList;
-        this.vehicleService = vehicleService;
-        this.verificationService = verificationService;
-        this.bankService = bankService;
-        this.creditService = creditService;
-        this.fssService = fssService;
-        this.kidiService = kidiService;
+        this.carList = carList;
+        this.identityVerifier = identityVerifier;
+        this.bankGateway = bankGateway;
+        this.creditList = creditList;
+        this.approvalGateway = approvalGateway;
     }
 
     public void run() {
@@ -140,27 +136,27 @@ public class MainMenuController {
 
         if (role == UserRole.CUSTOMER) {
             switch (input) {
-                case "1": new CS01ProductSubscription(productList, subscriptionList, riderList, vehicleService, verificationService).run(); break;
-                case "2": new CS02ProductInquiry(productList, riderList).run();                                    break;
-                case "3": new CS03PremiumEstimate(productList, riderList, vehicleService).run();                   break;
-                case "4": new CS04ClaimRequest(accidentList, contractList, subscriptionList, verificationService).run(); break;
-                case "5": new CS05ContractInquiry(subscriptionList, contractList, verificationService).run();            break;
+                case "1": new CS01ProductSubscription(productList, subscriptionList, riderList, carList, identityVerifier).run(); break;
+                case "2": new CS02ProductInquiry(productList, riderList).run();                                                    break;
+                case "3": new CS03PremiumEstimate(productList, riderList, carList).run();                                         break;
+                case "4": new CS04ClaimRequest(accidentList, contractList, subscriptionList, identityVerifier).run();             break;
+                case "5": new CS05ContractInquiry(subscriptionList, contractList, identityVerifier).run();                        break;
                 default:  invalid(); break;
             }
         } else {
             switch (input) {
-                case "1":  new CT01ProductDesign(riderList, productList, coverageList, kidiService).run();          break;
-                case "2":  new CT02PremiumCalculation(productList, kidiService).run();                             break;
-                case "3":  new CT03DocumentRegistration(productList).run();                                        break;
-                case "4":  new CT04ProductApproval(productList, fssService, kidiService).run();                    break;
-                case "5":  new CT05RateVerification(productList, kidiService).run();                               break;
-                case "6":  new CT06SaleConfirmation(productList, fssService).run();                                break;
-                case "7":  new UW01ContractReview(subscriptionList, contractList, riskReportList, creditService).run(); break;
-                case "8":  new UW02RiskAnalysis(riskReportList, creditService).run();                              break;
-                case "9":  new CL01AccidentRegistration(accidentList, claimList, fieldInvestigatorList).run();     break;
-                case "10": new CL02DamageAssessment(claimList, accidentList, contractList, damageInvestigationList, bankService).run(); break;
-                case "11": new CL03DamageInvestigation(accidentList, claimList, damageInvestigationList).run();    break;
-                case "12": new CL04InsurancePayment(claimList, accidentList, bankService).run();                   break;
+                case "1":  new CT01ProductDesign(riderList, productList, coverageList, approvalGateway).run();          break;
+                case "2":  new CT02PremiumCalculation(productList).run();                                               break;
+                case "3":  new CT03DocumentRegistration(productList).run();                                             break;
+                case "4":  new CT04ProductApproval(productList, approvalGateway).run();                                 break;
+                case "5":  new CT05RateVerification(productList, approvalGateway).run();                                break;
+                case "6":  new CT06SaleConfirmation(productList, approvalGateway).run();                                break;
+                case "7":  new UW01ContractReview(subscriptionList, contractList, riskReportList, creditList).run();    break;
+                case "8":  new UW02RiskAnalysis(riskReportList, creditList).run();                                      break;
+                case "9":  new CL01AccidentRegistration(accidentList, claimList, fieldInvestigatorList).run();          break;
+                case "10": new CL02DamageAssessment(claimList, accidentList, contractList, damageInvestigationList, bankGateway).run(); break;
+                case "11": new CL03DamageInvestigation(accidentList, claimList, damageInvestigationList).run();         break;
+                case "12": new CL04InsurancePayment(claimList, accidentList, bankGateway).run();                        break;
                 default:   invalid(); break;
             }
         }

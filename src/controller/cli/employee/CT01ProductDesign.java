@@ -2,7 +2,6 @@ package controller.cli.employee;
 
 import domain.*;
 import controller.cli.Context;
-import infra.external.kidi.KidiService;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -13,13 +12,14 @@ public class CT01ProductDesign {
     private final RiderList riderList;
     private final ProductList productList;
     private final CoverageList coverageList;
-    private final KidiService kidiService;
+    private final ProductApprovalGateway approvalGateway;
 
-    public CT01ProductDesign(RiderList riderList, ProductList productList, CoverageList coverageList, KidiService kidiService) {
+    public CT01ProductDesign(RiderList riderList, ProductList productList, CoverageList coverageList,
+                             ProductApprovalGateway approvalGateway) {
         this.riderList = riderList;
         this.productList = productList;
         this.coverageList = coverageList;
-        this.kidiService = kidiService;
+        this.approvalGateway = approvalGateway;
     }
 
     public void run() {
@@ -165,7 +165,7 @@ public class CT01ProductDesign {
 
         List<String> selectedCoverageNames = selectedOptions.keySet().stream()
                 .map(Coverage::getCoverageName).collect(Collectors.toList());
-        long[] premiumResult = new CT02PremiumCalculation(productList, kidiService).runAsInclude(productName, selectedCoverageNames, saleEnd);
+        long[] premiumResult = new CT02PremiumCalculation(productList).runAsInclude(productName, selectedCoverageNames, saleEnd);
         if (premiumResult == null) { returnToMenu(); return; }
 
         long finalPremium = premiumResult[0];

@@ -6,12 +6,11 @@ import domain.AccidentStatus;
 import domain.Claim;
 import domain.ClaimList;
 import domain.ClaimPayment;
+import domain.AccountVerification;
+import domain.BankGateway;
+import domain.TransferResult;
 import domain.common.Money;
 import controller.cli.Context;
-import infra.external.bank.BankService;
-import infra.external.bank.dto.AccountVerifyRequest;
-import infra.external.bank.dto.AccountVerifyResponse;
-import infra.external.bank.dto.TransferRequest;
 
 import java.util.Scanner;
 
@@ -19,12 +18,12 @@ public class CL04InsurancePayment {
     private final Scanner sc = Context.getInstance().scanner();
     private final ClaimList claimList;
     private final AccidentList accidentList;
-    private final BankService bankService;
+    private final BankGateway bankGateway;
 
-    public CL04InsurancePayment(ClaimList claimList, AccidentList accidentList, BankService bankService) {
+    public CL04InsurancePayment(ClaimList claimList, AccidentList accidentList, BankGateway bankGateway) {
         this.claimList = claimList;
         this.accidentList = accidentList;
-        this.bankService = bankService;
+        this.bankGateway = bankGateway;
     }
 
     public void run() {
@@ -96,16 +95,16 @@ public class CL04InsurancePayment {
                 continue;
             }
 
-            // Step 5: 예금주 실명 확인 (BankService)
-            AccountVerifyResponse vr = bankService.verifyAccount(new AccountVerifyRequest(bank, accountNo));
+            // Step 5: 예금주 실명 확인
+            AccountVerification vr = bankGateway.verifyAccount(bank, accountNo);
             System.out.println("\n[ 예금주 실명 일치 여부 결과 ]");
             System.out.println("------------------------------------------------------------");
             System.out.println("  은행   : " + bank);
             System.out.println("  계좌   : " + accountNo);
-            System.out.println("  예금주 : " + vr.accountHolder());
-            System.out.println("  결과   : " + (vr.verified() ? "검증 완료" : "검증 실패"));
+            System.out.println("  예금주 : " + vr.getAccountHolder());
+            System.out.println("  결과   : " + (vr.isVerified() ? "검증 완료" : "검증 실패"));
             System.out.println("------------------------------------------------------------");
-            if (!vr.verified()) {
+            if (!vr.isVerified()) {
                 System.out.println("[오류] 예금주 실명 확인에 실패하였습니다. 계좌 정보를 확인해 주세요.");
                 continue;
             }
@@ -133,12 +132,12 @@ public class CL04InsurancePayment {
             sc.nextLine();
             System.out.println("[최종 이체 승인]");
 
-            // Step 9: 이체 처리 (BankService)
+            // Step 9: 이체 처리
             System.out.println("\n[ 은행 API 연동 - 실시간 계좌 이체 처리 ]");
             System.out.print("  처리 중  [");
             for (int i = 0; i < 20; i++) System.out.print("█");
             System.out.println("]");
-            boolean transferred = bankService.transfer(new TransferRequest(bank, accountNo, payAmount)).success();
+            boolean transferred = bankGateway.transfer(bank, accountNo, payAmount).isSuccess();
             System.out.println("  결과     : " + (transferred ? "완료" : "실패"));
             if (!transferred) {
                 System.out.println("[오류] 이체 처리에 실패하였습니다. 잠시 후 다시 시도해 주세요.");

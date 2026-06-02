@@ -2,20 +2,17 @@ package controller.cli.employee;
 
 import domain.*;
 import controller.cli.Context;
-import infra.external.kidi.KidiService;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class CT02PremiumCalculation {
     private final Scanner sc = Context.getInstance().scanner();
-    private final KidiService kidiService;
     private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
     private final ProductList productList;
 
-    public CT02PremiumCalculation(ProductList productList, KidiService kidiService) {
+    public CT02PremiumCalculation(ProductList productList) {
         this.productList = productList;
-        this.kidiService = kidiService;
     }
 
     /** 표준 시장 기준 기본 보험료 (담보 구성 기반 계산 전까지 사용하는 가정치) */

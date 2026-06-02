@@ -2,9 +2,6 @@ package controller.cli.customer;
 
 import domain.*;
 import controller.cli.Context;
-import infra.external.vehicle.VehicleInquiryService;
-import infra.external.vehicle.dto.VehicleInquiryRequest;
-import infra.external.vehicle.dto.VehicleInquiryResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -13,12 +10,12 @@ public class CS03PremiumEstimate {
     private final Scanner sc = Context.getInstance().scanner();
     private final ProductList productList;
     private final RiderList riderList;
-    private final VehicleInquiryService vehicleService;
+    private final CarList carList;
 
-    public CS03PremiumEstimate(ProductList productList, RiderList riderList, VehicleInquiryService vehicleService) {
+    public CS03PremiumEstimate(ProductList productList, RiderList riderList, CarList carList) {
         this.productList = productList;
         this.riderList = riderList;
-        this.vehicleService = vehicleService;
+        this.carList = carList;
     }
 
     public void run() {
@@ -29,13 +26,13 @@ public class CS03PremiumEstimate {
         Product product = new CS02ProductInquiry(productList, riderList).run();
         if (product == null) { returnToMenu(); return; }
 
-        VehicleInquiryResponse vehicleInfo = null;
-        while (vehicleInfo == null || !vehicleInfo.isSuccess()) {
+        VehicleInfo vehicleInfo = null;
+        while (vehicleInfo == null || !vehicleInfo.isFound()) {
             System.out.println("\n[차량 정보 조회]");
             System.out.print(" 차량번호를 입력하세요: ");
             String carNo = sc.nextLine().trim();
-            vehicleInfo = vehicleService.inquire(new VehicleInquiryRequest(carNo));
-            if (!vehicleInfo.isSuccess()) {
+            vehicleInfo = carList.findByCarNumber(carNo);
+            if (!vehicleInfo.isFound()) {
                 System.out.println("[경고] 입력하신 차량번호로 차량 정보를 조회할 수 없습니다.");
                 System.out.print(" 다시 입력하시겠습니까? (Y/N): ");
                 if (!sc.nextLine().trim().equalsIgnoreCase("Y")) { returnToMenu(); return; }
@@ -50,7 +47,7 @@ public class CS03PremiumEstimate {
                             : "3".equals(p) ? CarPurpose.BUSINESS
                             : CarPurpose.COMMUTE;
 
-        runAsInclude(product, vehicleInfo.standardValue(), purpose);
+        runAsInclude(product, vehicleInfo.getStandardValue(), purpose);
         returnToMenu();
     }
 
@@ -113,7 +110,6 @@ public class CS03PremiumEstimate {
         // Step 7: 도메인이 보험료 산출
         PremiumCalculation calc = PremiumCalculation.calculate(stdValue, purpose, discounts);
 
-        // E1: 시스템 내부 오류 (시뮬레이션 - 정상 처리)
         System.out.println("\n[최종 보험료 확인]");
         System.out.println("------------------------------------------------------------");
         System.out.printf(" 대인배상I (의무)  : %,d원%n", calc.getPersonalInjuryMandatory());

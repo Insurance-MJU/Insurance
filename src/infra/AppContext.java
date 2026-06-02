@@ -30,17 +30,17 @@ public class AppContext {
 
     private AppContext(LoginController loginController, MainMenuController mainMenuController,
                        DispatcherServlet dispatcherServlet, Server server) {
-        this.loginController   = loginController;
+        this.loginController    = loginController;
         this.mainMenuController = mainMenuController;
-        this.dispatcherServlet = dispatcherServlet;
-        this.server            = server;
+        this.dispatcherServlet  = dispatcherServlet;
+        this.server             = server;
     }
 
     public static AppContext initialize(AppConfig config) {
         // ── 1. 인프라 ────────────────────────────────────────────
         Database db = new Database(config.getDbConfig());
 
-        // ── 외부 서비스 (Mock) ───────────────────────────────────
+        // ── 외부 서비스 Mock ─────────────────────────────────────
         MockVehicleInquiryService vehicleService     = new MockVehicleInquiryService();
         MockVerificationService   verificationService = new MockVerificationService();
         MockBankService           bankService         = new MockBankService();
@@ -48,7 +48,7 @@ public class AppContext {
         MockFssService            fssService          = new MockFssService();
         MockKidiService           kidiService         = new MockKidiService();
 
-        // ── 2. DAO ──────────────────────────────────────────────
+        // ── 2. DB DAO ────────────────────────────────────────────
         UserDao                userDao           = new UserDao(db);
         AccidentDao            accidentDao       = new AccidentDao(db);
         ClaimDao               claimDao          = new ClaimDao(db);
@@ -61,7 +61,15 @@ public class AppContext {
         DamageInvestigationDao damageInvDao      = new DamageInvestigationDao(db);
         CoverageDao            coverageDao       = new CoverageDao(db);
 
-        // ── 3. 도메인 컬렉션 ─────────────────────────────────────
+        // ── 3. 외부 서비스 DAO 래퍼 ──────────────────────────────
+        CarDao          carDao          = new CarDao(vehicleService);
+        VerificationDao verificationDao = new VerificationDao(verificationService);
+        CreditDao       creditDao       = new CreditDao(creditService);
+        BankDao         bankDao         = new BankDao(bankService);
+        FssDao          fssDao          = new FssDao(fssService);
+        KidiDao         kidiDao         = new KidiDao(kidiService);
+
+        // ── 4. 도메인 컬렉션 ─────────────────────────────────────
         UserList                userList              = new UserList(userDao);
         AccidentList            accidentList          = new AccidentList(accidentDao);
         ClaimList               claimList             = new ClaimList(claimDao);
@@ -74,22 +82,28 @@ public class AppContext {
         DamageInvestigationList damageInvList         = new DamageInvestigationList(damageInvDao);
         CoverageList            coverageList          = new CoverageList(coverageDao);
 
-        // ── 4. CLI 컨트롤러 ──────────────────────────────────────
+        // ── 5. 외부 서비스 도메인 모델 ───────────────────────────
+        CarList               carList          = new CarList(carDao);
+        IdentityVerifier      identityVerifier = new IdentityVerifier(verificationDao);
+        CreditList            creditList       = new CreditList(creditDao);
+        BankGateway           bankGateway      = new BankGateway(bankDao);
+        ProductApprovalGateway approvalGateway = new ProductApprovalGateway(fssDao, kidiDao);
+
+        // ── 6. CLI 컨트롤러 ──────────────────────────────────────
         LoginController loginController = new LoginController(userDao);
         MainMenuController mainMenuController = new MainMenuController(
                 productList, subscriptionList, contractList, claimList,
                 accidentList, fieldInvestigatorList, riderList,
                 riskReportList, damageInvList, coverageList,
-                vehicleService, verificationService,
-                bankService, creditService, fssService, kidiService
+                carList, identityVerifier, bankGateway, creditList, approvalGateway
         );
 
-        // ── 5. JWT / Web 인프라 ──────────────────────────────────
+        // ── 7. JWT / Web 인프라 ──────────────────────────────────
         JwtConfig jwtConfig = config.getJwtConfig();
         JwtUtil   jwtUtil   = new JwtUtil(jwtConfig);
         JwtFilter jwtFilter = new JwtFilter(jwtUtil);
 
-        // ── 6. Web 컨트롤러 + 라우팅 ────────────────────────────
+        // ── 8. Web 컨트롤러 + 라우팅 ────────────────────────────
         Router router = new Router();
         new AuthController(userList, jwtUtil).registerRoutes(router);
         new VehicleController(vehicleService).registerRoutes(router);

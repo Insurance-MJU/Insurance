@@ -8,8 +8,8 @@ import domain.RiskAnalysisReportList;
 import domain.Subscription;
 import domain.SubscriptionList;
 import domain.common.Money;
+import domain.CreditList;
 import controller.cli.Context;
-import infra.external.credit.CreditInquiryService;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -21,14 +21,14 @@ public class UW01ContractReview {
     private final SubscriptionList subscriptionList;
     private final ContractList contractList;
     private final RiskAnalysisReportList riskReportList;
-    private final CreditInquiryService creditService;
+    private final CreditList creditList;
 
     public UW01ContractReview(SubscriptionList subscriptionList, ContractList contractList,
-                              RiskAnalysisReportList riskReportList, CreditInquiryService creditService) {
+                              RiskAnalysisReportList riskReportList, CreditList creditList) {
         this.subscriptionList = subscriptionList;
         this.contractList = contractList;
         this.riskReportList = riskReportList;
-        this.creditService = creditService;
+        this.creditList = creditList;
     }
 
     public void run() {
@@ -79,7 +79,7 @@ public class UW01ContractReview {
         // Step 5: 위험성 분석 → include UW-02
         System.out.print("\n[위험성 분석] 버튼을 누르려면 Enter를 입력하세요...");
         sc.nextLine();
-        new UW02RiskAnalysis(riskReportList, creditService).runAsInclude(sub);
+        new UW02RiskAnalysis(riskReportList, creditList).runAsInclude(sub);
 
         // Step 6: 위험 분석 보고서 출력
         RiskAnalysisReport report = riskReportList.findBySubscriptionNo(sub.getSubscriptionNo());

@@ -2,18 +2,17 @@ package controller.cli.employee;
 
 import domain.*;
 import controller.cli.Context;
-import infra.external.fss.FssService;
 import common.util.DocumentUploadHelper;
 import java.util.*;
 
 public class CT06SaleConfirmation {
     private final Scanner sc = Context.getInstance().scanner();
-    private final FssService fssService;
     private final ProductList productList;
+    private final ProductApprovalGateway approvalGateway;
 
-    public CT06SaleConfirmation(ProductList productList, FssService fssService) {
+    public CT06SaleConfirmation(ProductList productList, ProductApprovalGateway approvalGateway) {
         this.productList = productList;
-        this.fssService = fssService;
+        this.approvalGateway = approvalGateway;
     }
 
     private static final String[] REQUIRED_DOCS = {"상품 신고서", "수익성 분석 보고서", "공시자료"};
@@ -104,17 +103,17 @@ public class CT06SaleConfirmation {
 
         // FSS 신고
         System.out.println("\n── 금융감독원 판매 신고 ─────────────────");
-        boolean submitted = fssService.submitSaleNotification(product.getProductId());
+        boolean submitted = approvalGateway.submitSaleNotification(product.getProductId());
         if (!submitted) {
             System.out.println("[오류] FSS 판매 신고 제출에 실패했습니다.");
             return;
         }
         System.out.println("[안내] FSS 판매 신고가 접수되었습니다. 심사 결과를 확인합니다...");
 
-        FssService.ReviewResult result = fssService.getSaleReviewResult(product.getProductId());
+        ExternalReviewResult result = approvalGateway.getSaleReviewResult(product.getProductId());
         System.out.printf(" FSS 심사 결과: %s%n", result.getLabel());
 
-        if (result == FssService.ReviewResult.APPROVED) {
+        if (result == ExternalReviewResult.APPROVED) {
             product.applySalePermit();
             productList.save(product);
             System.out.println("\n[완료] 판매신청이 승인되었습니다. 상태: " + product.getStatusLabel());

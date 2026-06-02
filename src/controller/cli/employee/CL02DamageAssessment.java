@@ -9,9 +9,9 @@ import domain.ContractList;
 import domain.DamageInvestigation;
 import domain.DamageInvestigationList;
 import domain.SelectedCoverage;
+import domain.BankGateway;
 import domain.common.Money;
 import controller.cli.Context;
-import infra.external.bank.BankService;
 
 import java.util.Scanner;
 
@@ -21,16 +21,16 @@ public class CL02DamageAssessment {
     private final AccidentList accidentList;
     private final ContractList contractList;
     private final DamageInvestigationList damageInvList;
-    private final BankService bankService;
+    private final BankGateway bankGateway;
 
     public CL02DamageAssessment(ClaimList claimList, AccidentList accidentList,
                                 ContractList contractList, DamageInvestigationList damageInvList,
-                                BankService bankService) {
+                                BankGateway bankGateway) {
         this.claimList = claimList;
         this.accidentList = accidentList;
         this.contractList = contractList;
         this.damageInvList = damageInvList;
-        this.bankService = bankService;
+        this.bankGateway = bankGateway;
     }
 
     public void run() {
@@ -184,7 +184,7 @@ public class CL02DamageAssessment {
             System.out.print("\n[보험금 지급 실행] 버튼을 누르려면 Enter를 입력하세요...");
             sc.nextLine();
 
-            new CL04InsurancePayment(claimList, accidentList, bankService).run();
+            new CL04InsurancePayment(claimList, accidentList, bankGateway).run();
 
             // Step 12: 지급 완료 팝업 (CL-04 완료 후 진입)
             System.out.println("\n┌──────────────────────────────────────────────────┐");
