@@ -21,13 +21,13 @@ public class Party implements Serializable {
         THIRD_PARTY   // 제3자 (사고 상대방)
     }
 
-    // SSN(YYMMDD-G******) 에서 만 나이 계산
+    // SSN(YYMMDD-G****** 또는 YYMMDGG******) 에서 만 나이 계산
     public static int calcAge(String ssn) {
         try {
-            String[] parts = ssn.split("-");
-            if (parts.length < 2 || parts[0].length() < 2) return -1;
-            int yy = Integer.parseInt(parts[0].substring(0, 2));
-            char g = parts[1].charAt(0);
+            String digits = ssn.replace("-", "");
+            if (digits.length() < 7) return -1;
+            int yy = Integer.parseInt(digits.substring(0, 2));
+            char g = digits.charAt(6);
             int birthYear = (g == '1' || g == '2') ? 1900 + yy : 2000 + yy;
             return java.time.LocalDate.now().getYear() - birthYear;
         } catch (Exception e) {

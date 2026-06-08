@@ -4,12 +4,18 @@ import java.util.Set;
 
 public class WhiteList {
 
-    private static final Set<String> PATHS = Set.of(
+    private static final Set<String> EXACT = Set.of(
             "/auth/login",
-            "/auth/signup"
+            "/auth/signup",
+            "/auth/login/identity"
     );
 
     public static boolean contains(String path) {
-        return PATHS.contains(path);
+        if (EXACT.contains(path)) return true;
+        if (path.startsWith("/public/")) return true;
+        if (path.startsWith("/verification/")) return true;
+        if (path.startsWith("/vehicles/")) return true;
+        if (path.startsWith("/payments/")) return true;
+        return false;
     }
 }

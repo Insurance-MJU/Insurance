@@ -71,6 +71,32 @@ public class RiskAnalysisReport implements Serializable {
         return r;
     }
 
+    // ── 정적 팩토리: DB 저장값으로 복원 ──────────────────────
+    public static RiskAnalysisReport fromStorage(
+            String subscriptionNo, double riskScore, int riskGrade,
+            double accidentScore, double drivingExpScore, double creditGradeScore,
+            double trafficViolationScore, double surchargeRate,
+            Money basePremium, Money surchargeAmount, Money totalPremium,
+            String reviewGuide, String reviewerName, Date reviewDate, String reviewOpinion) {
+        RiskAnalysisReport r = new RiskAnalysisReport();
+        r.subscriptionNo        = subscriptionNo;
+        r.riskScore             = riskScore;
+        r.riskGrade             = riskGrade;
+        r.accidentScore         = accidentScore;
+        r.drivingExpScore       = drivingExpScore;
+        r.creditGradeScore      = creditGradeScore;
+        r.trafficViolationScore = trafficViolationScore;
+        r.surchargeRate         = surchargeRate;
+        r.basePremium           = basePremium;
+        r.surchargeAmount       = surchargeAmount;
+        r.totalPremium          = totalPremium;
+        r.reviewGuide           = reviewGuide;
+        r.reviewerName          = reviewerName;
+        r.reviewDate            = reviewDate;
+        r.reviewOpinion         = reviewOpinion;
+        return r;
+    }
+
     // ── 비즈니스 메서드: 심사역 확정 ─────────────────────────
     public void confirm(String reviewerName, String opinion) {
         this.reviewerName  = reviewerName;

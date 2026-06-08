@@ -60,6 +60,9 @@ public class AppContext {
         RiskAnalysisReportDao  riskReportDao     = new RiskAnalysisReportDao(db);
         DamageInvestigationDao damageInvDao      = new DamageInvestigationDao(db);
         CoverageDao            coverageDao       = new CoverageDao(db);
+        BaseRateDao            baseRateDao       = new BaseRateDao(db);
+        ExclusionDao           exclusionDao      = new ExclusionDao(db);
+        ProvisionDao           provisionDao      = new ProvisionDao(db);
 
         // ── 3. 도메인 컬렉션 ─────────────────────────────────────
         UserList                userList              = new UserList(userDao);
@@ -91,13 +94,18 @@ public class AppContext {
 
         // ── 6. Web 컨트롤러 + 라우팅 ────────────────────────────
         Router router = new Router();
-        new AuthController(userList, jwtUtil).registerRoutes(router);
+        new AuthController(userList, jwtUtil, verificationService).registerRoutes(router);
         new VehicleController(vehicleService).registerRoutes(router);
         new VerificationController(verificationService).registerRoutes(router);
-        new ProductController(productList, riderList).registerRoutes(router);
-        new SubscriptionController(subscriptionList, productList, verificationService).registerRoutes(router);
-        new AccidentController(accidentList, claimList, contractList, fieldInvestigatorList).registerRoutes(router);
-        new ClaimController(claimList).registerRoutes(router);
+        new ProductController(productList, riderList, coverageList).registerRoutes(router);
+        new SubscriptionController(subscriptionList, productList, contractList, verificationService, jwtUtil).registerRoutes(router);
+        new ContractController(contractList, jwtUtil).registerRoutes(router);
+        new PaymentController(contractList, subscriptionList, config.getTossConfig()).registerRoutes(router);
+        new AccidentController(accidentList, claimList, contractList, fieldInvestigatorList, jwtUtil).registerRoutes(router);
+        new ClaimController(claimList, accidentList).registerRoutes(router);
+        new RiskAnalysisController(subscriptionList, riskReportList, creditService).registerRoutes(router);
+        new DamageInvestigationController(accidentList, claimList, damageInvList).registerRoutes(router);
+        new MasterController(baseRateDao, exclusionDao, provisionDao, riderDao, coverageDao).registerRoutes(router);
 
         DispatcherServlet dispatcher = new DispatcherServlet(router, jwtFilter);
         Server server = new Server(config.getServerConfig());

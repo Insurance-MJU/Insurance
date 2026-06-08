@@ -28,6 +28,13 @@ public class AppConfig {
         );
     }
 
+    public TossConfig getTossConfig() {
+        return new TossConfig(
+            loader.get("toss.secret.key"),
+            loader.get("toss.api.base.url", "https://api.tosspayments.com/v1/payments")
+        );
+    }
+
     public ServerConfig getServerConfig() {
         try {
             InetAddress host = InetAddress.getByName(loader.get("server.host", "127.0.0.1"));

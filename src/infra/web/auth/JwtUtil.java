@@ -43,6 +43,32 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String extractUserId(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+        } catch (JwtException e) {
+            return null;
+        }
+    }
+
+    public String extractRole(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(signingKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("role", String.class);
+        } catch (JwtException e) {
+            return null;
+        }
+    }
+
     public void verify(String token) {
         try {
             Jwts.parserBuilder()

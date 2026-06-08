@@ -1,7 +1,7 @@
 package domain;
 
 public enum ContractStatus {
-    ACTIVE, EXPIRED, CANCELLED;
+    PENDING_PAYMENT, ACTIVE, EXPIRED, CANCELLED;
 
     public String getLabel() {
         switch (this) {

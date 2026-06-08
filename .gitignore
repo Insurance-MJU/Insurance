@@ -118,3 +118,5 @@ replay_pid*
 Insurance.iml
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij+all
 /data
+/uploads
+.claude/

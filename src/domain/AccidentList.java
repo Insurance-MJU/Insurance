@@ -1,7 +1,9 @@
 package domain;
 
 import common.exception.domain.NotFoundException;
+import domain.common.Money;
 import infra.dao.AccidentDao;
+import infra.vo.AccidentVO;
 
 import java.util.Collections;
 import java.util.List;
@@ -12,26 +14,51 @@ public class AccidentList {
     private final List<Accident> accidents;
 
     public AccidentList(AccidentDao dao) {
-        this.dao = dao;
+        this.dao       = dao;
         this.accidents = Collections.emptyList();
     }
 
     public AccidentList(List<Accident> accidents) {
-        this.dao = null;
+        this.dao       = null;
         this.accidents = Collections.unmodifiableList(accidents);
+    }
+
+    private static Accident toDomain(AccidentVO vo) {
+        if (vo == null) return null;
+        Accident a = new Accident();
+        a.setAccidentId(vo.accidentId);
+        a.setUserId(vo.userId);
+        a.setAccidentDate(vo.accidentDate);
+        a.setReportedBy(vo.reportedBy);
+        a.setPhone(vo.phone);
+        a.setDescription(vo.description);
+        a.setAccidentLocation(vo.accidentLocation);
+        a.setAccidentDetail(vo.accidentDetail);
+        a.setDocuments(vo.documents);
+        a.setContractId(vo.contractId);
+        a.setCoverageDescription(vo.coverageDescription);
+        a.setCoverageLimit(new Money(vo.coverageLimit, "KRW"));
+        a.setPersonalInjuryLimit(new Money(vo.personalInjuryLimit, "KRW"));
+        a.setVehicleInfo(vo.vehicleInfo);
+        a.setExpectedRepairCost(new Money(vo.expectedRepairCost, "KRW"));
+        a.setRegionCode(vo.regionCode);
+        if (vo.status != null) a.setStatus(AccidentStatus.valueOf(vo.status));
+        return a;
     }
 
     // ── DAO 위임 ──────────────────────────────────────────────
     public AccidentList findByDateAndStatus(String date, String status) {
-        return dao.findByDateAndStatus(date, status);
+        return new AccidentList(dao.findByDateAndStatus(date, status).stream()
+            .map(AccidentList::toDomain).collect(Collectors.toList()));
     }
 
     public AccidentList findPendingAccidents() {
-        return dao.findPendingAccidents();
+        return new AccidentList(dao.findPendingAccidents().stream()
+            .map(AccidentList::toDomain).collect(Collectors.toList()));
     }
 
     public Accident findById(String accidentId) {
-        return dao.findById(accidentId);
+        return toDomain(dao.findById(accidentId));
     }
 
     public Accident getById(String accidentId) {
@@ -41,7 +68,17 @@ public class AccidentList {
     }
 
     public Accident findByCustomerName(String name) {
-        return dao.findByCustomerName(name);
+        return toDomain(dao.findByCustomerName(name));
+    }
+
+    public AccidentList findByReportedBy(String reportedBy) {
+        return new AccidentList(dao.findByReportedBy(reportedBy).stream()
+            .map(AccidentList::toDomain).collect(Collectors.toList()));
+    }
+
+    public AccidentList findByUserId(String userId) {
+        return new AccidentList(dao.findByUserId(userId).stream()
+            .map(AccidentList::toDomain).collect(Collectors.toList()));
     }
 
     public String nextId() {
@@ -49,7 +86,18 @@ public class AccidentList {
     }
 
     public void save(Accident accident) {
-        dao.save(accident);
+        dao.save(new AccidentVO(
+            accident.getAccidentId(), accident.getUserId(), accident.getAccidentDate(),
+            accident.getReportedBy(), accident.getPhone(), accident.getDescription(),
+            accident.getAccidentLocation(), accident.getAccidentDetail(), accident.getDocuments(),
+            accident.getContractId(), accident.getCoverageDescription(),
+            accident.getCoverageLimit()       != null ? accident.getCoverageLimit().getAmount()       : 0L,
+            accident.getPersonalInjuryLimit() != null ? accident.getPersonalInjuryLimit().getAmount() : 0L,
+            accident.getVehicleInfo(),
+            accident.getExpectedRepairCost()  != null ? accident.getExpectedRepairCost().getAmount()  : 0L,
+            accident.getRegionCode(),
+            accident.getStatus() != null ? accident.getStatus().name() : null
+        ));
     }
 
     // ── 도메인 로직 ────────────────────────────────────────────

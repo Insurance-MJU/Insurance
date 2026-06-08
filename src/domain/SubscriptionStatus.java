@@ -1,7 +1,7 @@
 package domain;
 
 public enum SubscriptionStatus {
-    PENDING_REVIEW, APPROVED, REJECTED, SUPPLEMENT_REQUIRED;
+    PENDING_REVIEW, APPROVED, REJECTED, SUPPLEMENT_REQUIRED, CONTRACTED;
 
     public String getLabel() {
         switch (this) {
@@ -9,6 +9,7 @@ public enum SubscriptionStatus {
             case APPROVED:            return "인수승인";
             case REJECTED:            return "인수거절";
             case SUPPLEMENT_REQUIRED: return "서류보완요청";
+            case CONTRACTED:          return "계약체결";
             default:                  return "";
         }
     }

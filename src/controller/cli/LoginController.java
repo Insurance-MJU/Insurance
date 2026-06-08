@@ -1,7 +1,9 @@
 package controller.cli;
 
 import domain.common.User;
+import domain.common.UserRole;
 import infra.dao.UserDao;
+import infra.vo.UserVO;
 import java.util.Scanner;
 
 public class LoginController {
@@ -23,7 +25,8 @@ public class LoginController {
             System.out.print("비밀번호: ");
             String password = sc.nextLine().trim();
 
-            User user = userDao.findByCredentials(userId, password);
+            UserVO vo = userDao.findByCredentials(userId, password);
+            User user = vo != null ? new User(vo.userId, vo.password, vo.name, UserRole.valueOf(vo.role), vo.ssn) : null;
             if (user != null) {
                 Context.getInstance().login(user);
                 System.out.println("\n안녕하세요, " + user.getName() + "님!\n");

@@ -57,7 +57,7 @@ public class Contract implements Serializable {
         c.ridersDescription    = ridersDescription;
         c.issueDate            = new java.util.Date();
         c.startDate            = new java.util.Date();
-        c.activate();
+        c.status               = ContractStatus.PENDING_PAYMENT;
         return c;
     }
 
