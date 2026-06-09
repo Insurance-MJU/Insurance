@@ -18,6 +18,7 @@ import infra.persistence.Database;
 import infra.web.DispatcherServlet;
 import infra.web.Router;
 import infra.web.Server;
+import infra.web.auth.CorsFilter;
 import infra.web.auth.JwtFilter;
 import infra.web.auth.JwtUtil;
 
@@ -90,6 +91,7 @@ public class AppContext {
         // ── 5. JWT / Web 인프라 ──────────────────────────────────
         JwtConfig jwtConfig = config.getJwtConfig();
         JwtUtil   jwtUtil   = new JwtUtil(jwtConfig);
+        CorsFilter corsFilter = new CorsFilter();
         JwtFilter jwtFilter = new JwtFilter(jwtUtil);
 
         // ── 6. Web 컨트롤러 + 라우팅 ────────────────────────────
@@ -107,7 +109,7 @@ public class AppContext {
         new DamageInvestigationController(accidentList, claimList, damageInvList).registerRoutes(router);
         new MasterController(baseRateDao, exclusionDao, provisionDao, riderDao, coverageDao).registerRoutes(router);
 
-        DispatcherServlet dispatcher = new DispatcherServlet(router, jwtFilter);
+        DispatcherServlet dispatcher = new DispatcherServlet(router, corsFilter, jwtFilter);
         Server server = new Server(config.getServerConfig());
 
         return new AppContext(loginController, mainMenuController, dispatcher, server);

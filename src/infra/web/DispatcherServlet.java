@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpHandler;
 import common.exception.dao.DataAccessException;
 import common.exception.domain.DomainException;
 import common.exception.infra.InfraException;
+import infra.web.auth.CorsFilter;
 import infra.web.auth.JwtFilter;
 import infra.web.dto.HttpRequest;
 import infra.web.dto.HttpResponse;
@@ -14,25 +15,22 @@ import java.io.IOException;
 public class DispatcherServlet implements HttpHandler {
 
     private final Router router;
+    private final CorsFilter corsFilter;
     private final JwtFilter jwtFilter;
 
-    public DispatcherServlet(Router router, JwtFilter jwtFilter) {
+    public DispatcherServlet(Router router, CorsFilter corsFilter, JwtFilter jwtFilter) {
         this.router = router;
+        this.corsFilter = corsFilter;
         this.jwtFilter = jwtFilter;
     }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "http://localhost:3000");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-        String method = exchange.getRequestMethod();
-        if ("OPTIONS".equalsIgnoreCase(method)) {
-            exchange.sendResponseHeaders(204, -1);
+        if (corsFilter.apply(exchange)) {
             return;
         }
 
+        String method = exchange.getRequestMethod();
         String path = exchange.getRequestURI().getPath();
 
         HttpResponse response = new HttpResponse(exchange);
