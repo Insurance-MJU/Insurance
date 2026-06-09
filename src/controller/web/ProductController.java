@@ -56,13 +56,15 @@ public class ProductController {
         String docId = "DOC-" + System.nanoTime();
         doc.setProductDocumentId(docId);
         doc.setProductId(productId);
-        if (req.docType() != null) {
-            try { doc.setDocType(ProductDocument.DocType.valueOf(req.docType())); } catch (Exception ignored) {}
-        }
+        ProductDocument.DocType docType = parseDocType(req.docType());
+        doc.setDocType(docType);
         doc.setTitle(req.title());
         doc.setNote(req.note());
         doc.setFilename(req.filename());
         doc.setSubmittedAt(new Date());
+        if (docType == ProductDocument.DocType.RATE_VERIFICATION) {
+            doc.setReceivedAt(new Date());
+        }
 
         // 실제 파일 저장
         if (req.fileContent() != null && !req.fileContent().isEmpty()) {
@@ -81,8 +83,39 @@ public class ProductController {
 
         if (p.getDocuments() == null) p.setDocuments(new java.util.ArrayList<>());
         p.getDocuments().add(doc);
+        advanceStatusAfterDocumentUpload(p, docType);
         productList.save(p);
         return ProductResponse.from(productList.getById(productId));
+    }
+
+    private ProductDocument.DocType parseDocType(String docType) {
+        if (docType == null || docType.isBlank()) return null;
+        return switch (docType) {
+            case "BUSINESS_METHOD" -> ProductDocument.DocType.BASIC_DOCUMENT;
+            case "TERMS_CONDITIONS" -> ProductDocument.DocType.GENERAL_TERMS;
+            case "CALC_METHOD" -> ProductDocument.DocType.RATE_CALC_BASIS;
+            case "RATE_CERT" -> ProductDocument.DocType.RATE_VERIFICATION;
+            case "FSS_APPLICATION" -> ProductDocument.DocType.APPROVAL_APPLICATION;
+            default -> {
+                try {
+                    yield ProductDocument.DocType.valueOf(docType);
+                } catch (IllegalArgumentException e) {
+                    yield null;
+                }
+            }
+        };
+    }
+
+    private void advanceStatusAfterDocumentUpload(Product p, ProductDocument.DocType docType) {
+        if (docType == ProductDocument.DocType.RATE_VERIFICATION
+                && p.getStatus() == ProductStatus.KIDI_SUBMITTED) {
+            p.applySalePermit();
+            return;
+        }
+        if (docType == ProductDocument.DocType.APPROVAL_APPLICATION
+                && p.getStatus() == ProductStatus.KIDI_CONFIRMED) {
+            p.applySalePermit();
+        }
     }
 
     private void deleteProduct(String id) {
