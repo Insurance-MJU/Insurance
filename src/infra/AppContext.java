@@ -73,6 +73,9 @@ public class AppContext {
         SubscriptionList        subscriptionList      = new SubscriptionList(subscriptionDao);
         ProductList             productList           = new ProductList(productDao);
         RiderList               riderList             = new RiderList(riderDao);
+        BaseRateList            baseRateList          = new BaseRateList(baseRateDao);
+        ExclusionList           exclusionList         = new ExclusionList(exclusionDao);
+        ProvisionList           provisionList         = new ProvisionList(provisionDao);
         FieldInvestigatorList   fieldInvestigatorList = new FieldInvestigatorList(employeeDao);
         RiskAnalysisReportList  riskReportList        = new RiskAnalysisReportList(riskReportDao);
         DamageInvestigationList damageInvList         = new DamageInvestigationList(damageInvDao);
@@ -107,7 +110,11 @@ public class AppContext {
         new ClaimController(claimList, accidentList).registerRoutes(router);
         new RiskAnalysisController(subscriptionList, riskReportList, creditService).registerRoutes(router);
         new DamageInvestigationController(accidentList, claimList, damageInvList).registerRoutes(router);
-        new MasterController(baseRateDao, exclusionDao, provisionDao, riderDao, coverageDao).registerRoutes(router);
+        new BaseRateController(baseRateList).registerRoutes(router);
+        new ExclusionController(exclusionList).registerRoutes(router);
+        new ProvisionController(provisionList).registerRoutes(router);
+        new RiderController(riderList).registerRoutes(router);
+        new CoverageController(coverageList).registerRoutes(router);
 
         DispatcherServlet dispatcher = new DispatcherServlet(router, corsFilter, jwtFilter);
         Server server = new Server(config.getServerConfig());

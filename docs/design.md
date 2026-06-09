@@ -44,6 +44,83 @@ DB table
 
 DTOs are used at the controller boundary. They are not database objects and they are not the main business objects.
 
+### Current Controller And DTO Generation Rules
+
+The current web API is generated around business use cases, not around database tables.
+
+Current counts:
+
+| Type | Count | Location |
+|---|---:|---|
+| Web controllers | 16 | `src/controller/web` |
+| Web boundary DTOs | 18 | `src/controller/web/dto` |
+| All request/response DTOs | 42 | `src/dto`, `src/controller/web/dto` |
+
+Controller generation rule:
+
+```text
+One controller groups one screen menu or one business workflow.
+```
+
+Examples:
+
+| Controller | Generation basis |
+|---|---|
+| `ProductController` | Product design, approval, rate verification, sale transition, and product documents. |
+| `SubscriptionController` | Subscription creation and underwriting review decisions. |
+| `ContractController` | Contract list/detail inquiry. |
+| `AccidentController` | Accident report, accident search, claim creation, and investigator search. |
+| `ClaimController` | Claim assessment and payment state transitions. |
+| `RiskAnalysisController` | Underwriting risk analysis for a subscription. |
+| `DamageInvestigationController` | Damage investigation registration and inquiry. |
+| `AuthController` | Login, signup, and identity login. |
+| `VehicleController` | Vehicle inquiry external boundary. |
+| `VerificationController` | Identity verification external boundary. |
+| `PaymentController` | Payment preparation and confirmation. |
+| `BaseRateController` | Base-rate master-data CRUD. |
+| `CoverageController` | Coverage master-data CRUD. |
+| `ExclusionController` | Exclusion master-data CRUD. |
+| `ProvisionController` | Provision master-data and provision-item CRUD. |
+| `RiderController` | Rider master-data CRUD. |
+
+DTO generation rule:
+
+```text
+Request DTOs are created per frontend input form.
+Response DTOs are created per frontend display shape.
+```
+
+The number of DTOs is therefore not expected to match the number of domain classes. A DTO is added when the HTTP input/output shape is different from the domain model, when sensitive/internal fields should be hidden, or when one response combines fields from multiple domain objects.
+
+Route generation follows two patterns:
+
+```text
+GET/POST /resources
+GET /resources/{id}
+```
+
+for normal resource lookup and creation, and:
+
+```text
+PUT /resources/{id}/business-action
+```
+
+for business state transitions such as approval, rejection, assessment, payment, rate verification, and sale confirmation.
+
+The intended controller implementation flow is:
+
+```text
+HttpRequest
+  -> Request DTO
+  -> Domain List or External Service
+  -> Domain behavior method
+  -> Domain List save
+  -> Response DTO
+  -> HttpResponse
+```
+
+Normal web controllers should not set persistence fields directly and should not expose domain objects directly as API responses.
+
 ### Request DTO
 
 Request DTOs represent data received from HTTP request bodies.
@@ -276,10 +353,11 @@ There are current exceptions:
 
 | File | Exception |
 |---|---|
-| `controller.web.MasterController` | Directly uses several DAO classes and VO classes for master-data CRUD. |
 | `controller.cli.LoginController` | Directly uses `UserDao` and `UserVO` for CLI login. |
 
-These are accepted as current implementation exceptions. For new code, the preferred rule is:
+This is accepted as a current implementation exception. Master-data web controllers now follow the normal dependency direction through domain list classes such as `BaseRateList`, `CoverageList`, `ExclusionList`, `ProvisionList`, and `RiderList`.
+
+For new code, the preferred rule is:
 
 ```text
 Controller should not directly depend on infra.dao or infra.vo.
@@ -336,3 +414,13 @@ Current checks:
 3. CLI controllers may depend on CLI context, domain, external services, common, and JDK APIs.
 4. Domain may depend on domain/common/JDK code and the current persistence boundary types `infra.dao`, `infra.vo`, and `dto`.
 5. DAO may depend only on persistence helpers, VO, common, and JDK APIs.
+
+## 9. Domain Class Diagram
+
+The current domain model diagram is maintained separately:
+
+```text
+docs/domain-class-diagram.md
+```
+
+The diagram is based on the current Java files under `src/domain` and focuses on the main aggregate, value-object, enum, and domain-list relationships.
