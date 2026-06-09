@@ -20,7 +20,6 @@ $Rules = @(
         Name = "controller-must-not-use-dao-or-vo"
         Include = @("src/controller/*.java")
         Exclude = @(
-            "src/controller/web/MasterController.java",
             "src/controller/cli/LoginController.java"
         )
         AllowedImports = $null
@@ -30,9 +29,7 @@ $Rules = @(
     @{
         Name = "web-controller-allowed-dependencies"
         Include = @("src/controller/web/*.java")
-        Exclude = @(
-            "src/controller/web/MasterController.java"
-        )
+        Exclude = @()
         AllowedImports = @(
             "controller.web",
             "domain",
